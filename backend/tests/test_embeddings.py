@@ -72,3 +72,45 @@ def test_retries_after_rate_limit():
     emb = make_embedder(seen, fail_first=2)
     assert len(emb.embed(["retry me"])) == 1
     assert len(seen) == 3
+
+class FakeLocalModel:
+    def __init__(self):
+        self.calls = []
+
+    def passage_embed(self, texts, batch_size=32):
+        texts = list(texts)
+        self.calls.append(("passage", texts))
+        return [[3.0, 4.0] for _ in texts]
+
+    def query_embed(self, texts):
+        texts = [texts] if isinstance(texts, str) else list(texts)
+        self.calls.append(("query", texts))
+        return [[0.0, 2.0] for _ in texts]
+
+
+def test_local_embedder_normalizes_and_caches(tmp_path):
+    from app.rag.embeddings import LocalEmbedder
+
+    model = FakeLocalModel()
+    emb = LocalEmbedder(cache_dir=tmp_path, model=model)
+    assert emb.embed(["a", "b"]) == [[0.6, 0.8], [0.6, 0.8]]
+    emb.embed(["a"])
+    assert len(model.calls) == 1
+    assert emb.stats["cached"] == 1
+
+
+def test_local_query_uses_query_embedding():
+    from app.rag.embeddings import LocalEmbedder
+
+    model = FakeLocalModel()
+    assert LocalEmbedder(model=model).embed_query("who is independent?") == [0.0, 1.0]
+    assert model.calls[0][0] == "query"
+
+
+def test_unknown_provider_raises():
+    from types import SimpleNamespace
+
+    from app.rag.embeddings import get_embedder
+
+    with pytest.raises(EmbeddingError):
+        get_embedder(SimpleNamespace(embedding_provider="other"))

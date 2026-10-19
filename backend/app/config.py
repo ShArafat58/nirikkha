@@ -34,7 +34,11 @@ class Settings(BaseSettings):
     # SEC requires a User-Agent with a real name and email.
     sec_user_agent: str = ""
 
-    # Retrieval embeddings (Gemini free tier). Conservative rate limits by default.
+    # Retrieval embeddings.
+    # "local" (default): BAAI/bge-small-en-v1.5 via fastembed, 384 dims, unlimited, data stays on the machine.
+    # "gemini": gemini-embedding-001 (free tier: 1,000 requests/day/project), set EMBEDDING_DIM=768.
+    embedding_provider: str = "local"
+    local_embedding_model: str = "BAAI/bge-small-en-v1.5"
     embedding_model: str = "gemini-embedding-001"
     embedding_dim: int = 768
     gemini_embed_tpm: int = 25000

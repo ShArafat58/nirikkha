@@ -29,7 +29,7 @@ create table if not exists chunks (
     text              text not null,
     char_count        int not null,
     content_hash      text not null,
-    embedding         vector(768),
+    embedding         vector(384),
     tsv               tsvector generated always as (to_tsvector('english', context_header || ' ' || text)) stored
 );
 

@@ -135,7 +135,7 @@ def hybrid_search(conn: psycopg.Connection, query: str, query_vector: list[float
 
 def _main(argv: list[str]) -> int:
     from app.config import get_settings
-    from app.rag.embeddings import EmbeddingError, GeminiEmbedder
+    from app.rag.embeddings import EmbeddingError, get_embedder
 
     parser = argparse.ArgumentParser(description="Search filings in Supabase")
     parser.add_argument("query")
@@ -152,7 +152,7 @@ def _main(argv: list[str]) -> int:
             if args.mode == "keyword":
                 hits = keyword_search(conn, args.query, args.k, args.cik, args.before, args.forms)
             else:
-                with GeminiEmbedder(s.gemini_api_key, s.embedding_model, s.embedding_dim, cache_dir=s.cache_dir) as emb:
+                with get_embedder(s) as emb:
                     qvec = emb.embed_query(args.query)
                 if args.mode == "vector":
                     hits = vector_search(conn, qvec, args.k, args.cik, args.before, args.forms)
