@@ -39,6 +39,9 @@ class Settings(BaseSettings):
     # "gemini": gemini-embedding-001 (free tier: 1,000 requests/day/project), set EMBEDDING_DIM=768.
     embedding_provider: str = "local"
     local_embedding_model: str = "BAAI/bge-small-en-v1.5"
+    # Cross-encoder reranker (local, fastembed) and how many hybrid candidates it re-scores.
+    reranker_model: str = "Xenova/ms-marco-MiniLM-L-6-v2"
+    rerank_candidates: int = 20
     embedding_model: str = "gemini-embedding-001"
     embedding_dim: int = 768
     gemini_embed_tpm: int = 25000
