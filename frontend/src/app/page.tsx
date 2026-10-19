@@ -16,8 +16,9 @@ export default function Home() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-950 p-6 text-slate-100">
       <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-8 shadow-xl">
-        <h1 className="text-3xl font-bold tracking-tight">Nirikkha</h1>
-        <p className="mt-1 text-slate-400">Trust less, Verify more.</p>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/brand/logo.svg" alt="Nirikkha logo" width={232} height={77} className="h-auto w-56" />
+        <p className="mt-3 text-slate-400">Trust less, Verify more.</p>
 
         <div className="mt-6 space-y-2 text-sm">
           <p className="text-slate-400">
