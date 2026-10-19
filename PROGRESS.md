@@ -15,14 +15,14 @@ Last updated: 2026-10-19 (Day 1)
 
 - [x] Step 1.1 Machine check
 - [x] Step 1.2 Repo structure, .gitignore, README, first commit, pushed to GitHub
+- [x] Step 1.3 AGENTS.md + PROGRESS.md
 
 ## In progress
 
-- [ ] Step 1.3 AGENTS.md + PROGRESS.md
+- [ ] Step 1.4 docs/SCORE_LEDGER.md
 
 ## Next
 
-- [ ] Step 1.4 docs/SCORE_LEDGER.md
 - [ ] Step 1.5 Spec (docs/SPEC.md)
 - [ ] Accounts: Neo4j Aura (new); confirm Supabase, Groq, Google AI Studio, Vercel, Render
 - [ ] Backend host decision
@@ -47,6 +47,10 @@ Last updated: 2026-10-19 (Day 1)
 - GitHub: https://github.com/ShArafat58/nirikkha
 - Frontend: —
 - Backend: —
+
+## Score
+
+- See `docs/SCORE_LEDGER.md`. Built: 5 / 425. Verified: 0 / 425.
 
 ## Known issues / risks
 
