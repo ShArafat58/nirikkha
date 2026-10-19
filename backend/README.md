@@ -40,3 +40,10 @@ Open http://localhost:7860/health
 ## Environment variables
 
 See `.env.example`. Never commit `.env`.
+## Local ingestion (offline, on a developer machine)
+
+Heavy parsing / chunking runs locally, not on the 512 MB server:
+
+    pip install -r requirements-ingest.txt
+    python -m app.ingest.parse 719739 --before 2023-03-10
+    python -m app.ingest.chunk

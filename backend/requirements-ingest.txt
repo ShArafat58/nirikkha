@@ -1,0 +1,4 @@
+# Local / offline ingestion only (NOT installed on the Render server).
+# Install with: pip install -r requirements-ingest.txt
+-r requirements.txt
+fastembed>=0.4
