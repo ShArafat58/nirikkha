@@ -40,3 +40,5 @@ models/
 Thumbs.db
 desktop.ini
 .idea/
+# backend download cache
+.cache/
