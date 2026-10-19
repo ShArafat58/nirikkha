@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 290 96" width="290" height="96" role="img" aria-label="Nirikkha logo">
+  <rect width="290" height="96" rx="20" fill="#0B1220"/>
+  <rect x="14" y="28" width="56" height="5" rx="2.5" fill="#F5F1E8" opacity="0.18"/>
+  <rect x="14" y="39" width="56" height="10" rx="2" fill="#F2B33D" opacity="0.35"/>
+  <rect x="14" y="55" width="44" height="5" rx="2.5" fill="#F5F1E8" opacity="0.18"/>
+  <circle cx="42" cy="44" r="20" fill="#0B1220" fill-opacity="0.35" stroke="#F5F1E8" stroke-width="5"/>
+  <path d="M33 44.5 L39.5 51 L52 37.5" fill="none" stroke="#F2B33D" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="56.5" y1="58.5" x2="72" y2="74" stroke="#F5F1E8" stroke-width="7" stroke-linecap="round"/>
+  <text x="94" y="52" font-family="IBM Plex Sans, Inter, Segoe UI, Arial, sans-serif" font-size="38" font-weight="600" letter-spacing="-0.5" fill="#F5F1E8">Nirikkha</text>
+  <text x="96" y="78" font-family="Noto Sans Bengali, Hind Siliguri, Nirmala UI, sans-serif" font-size="17" fill="#F2B33D">&#x9A8;&#x9BF;&#x9B0;&#x9C0;&#x995;&#x9CD;&#x9B7;&#x9BE;</text>
+</svg>
