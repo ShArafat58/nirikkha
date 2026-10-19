@@ -22,16 +22,28 @@ class DatabaseError(RuntimeError):
     """Raised with a clear message (never containing the password)."""
 
 
-@contextmanager
-def connect(autocommit: bool = False) -> Iterator[psycopg.Connection]:
+def open_connection(autocommit: bool = False) -> psycopg.Connection:
     url = get_settings().supabase_db_url
     if not url:
         raise DatabaseError("SUPABASE_DB_URL is not set in backend/.env.")
     try:
-        conn = psycopg.connect(url, autocommit=autocommit, connect_timeout=15)
+        return psycopg.connect(url, autocommit=autocommit, connect_timeout=15)
     except psycopg.OperationalError as exc:
         first_line = str(exc).strip().splitlines()[0] if str(exc).strip() else exc.__class__.__name__
         raise DatabaseError(f"Could not connect to the database: {first_line}") from exc
+
+
+def tune_session(conn: psycopg.Connection) -> None:
+    """Session settings for vector search, applied once per connection (one round trip)."""
+    try:
+        conn.execute("set hnsw.ef_search = 100; set hnsw.iterative_scan = relaxed_order")
+    except psycopg.Error:
+        conn.execute("set hnsw.ef_search = 100")  # pgvector < 0.8 has no iterative scan
+
+
+@contextmanager
+def connect(autocommit: bool = False) -> Iterator[psycopg.Connection]:
+    conn = open_connection(autocommit)
     try:
         yield conn
     finally:

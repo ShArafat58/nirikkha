@@ -1,6 +1,7 @@
 """Retrieval over Supabase pgvector: vector search, keyword (full-text) search and hybrid (RRF).
 
 Filters: company (CIK), filed strictly before a date (Replay evidence freeze), form types.
+Hybrid runs vector + keyword candidates in ONE SQL round trip and fuses them with RRF.
 
 Run directly:
     python -m app.rag.search "unrealized losses on held-to-maturity securities" --cik 719739 --before 2023-03-10
@@ -17,7 +18,7 @@ from datetime import date
 import psycopg
 from pydantic import BaseModel
 
-from app.db import DatabaseError, connect
+from app.db import DatabaseError, connect, tune_session
 from app.ingest.edgar import normalize_cik
 from app.rag.store import to_pgvector
 
@@ -77,12 +78,9 @@ def to_or_query(query: str) -> str:
     return " or ".join(words) if words else query
 
 
-def _rows_to_hits(rows, source: str) -> list[Hit]:
-    return [
-        Hit(chunk_id=r[0], accession_no=r[1], company=r[2], form=r[3], filing_date=r[4], section_title=r[5],
-            page_start=r[6], page_end=r[7], text=r[8], score=float(r[9]), sources=[source])
-        for r in rows
-    ]
+def _row_to_hit(r, score: float, sources: list[str]) -> Hit:
+    return Hit(chunk_id=r[0], accession_no=r[1], company=r[2], form=r[3], filing_date=r[4], section_title=r[5],
+               page_start=r[6], page_end=r[7], text=r[8], score=score, sources=sources)
 
 
 def vector_search(conn: psycopg.Connection, query_vector: list[float], k: int = CANDIDATES,
@@ -95,15 +93,8 @@ def vector_search(conn: psycopg.Connection, query_vector: list[float], k: int = 
         f"where c.embedding is not null and {where} "
         f"order by c.embedding <=> %s::vector limit %s"
     )
-    with conn.transaction():
-        conn.execute("set local hnsw.ef_search = 100")
-        try:
-            with conn.transaction():  # pgvector >= 0.8: keep results when filters are selective
-                conn.execute("set local hnsw.iterative_scan = relaxed_order")
-        except psycopg.Error:
-            pass
-        rows = conn.execute(sql, [vec, *params, vec, k]).fetchall()
-    return _rows_to_hits(rows, "vector")
+    rows = conn.execute(sql, [vec, *params, vec, k]).fetchall()
+    return [_row_to_hit(r, float(r[9]), ["vector"]) for r in rows]
 
 
 def keyword_search(conn: psycopg.Connection, query: str, k: int = CANDIDATES,
@@ -116,21 +107,43 @@ def keyword_search(conn: psycopg.Connection, query: str, k: int = CANDIDATES,
         f"order by score desc limit %s"
     )
     rows = conn.execute(sql, [to_or_query(query), *params, k]).fetchall()
-    return _rows_to_hits(rows, "keyword")
+    return [_row_to_hit(r, float(r[9]), ["keyword"]) for r in rows]
 
 
 def hybrid_search(conn: psycopg.Connection, query: str, query_vector: list[float], k: int = 8,
                   cik: str | None = None, before: date | None = None, forms: list[str] | None = None) -> list[Hit]:
-    vec_hits = vector_search(conn, query_vector, CANDIDATES, cik, before, forms)
-    kw_hits = keyword_search(conn, query, CANDIDATES, cik, before, forms)
-    by_id = {h.chunk_id: h for h in kw_hits}
-    by_id.update({h.chunk_id: h for h in vec_hits})
-    fused = rrf_merge({"vector": [h.chunk_id for h in vec_hits], "keyword": [h.chunk_id for h in kw_hits]}, limit=k)
-    results = []
-    for chunk_id, score, sources in fused:
-        hit = by_id[chunk_id].model_copy(update={"score": score, "sources": sources})
-        results.append(hit)
-    return results
+    """Vector + keyword candidates in one round trip, fused with RRF."""
+    where, params = build_filters(cik, before, forms)
+    vec = to_pgvector(query_vector)
+    sql = f"""
+    with v as (
+        select chunk_id, row_number() over (order by dist) as rk
+        from (select c.chunk_id, c.embedding <=> %s::vector as dist
+              from chunks c join filings f using (accession_no)
+              where c.embedding is not null and {where}
+              order by dist limit %s) s
+    ),
+    kw as (
+        select chunk_id, row_number() over (order by rank desc) as rk
+        from (select c.chunk_id, ts_rank_cd(c.tsv, q) as rank
+              from chunks c join filings f using (accession_no), websearch_to_tsquery('english', %s) q
+              where c.tsv @@ q and {where}
+              order by rank desc limit %s) s
+    ),
+    ids as (select chunk_id from v union select chunk_id from kw)
+    select {SELECT_COLS}, v.rk, kw.rk
+    from ids
+    join chunks c using (chunk_id)
+    join filings f using (accession_no)
+    left join v using (chunk_id)
+    left join kw using (chunk_id)
+    """
+    rows = conn.execute(sql, [vec, *params, CANDIDATES, to_or_query(query), *params, CANDIDATES]).fetchall()
+    by_id = {r[0]: r for r in rows}
+    vector_ids = [r[0] for r in sorted((r for r in rows if r[9] is not None), key=lambda r: r[9])]
+    keyword_ids = [r[0] for r in sorted((r for r in rows if r[10] is not None), key=lambda r: r[10])]
+    fused = rrf_merge({"vector": vector_ids, "keyword": keyword_ids}, limit=k)
+    return [_row_to_hit(by_id[chunk_id], score, sources) for chunk_id, score, sources in fused]
 
 
 def _main(argv: list[str]) -> int:
@@ -148,7 +161,8 @@ def _main(argv: list[str]) -> int:
 
     s = get_settings()
     try:
-        with connect() as conn:
+        with connect(autocommit=True) as conn:
+            tune_session(conn)
             if args.mode == "keyword":
                 hits = keyword_search(conn, args.query, args.k, args.cik, args.before, args.forms)
             else:
