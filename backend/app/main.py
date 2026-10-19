@@ -1,4 +1,4 @@
-"""Nirikkha backend — FastAPI entry point."""
+"""Nirikkha backend - FastAPI entry point."""
 
 from datetime import datetime, timezone
 from functools import lru_cache
@@ -41,7 +41,7 @@ settings = get_settings()
 app = FastAPI(
     title="Nirikkha API",
     version=APP_VERSION,
-    description="Governance Crash-Test AI — Trust less, Verify more.",
+    description="Governance Crash-Test AI - Trust less, Verify more.",
 )
 
 app.add_middleware(
@@ -53,12 +53,12 @@ app.add_middleware(
 )
 
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 def root() -> dict:
     return {"app": settings.app_name, "message": "See /docs for the API.", "health": "/health"}
 
 
-@app.get("/health")
+@app.api_route("/health", methods=["GET", "HEAD"])
 def health() -> dict:
     """Liveness check. Reports which providers are configured, never the secrets."""
     return {

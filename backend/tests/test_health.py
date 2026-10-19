@@ -22,3 +22,9 @@ def test_health_never_leaks_secrets():
     for secret in (s.groq_api_key, s.gemini_api_key):
         if secret:
             assert secret not in text
+
+
+def test_head_requests_supported():
+    # Uptime pingers and the host's port probe use HEAD.
+    assert client.head("/").status_code == 200
+    assert client.head("/health").status_code == 200
