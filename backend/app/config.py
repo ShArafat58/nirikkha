@@ -28,10 +28,19 @@ class Settings(BaseSettings):
     neo4j_password: str = ""
     neo4j_database: str = ""
 
+    # Supabase Postgres (Session pooler URI, port 5432). Never commit.
+    supabase_db_url: str = ""
+
     # SEC requires a User-Agent with a real name and email.
     sec_user_agent: str = ""
 
-    # Local download cache (not committed).
+    # Retrieval embeddings (Gemini free tier). Conservative rate limits by default.
+    embedding_model: str = "gemini-embedding-001"
+    embedding_dim: int = 768
+    gemini_embed_tpm: int = 25000
+    gemini_embed_rpm: int = 90
+
+    # Local download / processing cache (not committed).
     cache_dir: Path = BACKEND_DIR / ".cache"
 
 
