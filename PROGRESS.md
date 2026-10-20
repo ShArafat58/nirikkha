@@ -44,6 +44,8 @@ Last updated: 2026-10-20 15:35 (Day 4 in progress - one day ahead of plan)
 - [x] Step 4.3b: Legal memo (memo.py, prompt legal_memo.v3, gpt-oss-120b). Code verifies: >=2 known finding ids per risk, rules only from the evaluated Reg S-K list with exact meanings, intent words dropped, absence and conduct-wording flagged for legal review, evidence gaps + disclaimer by code. SVB: complete, 4 risks; 118 tests
 - [x] Step 4.4a: PII redaction guardrail (app/guardrails/pii.py, graph node redact before guard): email, phone, SSN, card (Luhn), IBAN, IP; accession, CIK and dates protected; only counts stored; 122 tests
 - [x] Step 4.4b: Evaluation suite (python -m evaluation.run -> docs/EVALUATION.md): retrieval hit@1 90%, hit@3 100%, MRR 0.933; injection 6/6 (optimistic), PII 8/8 with 0/6 false positives; rule regression OK
+- [x] Step 4.5a/b: crash_tests table (sql/003), PostgresStore, API POST /api/crash-tests (cache by cik+as_of+redacted decision hash, one live run at a time -> 429) and GET /api/crash-tests/{id} (polling, per-node events, 15-min timeout). Live local run: all 13 nodes, done, SVB 52/100 (judge downgraded 2), second POST cached=True; 130 tests
+- Note: score varies between live runs because judge verdicts vary; the DB run is the frozen demo result
 
 ## Next (Day 4)
 - [ ] Reliability Sentinel (LLM-as-judge with a different model + deterministic checks: citation supports claim, contradictions,

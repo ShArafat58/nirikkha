@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.routes import router as api_router
 from app.config import get_settings
 
 APP_VERSION = "0.1.0"
@@ -25,6 +26,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(api_router)
+
 
 @app.api_route("/", methods=["GET", "HEAD"])
 def root() -> dict:
@@ -44,5 +47,6 @@ def health() -> dict:
             "groq": bool(settings.groq_api_key),
             "gemini": bool(settings.gemini_api_key),
             "neo4j": bool(settings.neo4j_uri),
+            "supabase": bool(settings.supabase_db_url),
         },
     }

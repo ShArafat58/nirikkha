@@ -13,7 +13,7 @@ def test_health_returns_ok():
     body = response.json()
     assert body["status"] == "ok"
     assert body["app"] == "Nirikkha"
-    assert set(body["providers_configured"]) == {"groq", "gemini", "neo4j"}
+    assert set(body["providers_configured"]) == {"groq", "gemini", "neo4j", "supabase"}
 
 
 def test_health_never_leaks_secrets():
