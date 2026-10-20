@@ -17,7 +17,7 @@ export class ApiError extends Error {
 }
 
 // ---------- types (mirror docs/API.md) ----------
-export type Health = { status: string; app: string; version: string; env: string; time_utc: string;
+export type ServerHealth = { status: string; app: string; version: string; env: string; time_utc: string;
   providers_configured: Record<string, boolean> };
 export type Status = { live_mode: "inline" | "worker"; worker_online: boolean;
   worker: { last_seen: string; busy: boolean } | null; rerank_enabled: boolean | null };
@@ -96,10 +96,10 @@ function mockUnavailable(): never {
 }
 
 // ---------- endpoints ----------
-export async function getHealth(): Promise<Health> {
+export async function getHealth(): Promise<ServerHealth> {
   if (USE_MOCK) return { status: "ok", app: "Nirikkha", version: "mock", env: "mock",
     time_utc: new Date().toISOString(), providers_configured: {} };
-  return request<Health>("/health", { auth: false });
+  return request<ServerHealth>("/health", { auth: false });
 }
 
 export async function getStatus(): Promise<Status> {
@@ -151,4 +151,45 @@ export async function requestPlan(plan: PlanId, kind: "upgrade" | "pilot", note?
   if (USE_MOCK) return { id: "mock", status: "open", message: "Mock mode: request not sent." };
   return request<{ id: string; status: string; message: string }>("/api/plans/request",
     { method: "POST", body: { plan, kind, note } });
+}
+
+// ---------- crash-tests ----------
+export type CrashTestSummary = { id: string; cik: string; as_of: string; decision: string; source: string;
+  updated_at: string; has_memo: boolean; score: number | null; band: string | null; coverage_pct: number | null };
+export type Company = { cik: string; company: string; filing_count: number; chunk_count: number;
+  filings: { accession_no: string; form: string; filing_date: string; has_page_markers: boolean; url: string }[];
+  crash_tests: CrashTestSummary[] };
+export type JobStatus = "queued" | "running" | "done" | "failed" | "blocked";
+export type PipelineEvent = { node: string; message: string; ms: number; model?: string };
+export type HealthFactor = { id: string; title: string; investigation: string; severity: string; confidence: string;
+  points: number; human_review: boolean };
+export type Health = { score: number; band: string; deducted: number; formula: string;
+  coverage: { pct: number; label: string; rules_resolved: number; rules_total: number; questions_credit: number;
+              questions_total: number };
+  factors: HealthFactor[]; by_investigation: Record<string, { raw: number; deducted: number; capped: boolean }>;
+  insufficient_evidence: { count: number; items: { id: string; title: string; severity: string }[] };
+  excluded: { id: string; title: string; reason: string }[]; human_review: number; warnings: string[] };
+export type Report = { company: string; cik: string; as_of: string; decision: string; health?: Health;
+  summary?: { findings: number; sentinel?: { verified: number; needs_review: number; downgraded: number; unsupported: number;
+    human_review: number; judge_model: string | null } }; retrieval_mode?: string;
+  usage?: { llm_calls: number; input_tokens: number; output_tokens: number; cost_usd: number };
+  [key: string]: unknown };
+export type CrashTestJob = { id: string; cik: string; as_of: string; decision: string; status: JobStatus;
+  pipeline: string[]; done_nodes: string[]; events: PipelineEvent[]; report: Report | null; error: string | null;
+  source: string; created_at: string; updated_at: string; worker_online?: boolean };
+export type CrashTestStarted = { id: string; status: JobStatus; cached: boolean; worker_online: boolean | null };
+
+export async function getCompanies(): Promise<Company[]> {
+  if (USE_MOCK) return [];
+  return request<Company[]>("/api/companies", { auth: false });
+}
+
+export async function startCrashTest(cik: string, as_of: string, decision: string): Promise<CrashTestStarted> {
+  if (USE_MOCK) mockUnavailable();
+  return request<CrashTestStarted>("/api/crash-tests", { method: "POST", body: { cik, as_of, decision } });
+}
+
+export async function getCrashTest(id: string): Promise<CrashTestJob> {
+  if (USE_MOCK) mockUnavailable();
+  return request<CrashTestJob>(`/api/crash-tests/${encodeURIComponent(id)}`, { auth: false });
 }
