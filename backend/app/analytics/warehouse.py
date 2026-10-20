@@ -63,6 +63,19 @@ def db_path(cache_dir: Path) -> Path:
     return cache_dir / "analytics.duckdb"
 
 
+def snapshot_path() -> Path:
+    """Committed copy of the warehouse for servers without backend/.cache (e.g. Render)."""
+    return Path(__file__).resolve().parent.parent.parent / "data" / "analytics.duckdb"
+
+
+def resolve_db(cache_dir: Path, snapshot: Path | None = None) -> Path | None:
+    """Local build first (newest), then the committed snapshot; None if neither exists."""
+    for candidate in (db_path(cache_dir), snapshot or snapshot_path()):
+        if candidate.exists():
+            return candidate
+    return None
+
+
 def build(cache_dir: Path, out: Path | None = None) -> dict:
     """(Re)build the warehouse from parsed filings. Bulk-loads via temporary JSONL files (fast)."""
     out = out or db_path(cache_dir)

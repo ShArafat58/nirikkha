@@ -1,4 +1,3 @@
-# Local / offline ingestion only (NOT installed on the Render server).
+# Local / offline ingestion. fastembed is now in requirements.txt (the server needs it for query embedding + rerank).
 # Install with: pip install -r requirements-ingest.txt
 -r requirements.txt
-fastembed>=0.4

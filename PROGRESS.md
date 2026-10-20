@@ -47,6 +47,7 @@ Last updated: 2026-10-20 15:35 (Day 4 in progress - one day ahead of plan)
 - [x] Step 4.5a/b: crash_tests table (sql/003), PostgresStore, API POST /api/crash-tests (cache by cik+as_of+redacted decision hash, one live run at a time -> 429) and GET /api/crash-tests/{id} (polling, per-node events, 15-min timeout). Live local run: all 13 nodes, done, SVB 52/100 (judge downgraded 2), second POST cached=True; 130 tests
 - Note: score varies between live runs because judge verdicts vary; the DB run is the frozen demo result
 - [x] Step 4.5c: GET /api/companies, POST+GET /api/crash-tests/{id}/memo (cached in crash_tests.memo, sql/004; unavailable not cached), GET /api/evaluation; 135 tests. Absence regex covers 'undisclosed'; absence statements in memo risks require human review
+- [x] Step 4.5d (part 1): docs/API.md; /health shows memory_mb + warehouse_snapshot; fastembed + onnxruntime pinned in requirements.txt; DuckDB snapshot committed at backend/data/analytics.duckdb (resolve_db: .cache first, then data/). After new ingestion: rebuild warehouse and copy the snapshot. 136 tests
 
 ## Next (Day 4)
 - [ ] Reliability Sentinel (LLM-as-judge with a different model + deterministic checks: citation supports claim, contradictions,

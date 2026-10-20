@@ -47,7 +47,7 @@ def phrase_search(conn, accessions: list[str], pattern: str, limit: int = 5) -> 
 
 
 def collect_facts(cik: str, as_of: date | None = None) -> Facts:
-    from app.analytics.warehouse import db_path, section_yoy
+    from app.analytics.warehouse import resolve_db, section_yoy
     from app.graph.resolve import build_rows
     from app.rag.retrieve import retrieve
 
@@ -73,8 +73,8 @@ def collect_facts(cik: str, as_of: date | None = None) -> Facts:
             facts.passages[key] = phrase_search(conn, allowed, RULE_PATTERNS[key]) if allowed else []
 
     # Sections and year-over-year sizes from the DuckDB warehouse (only filings on or before as_of).
-    wh = db_path(settings.cache_dir)
-    if wh.exists():
+    wh = resolve_db(settings.cache_dir)
+    if wh is not None:
         con = duckdb.connect(str(wh), read_only=True)
         allowed = [f["accession_no"] for f in filings]
         for acc, key in con.execute(

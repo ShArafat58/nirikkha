@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.analytics.warehouse import resolve_db
 from app.api.routes import router as api_router
 from app.config import get_settings
 
@@ -29,6 +30,17 @@ app.add_middleware(
 app.include_router(api_router)
 
 
+def _memory_mb() -> float | None:
+    """Resident memory of this process on Linux (Render); None elsewhere."""
+    try:
+        with open("/proc/self/status", encoding="ascii") as f:
+            for line in f:
+                if line.startswith("VmRSS:"):
+                    return round(int(line.split()[1]) / 1024, 1)
+    except OSError:
+        return None
+    return None
+
 @app.api_route("/", methods=["GET", "HEAD"])
 def root() -> dict:
     return {"app": settings.app_name, "message": "See /docs for the API.", "health": "/health"}
@@ -43,6 +55,8 @@ def health() -> dict:
         "version": APP_VERSION,
         "env": settings.app_env,
         "time_utc": datetime.now(timezone.utc).isoformat(),
+        "memory_mb": _memory_mb(),
+        "warehouse_snapshot": resolve_db(settings.cache_dir) is not None,
         "providers_configured": {
             "groq": bool(settings.groq_api_key),
             "gemini": bool(settings.gemini_api_key),
