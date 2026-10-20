@@ -1,14 +1,17 @@
 """LangGraph orchestration of a Governance Crash-Test.
 
-    guard -> collect -> plan -> gather -> analyze -> [relationship | consistency | regulatory | missing_evidence] -> merge
+    guard -> collect -> plan -> gather -> analyze -> [relationship | consistency | regulatory | missing_evidence]
+          -> merge -> sentinel
 
-- guard:   heuristic checks, then the safety model (gpt-oss-safeguard) classifies the decision text.
-- collect: facts + Governance Rule Engine results (evidence frozen at as_of).
-- plan:    decision-specific stress test: the decision becomes up to 8 questions across the 4 investigations.
-- gather:  retrieval for each question (filed on or before as_of only).
-- analyze: the analyst model answers each question ONLY from an evidence pack (passages, graph facts, rules),
-           citing evidence ids; answers without valid citations become "insufficient".
+- guard:    heuristic checks, then the safety model (gpt-oss-safeguard) classifies the decision text.
+- collect:  facts + Governance Rule Engine results (evidence frozen at as_of).
+- plan:     decision-specific stress test: the decision becomes up to 8 questions across the 4 investigations.
+- gather:   retrieval for each question (filed on or before as_of only).
+- analyze:  the analyst model answers each question ONLY from an evidence pack (passages, graph facts, rules),
+            citing evidence ids; answers without valid citations become "insufficient".
 - the 4 deterministic investigations run in parallel; merge numbers and ranks findings and adds usage.
+- sentinel: AI Reliability Sentinel checks every finding (source, period, sufficiency, contradiction, judge-model
+            support, human review). Severity never changes; confidence can only go down.
 Every node appends a timed event (used for live progress in the UI).
 
 Run directly:
@@ -37,6 +40,7 @@ from app.agents.findings import (
     Finding, consistency_findings, missing_evidence_findings, number_findings, regulatory_findings,
     relationship_findings,
 )
+from app.agents.sentinel import review_findings
 from app.llm.client import LLMError
 from app.rules.engine import evaluate
 
@@ -230,6 +234,14 @@ def build_graph(services: Services):
         }
         return {"report": report, "events": [_event("merge", f"{len(findings)} findings ranked by severity", started)]}
 
+    def sentinel(state: CrashTestState) -> dict:
+        started = time.perf_counter()
+        report, usages = review_findings(state["report"], state["facts"], services.complete)
+        s = report["summary"]["sentinel"]
+        message = (f"{s['verified']} verified, {s['needs_review']} need review, {s['downgraded']} downgraded, "
+                   f"{s['unsupported']} unsupported; {s['human_review']} for human review")
+        return {"report": report, "usage": usages, "events": [_event("sentinel", message, started)]}
+
     graph = StateGraph(CrashTestState)
     graph.add_node("guard", guard)
     graph.add_node("collect", collect)
@@ -244,6 +256,7 @@ def build_graph(services: Services):
         lambda s: missing_evidence_findings(s["rule_report"], s["facts"],
                                             missing_inputs(s.get("analysis", []), s.get("answers", [])))))
     graph.add_node("merge", merge)
+    graph.add_node("sentinel", sentinel)
 
     graph.add_edge(START, "guard")
     graph.add_conditional_edges("guard", lambda s: "collect" if s.get("allowed") else "end",
@@ -254,7 +267,8 @@ def build_graph(services: Services):
     for name in INVESTIGATIONS:
         graph.add_edge("analyze", name)
     graph.add_edge(list(INVESTIGATIONS), "merge")
-    graph.add_edge("merge", END)
+    graph.add_edge("merge", "sentinel")
+    graph.add_edge("sentinel", END)
     return graph.compile()
 
 
@@ -295,7 +309,10 @@ def _main(argv: list[str]) -> int:
         print(f"  [{a['investigation']}] ({a['status']}) {a['question']}")
     print(f"\n== findings ({report['summary']}) ==")
     for f in report["findings"]:
-        print(f"\n  {f['id']:6} severity={f['risk_severity']:8} confidence={f['evidence_confidence']:12} {f['source']:13} {f['report_section']}")
+        s = f.get("sentinel") or {}
+        flag = " HUMAN REVIEW" if s.get("human_review") else ""
+        print(f"\n  {f['id']:6} severity={f['risk_severity']:8} confidence={f['evidence_confidence']:12} "
+              f"{f['source']:13} sentinel={s.get('verdict', '-')}{flag}")
         print(f"         {f['title']}")
         print(f"         {f['claim'][:240]}")
         if f["citations"]:

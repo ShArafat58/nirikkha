@@ -60,11 +60,11 @@ def test_full_crash_test_runs_every_node_and_ranks_findings():
     state = run()
     nodes = {e["node"] for e in state["events"]}
     assert nodes == {"guard", "collect", "plan", "gather", "analyze", "relationship", "consistency", "regulatory",
-                     "missing_evidence", "merge"}
+                     "missing_evidence", "merge", "sentinel"}
     report = state["report"]
     assert len(report["questions"]) == 2
     assert report["findings"][0]["risk_severity"] == "high"
-    assert report["usage"]["llm_calls"] == 3
+    assert report["usage"]["llm_calls"] == 4   # guard, plan, analyze, sentinel judge
 
 
 def test_analyst_finding_is_cited_and_unanswered_question_becomes_missing_evidence():
@@ -98,3 +98,11 @@ def test_safety_model_can_block():
 
 def test_no_decision_uses_default_questions():
     assert len(run("")["questions"]) == 4
+
+def test_every_finding_passes_through_sentinel():
+    state = run()
+    report = state["report"]
+    assert report["findings"], "expected findings"
+    assert all(f["sentinel"]["verdict"] in ("verified", "needs_review", "downgraded", "unsupported")
+               for f in report["findings"])
+    assert "sentinel" in report["summary"]

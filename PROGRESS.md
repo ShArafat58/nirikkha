@@ -1,6 +1,6 @@
 # PROGRESS - Nirikkha
 
-Last updated: 2026-10-20 15:00 (Day 3 COMPLETE - one day ahead of plan)
+Last updated: 2026-10-20 15:35 (Day 4 in progress - one day ahead of plan)
 
 ## Decisions
 - Product name: **Nirikkha** - tagline "Trust less, Verify more". Challenge: GovernanceIQ.
@@ -38,6 +38,7 @@ Last updated: 2026-10-20 15:00 (Day 3 COMPLETE - one day ahead of plan)
 - [x] Day 1: accounts, repo + docs, live backend + frontend, CORS, logo, design tokens
 - [x] Day 2: EDGAR, parser, chunking, local embeddings, pgvector, hybrid search, reranker, DuckDB
 - [x] Day 3: LLM router + budgets, governance extraction + Neo4j graph, Rule Engine, LangGraph Crash-Test with analyst; 90 tests
+- [x] Step 4.1: AI Reliability Sentinel (sentinel.py, judge gpt-oss-120b in batches of 4, node merge -> sentinel). SVB: 12 verified, 6 human review, 0 judge errors; 98 tests
 
 ## Next (Day 4)
 - [ ] Reliability Sentinel (LLM-as-judge with a different model + deterministic checks: citation supports claim, contradictions,
@@ -52,7 +53,7 @@ Last updated: 2026-10-20 15:00 (Day 3 COMPLETE - one day ahead of plan)
 - Frontend: https://nirikkha.vercel.app | Backend: https://nirikkha-api.onrender.com (/health, /docs)
 
 ## Score
-- See `docs/SCORE_LEDGER.md`. Built: 89 / 425. Verified: 0 / 425.
+- See `docs/SCORE_LEDGER.md`. Built: 92 / 425. Verified: 0 / 425.
 
 ## Known issues / risks
 - Crash-Test takes ~2.5 min locally (14 retrievals over BD -> Asia-Pacific network) -> precompute demo companies; measure on Render.

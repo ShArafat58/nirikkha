@@ -7,11 +7,11 @@ Status: `planned` -> `built` (in repo) -> `verified` (checked live / in form).
 | Section | Max | Built | Verified |
 |---|---|---|---|
 | Basics | 149 | 27 | 0 |
-| AI Detail Usage | 232 (brief table sums 237 - confirm with live form) | 56 | 0 |
+| AI Detail Usage | 232 (brief table sums 237 - confirm with live form) | 59 | 0 |
 | Links | 17 | 3 | 0 |
 | Build Provenance | 20 | 3 | 0 |
 | Team | 7 | - | - |
-| **Total** | **425** | **89** | **0** |
+| **Total** | **425** | **92** | **0** |
 
 ## Basics (149)
 | # | Field | Pts | What we build / write | Evidence path | Status |
@@ -46,7 +46,7 @@ Status: `planned` -> `built` (in repo) -> `verified` (checked live / in form).
 ## AI Detail Usage (232)
 | # | Field | Pts | What we build | Evidence path | Status |
 |---|---|---|---|---|---|
-| A1 | LLMs (each +3, max 15) | 15 | In pipeline: qwen/qwen3.8-27b (extraction), openai/gpt-oss-20b (planner, fallback), openai/gpt-oss-safeguard-20b (input guard), gemini-2.5-flash (analyst) = 12. Planned: gpt-oss-120b (legal memo) | `backend/app/llm/client.py`, `backend/app/agents/` | built (12/15) |
+| A1 | LLMs (each +3, max 15) | 15 | In pipeline: qwen/qwen3.8-27b (extraction), openai/gpt-oss-20b (planner, fallback), openai/gpt-oss-safeguard-20b (input guard), gemini-2.5-flash (analyst), openai/gpt-oss-120b (Reliability Sentinel judge) = 15 | `backend/app/llm/client.py`, `backend/app/agents/` | built (15/15) |
 | A2 | LLM "how & why" | 5 | Real description | `docs/AI_DETAILS.md` | planned |
 | A3 | >=1 LLM bonus | 5 | LLM router with fallback in use | `backend/app/llm/client.py` | built |
 | A4 | Prompt usage | 10 | 7 versioned prompt files used in the pipeline: extract_governance v1/v2, guard_input v1, plan_decision v1/v2, analyze_questions v1/v2 | `backend/app/prompts/` | built |
@@ -74,8 +74,8 @@ Status: `planned` -> `built` (in repo) -> `verified` (checked live / in form).
 | A26 | Agent orchestration notes (>=80) | 5 | Real description (2+3) | `docs/AI_DETAILS.md` | planned |
 | A27 | AI-DLC frameworks + process notes | 18 | AGENTS.md (root + frontend), SPEC.md, PROGRESS.md really followed (3+8+3+4) | `AGENTS.md`, `docs/SPEC.md` | built (partial) |
 | A28 | Fine-tuning (>=80) | 4 | Small LoRA on Colab/Kaggle (2+2) | `notebooks/` | planned |
-| A29 | Evaluation (>=80) | 6 | 90 pytest tests, quote verification rate, Replay (3+3) | `backend/tests/`, `notebooks/` | planned |
-| A30 | Guardrails (>=80) | 6 | Built so far: input guard (heuristic + safety model), JSON/Pydantic output validation, quote + evidence-id verification. Planned: PII redaction, Sentinel | `backend/app/agents/graph.py`, `backend/app/graph/extract.py` | planned |
+| A29 | Evaluation (>=80) | 6 | 98 pytest tests, quote verification rate, LLM-as-judge (Sentinel, different model than analyst), Replay (3+3) | `backend/tests/`, `notebooks/` | planned |
+| A30 | Guardrails (>=80) | 6 | Built so far: input guard (heuristic + safety model), JSON/Pydantic output validation, quote + evidence-id verification. Reliability Sentinel (source, period, sufficiency, contradiction, judge support, human review). Planned: PII redaction | `backend/app/agents/graph.py`, `backend/app/graph/extract.py` | planned |
 | A31 | Open-source tools + other notes | 4 | Real list (3+1) | `docs/AI_DETAILS.md` | planned |
 
 Note: A1-A31 as listed in the brief sum to 237; the form says 232. Fix rows after checking the live form.
@@ -111,4 +111,4 @@ Note: A1-A31 as listed in the brief sum to 237; the form says 232. Fix rows afte
 | T3 | >=1 female member | done |
 
 Built total = Basics (B1 1 + B9 5 + B10 3 + B11 3 + B12 2 + B13 3 + B14 1 + B15 4 + B16 2 + B18 3 = 27)
-+ AI (A1 12 + A3 5 + A4 10 + A10 12 + A11 5 + A12 5 + A13 3 + A14 3 + A25 1 = 56) + Links (3) + Provenance (3) = 89.
++ AI (A1 15 + A3 5 + A4 10 + A10 12 + A11 5 + A12 5 + A13 3 + A14 3 + A25 1 = 59) + Links (3) + Provenance (3) = 92.
