@@ -22,6 +22,8 @@ class Settings(BaseSettings):
 
     groq_api_key: str = ""
     gemini_api_key: str = ""
+    # Local LLM runtime (optional; used as last fallback when reachable)
+    ollama_url: str = "http://localhost:11434"
 
     neo4j_uri: str = ""
     neo4j_username: str = ""
