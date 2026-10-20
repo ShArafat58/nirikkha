@@ -1,0 +1,115 @@
+{
+  "note": "Curated SEC rule changes for the prototype Radar. Dates checked against SEC press releases and law-firm summaries. applies_from is an approximation by filing date; the true trigger is the company's fiscal year end, so every alert needs human confirmation.",
+  "updates": [
+    {
+      "id": "sec-2022-pvp",
+      "title": "Pay versus performance disclosure",
+      "authority": "SEC",
+      "adopted": "2022-08-25",
+      "items": [
+        "Reg S-K Item 402(v)"
+      ],
+      "rules": [
+        "R402_PVP"
+      ],
+      "what_changed": "Proxy statements must include a table linking executive compensation actually paid to company financial performance, plus a list of the most important performance measures.",
+      "applies": "Proxy and information statements covering fiscal years ending on or after 16 December 2022.",
+      "check": {
+        "forms": [
+          "DEF 14A",
+          "PRE 14A"
+        ],
+        "pattern": "pay versus performance",
+        "applies_from": "2022-12-16"
+      },
+      "sources": [
+        {
+          "title": "SEC press release 2022-149",
+          "url": "https://www.sec.gov/news/press-release/2022-149"
+        }
+      ]
+    },
+    {
+      "id": "sec-2022-clawback",
+      "title": "Recovery of erroneously awarded compensation (clawback)",
+      "authority": "SEC",
+      "adopted": "2022-10-26",
+      "items": [
+        "Exchange Act Rule 10D-1",
+        "Reg S-K Item 402(w)"
+      ],
+      "rules": [],
+      "what_changed": "Listed companies must adopt and disclose a policy to recover incentive pay awarded on the basis of misstated financials, and disclose any recovery under Item 402(w).",
+      "applies": "Exchange listing standards had to take effect no later than 27 November 2023; annual reports after that should reflect the policy.",
+      "check": {
+        "forms": [
+          "10-K",
+          "DEF 14A",
+          "PRE 14A"
+        ],
+        "pattern": "(clawback|erroneously awarded|compensation recovery|recovery policy)",
+        "applies_from": "2023-12-01"
+      },
+      "sources": [
+        {
+          "title": "Cooley: SEC adopts long-awaited final clawback rule",
+          "url": "https://www.cooley.com/news/insight/2022/2022-10-28-sec-adopts-long-awaited-final-clawback-rule"
+        }
+      ]
+    },
+    {
+      "id": "sec-2022-10b5-1",
+      "title": "Insider trading policies and Rule 10b5-1 plans",
+      "authority": "SEC",
+      "adopted": "2022-12-14",
+      "items": [
+        "Reg S-K Item 408",
+        "Reg S-K Item 402(x)"
+      ],
+      "rules": [],
+      "what_changed": "Companies must disclose whether they have insider trading policies (Item 408(b)), report directors' and officers' trading plans quarterly (Item 408(a)), and describe option-grant timing around material news (Item 402(x)).",
+      "applies": "Phased in after the rule took effect in 2023; confirm the compliance date for the company's filer status in the adopting release.",
+      "check": {
+        "forms": [
+          "10-K",
+          "DEF 14A",
+          "PRE 14A"
+        ],
+        "pattern": "insider trading (policy|policies)",
+        "applies_from": "2024-01-01"
+      },
+      "sources": [
+        {
+          "title": "SEC press release 2022-222",
+          "url": "https://www.sec.gov/news/press-release/2022-222"
+        }
+      ]
+    },
+    {
+      "id": "sec-2023-cyber",
+      "title": "Cybersecurity risk management, strategy and governance",
+      "authority": "SEC",
+      "adopted": "2023-07-26",
+      "items": [
+        "Reg S-K Item 106",
+        "Form 8-K Item 1.05"
+      ],
+      "rules": [],
+      "what_changed": "Annual reports must describe processes for managing cybersecurity risk and the board's oversight of it; material incidents must be reported on Form 8-K.",
+      "applies": "Annual reports for fiscal years ending on or after 15 December 2023.",
+      "check": {
+        "forms": [
+          "10-K"
+        ],
+        "pattern": "(risks? from cybersecurity threats|cybersecurity risk management|item 1c)",
+        "applies_from": "2023-12-15"
+      },
+      "sources": [
+        {
+          "title": "SEC press release 2023-139",
+          "url": "https://www.sec.gov/news/press-release/2023-139"
+        }
+      ]
+    }
+  ]
+}
