@@ -1,7 +1,7 @@
 """LangGraph orchestration of a Governance Crash-Test.
 
     guard -> collect -> plan -> gather -> analyze -> [relationship | consistency | regulatory | missing_evidence]
-          -> merge -> sentinel
+          -> merge -> sentinel -> score
 
 - guard:    heuristic checks, then the safety model (gpt-oss-safeguard) classifies the decision text.
 - collect:  facts + Governance Rule Engine results (evidence frozen at as_of).
@@ -40,6 +40,7 @@ from app.agents.findings import (
     Finding, consistency_findings, missing_evidence_findings, number_findings, regulatory_findings,
     relationship_findings,
 )
+from app.agents.score import health_score
 from app.agents.sentinel import review_findings
 from app.llm.client import LLMError
 from app.rules.engine import evaluate
@@ -242,6 +243,13 @@ def build_graph(services: Services):
                    f"{s['unsupported']} unsupported; {s['human_review']} for human review")
         return {"report": report, "usage": usages, "events": [_event("sentinel", message, started)]}
 
+    def score(state: CrashTestState) -> dict:
+        started = time.perf_counter()
+        health = health_score(state["report"])
+        message = (f"Health {health['score']}/100 ({health['band']}), coverage {health['coverage']['pct']}%, "
+                   f"{health['insufficient_evidence']['count']} insufficient")
+        return {"report": {**state["report"], "health": health}, "events": [_event("score", message, started)]}
+
     graph = StateGraph(CrashTestState)
     graph.add_node("guard", guard)
     graph.add_node("collect", collect)
@@ -268,7 +276,9 @@ def build_graph(services: Services):
         graph.add_edge("analyze", name)
     graph.add_edge(list(INVESTIGATIONS), "merge")
     graph.add_edge("merge", "sentinel")
-    graph.add_edge("sentinel", END)
+    graph.add_node("score", score)
+    graph.add_edge("sentinel", "score")
+    graph.add_edge("score", END)
     return graph.compile()
 
 
@@ -320,6 +330,12 @@ def _main(argv: list[str]) -> int:
             print(f"         evidence: {c.get('form') or ''} {c['accession_no']} p.{c.get('page')} \"{' '.join(c['quote'].split())[:120]}\"")
         if f["recommended_actions"]:
             print(f"         action: {f['recommended_actions'][0]}")
+    h = report.get("health")
+    if h:
+        print(f"\nGovernance Health Score {h['score']}/100 ({h['band']}), coverage {h['coverage']['pct']}% "
+              f"({h['coverage']['label']}), insufficient {h['insufficient_evidence']['count']}, human review {h['human_review']}")
+        for w in h["warnings"]:
+            print(f"  WARNING: {w}")
     u = report["usage"]
     print(f"\nLLM calls={u['llm_calls']} tokens in={u['input_tokens']} out={u['output_tokens']} cost=${u['cost_usd']}")
 

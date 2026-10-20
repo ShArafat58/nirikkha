@@ -60,7 +60,7 @@ def test_full_crash_test_runs_every_node_and_ranks_findings():
     state = run()
     nodes = {e["node"] for e in state["events"]}
     assert nodes == {"guard", "collect", "plan", "gather", "analyze", "relationship", "consistency", "regulatory",
-                     "missing_evidence", "merge", "sentinel"}
+                     "missing_evidence", "merge", "sentinel", "score"}
     report = state["report"]
     assert len(report["questions"]) == 2
     assert report["findings"][0]["risk_severity"] == "high"
@@ -106,3 +106,8 @@ def test_every_finding_passes_through_sentinel():
     assert all(f["sentinel"]["verdict"] in ("verified", "needs_review", "downgraded", "unsupported")
                for f in report["findings"])
     assert "sentinel" in report["summary"]
+
+def test_report_has_explainable_health_score():
+    h = run()["report"]["health"]
+    assert 0 <= h["score"] <= 100 and h["formula"]
+    assert "pct" in h["coverage"] and "count" in h["insufficient_evidence"]
