@@ -40,7 +40,7 @@ JUDGE_MAX_WAIT = 75   # seconds the router may wait for the per-minute token bud
 
 ABSENCE = re.compile(
     r"\b(?:do|does|did)\s+not\s+(?:disclose|contain|provide|include|mention|show|report)\b"
-    r"|\bnot\s+disclosed\b|\bomit(?:s|ted|ting)?\b|\black(?:s|ing)?\b|\babsence\s+of\b"
+    r"|\bnot\s+disclosed\b|\bomit(?:s|ted|ting)?\b|\black(?:s|ing)?\b|\babsence\s+of\b|\bundisclosed\b"
     r"|\bno\b[^.;]{0,100}\b(?:is|are|was|were)\s+(?:disclosed|provided|reported)\b",
     re.I,
 )

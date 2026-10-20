@@ -46,6 +46,7 @@ Last updated: 2026-10-20 15:35 (Day 4 in progress - one day ahead of plan)
 - [x] Step 4.4b: Evaluation suite (python -m evaluation.run -> docs/EVALUATION.md): retrieval hit@1 90%, hit@3 100%, MRR 0.933; injection 6/6 (optimistic), PII 8/8 with 0/6 false positives; rule regression OK
 - [x] Step 4.5a/b: crash_tests table (sql/003), PostgresStore, API POST /api/crash-tests (cache by cik+as_of+redacted decision hash, one live run at a time -> 429) and GET /api/crash-tests/{id} (polling, per-node events, 15-min timeout). Live local run: all 13 nodes, done, SVB 52/100 (judge downgraded 2), second POST cached=True; 130 tests
 - Note: score varies between live runs because judge verdicts vary; the DB run is the frozen demo result
+- [x] Step 4.5c: GET /api/companies, POST+GET /api/crash-tests/{id}/memo (cached in crash_tests.memo, sql/004; unavailable not cached), GET /api/evaluation; 135 tests. Absence regex covers 'undisclosed'; absence statements in memo risks require human review
 
 ## Next (Day 4)
 - [ ] Reliability Sentinel (LLM-as-judge with a different model + deterministic checks: citation supports claim, contradictions,

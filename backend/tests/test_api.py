@@ -4,7 +4,7 @@ from datetime import date, datetime, timedelta, timezone
 import pytest
 from fastapi.testclient import TestClient
 
-from app.api.routes import get_runner, get_store
+from app.api.routes import get_memo_writer, get_runner, get_store
 from app.main import app
 
 
@@ -27,7 +27,8 @@ class FakeStore:
     def create(self, cik, as_of, decision, h, source="live"):
         i = str(uuid.uuid4())
         self.rows[i] = dict(id=i, cik=cik, as_of=as_of, decision=decision, decision_hash=h, status="queued",
-                            events=[], report=None, error=None, source=source, created_at=now(), updated_at=now())
+                            events=[], report=None, memo=None, error=None, source=source,
+                            created_at=now(), updated_at=now())
         return i
 
     def update(self, i, **fields):
@@ -36,27 +37,48 @@ class FakeStore:
     def get(self, i):
         return self.rows.get(i)
 
+    def companies(self):
+        return [{"cik": "0000719739", "company": "SVB FINANCIAL GROUP", "filing_count": 4, "chunk_count": 900,
+                 "filings": [], "crash_tests": [r for r in self.rows.values() if r["status"] == "done"]}]
+
 
 def ok_runner(cik, as_of, decision, on_event):
     on_event([{"node": "redact", "message": "No personal data found", "ms": 1}])
     on_event([{"node": "score", "message": "Health 42/100", "ms": 2}])
-    return {"allowed": True, "report": {"cik": cik, "decision": decision, "health": {"score": 42}}}
+    return {"allowed": True, "report": {"cik": cik, "company": "SVB", "as_of": as_of.isoformat(), "decision": decision,
+                                        "findings": [], "health": {"score": 42}}}
+
+
+MEMO_CALLS = []
+
+
+def fake_writer(report):
+    MEMO_CALLS.append(report["cik"])
+    return {"company": report["company"], "as_of": report["as_of"], "decision": report["decision"],
+            "status": "complete", "status_note": "", "health": None, "executive_summary": "summary",
+            "risks": [], "evidence_gaps": [], "disclaimer": "not legal advice", "dropped": [], "usage": None}
 
 
 @pytest.fixture
 def client_store():
-    def make(runner=ok_runner):
+    def make(runner=ok_runner, writer=fake_writer):
         store = FakeStore()
         app.dependency_overrides[get_store] = lambda: store
         app.dependency_overrides[get_runner] = lambda: runner
+        app.dependency_overrides[get_memo_writer] = lambda: writer
+        MEMO_CALLS.clear()
         return TestClient(app), store
     yield make
     app.dependency_overrides.clear()
 
 
+def start(client, **body):
+    return client.post("/api/crash-tests", json={"cik": "719739", "as_of": "2023-03-10", **body})
+
+
 def test_start_then_poll_until_done(client_store):
-    client, store = client_store()
-    r = client.post("/api/crash-tests", json={"cik": "719739", "as_of": "2023-03-10", "decision": "Deposit partnership"})
+    client, _ = client_store()
+    r = start(client, decision="Deposit partnership")
     assert r.status_code == 202 and r.json()["cached"] is False
     job = client.get(f"/api/crash-tests/{r.json()['id']}").json()
     assert job["status"] == "done" and job["cik"] == "0000719739"
@@ -66,7 +88,7 @@ def test_start_then_poll_until_done(client_store):
 
 def test_same_decision_is_served_from_cache(client_store):
     client, _ = client_store()
-    first = client.post("/api/crash-tests", json={"cik": "719739", "as_of": "2023-03-10", "decision": "Deposit  partnership"}).json()
+    first = start(client, decision="Deposit  partnership").json()
     again = client.post("/api/crash-tests", json={"cik": "0000719739", "as_of": "2023-03-10", "decision": "deposit partnership "})
     assert again.status_code == 200 and again.json() == {"id": first["id"], "status": "done", "cached": True}
 
@@ -98,7 +120,7 @@ def test_runner_error_marks_job_failed(client_store):
         on_event([{"node": "redact", "message": "ok", "ms": 1}])
         raise RuntimeError("Neo4j unreachable\nstack details")
     client, _ = client_store(broken)
-    job = client.get(f"/api/crash-tests/{client.post('/api/crash-tests', json={'cik': '1'}).json()['id']}").json()
+    job = client.get(f"/api/crash-tests/{start(client).json()['id']}").json()
     assert job["status"] == "failed" and job["error"] == "RuntimeError: Neo4j unreachable"
     assert job["done_nodes"] == ["redact"]
 
@@ -107,7 +129,7 @@ def test_guard_block_is_reported(client_store):
     def blocked(cik, as_of, decision, on_event):
         return {"allowed": False, "guard_result": {"category": "prompt_injection", "reason": "Instruction-override pattern detected."}}
     client, _ = client_store(blocked)
-    job = client.get(f"/api/crash-tests/{client.post('/api/crash-tests', json={'cik': '1'}).json()['id']}").json()
+    job = client.get(f"/api/crash-tests/{start(client).json()['id']}").json()
     assert job["status"] == "blocked" and "Instruction-override" in job["error"]
 
 
@@ -119,3 +141,43 @@ def test_unknown_and_stale_jobs(client_store):
     store.rows[i].update(status="running", updated_at=now() - timedelta(minutes=20))
     job = client.get(f"/api/crash-tests/{i}").json()
     assert job["status"] == "failed" and "Timed out" in job["error"]
+
+
+def test_memo_created_once_then_cached(client_store):
+    client, _ = client_store()
+    job_id = start(client, decision="Deposit partnership").json()["id"]
+    assert client.get(f"/api/crash-tests/{job_id}/memo").status_code == 404
+    first = client.post(f"/api/crash-tests/{job_id}/memo").json()
+    assert first["cached"] is False and first["memo"]["status"] == "complete"
+    assert "# Legal Risk Memo: SVB" in first["markdown"] and "not legal advice" in first["markdown"]
+    second = client.post(f"/api/crash-tests/{job_id}/memo").json()
+    assert second["cached"] is True and MEMO_CALLS == ["0000719739"]
+    assert client.get(f"/api/crash-tests/{job_id}/memo").json()["cached"] is True
+
+
+def test_memo_needs_finished_crash_test(client_store):
+    client, store = client_store()
+    i = store.create("0000000001", date.today(), "", "h")
+    r = client.post(f"/api/crash-tests/{i}/memo")
+    assert r.status_code == 409 and "not finished" in r.json()["detail"]
+
+
+def test_unavailable_memo_is_not_cached(client_store):
+    def down(report):
+        return {**fake_writer(report), "status": "unavailable", "status_note": "rate limited"}
+    client, store = client_store(writer=down)
+    job_id = start(client).json()["id"]
+    assert client.post(f"/api/crash-tests/{job_id}/memo").json()["memo"]["status"] == "unavailable"
+    assert store.rows[job_id]["memo"] is None
+
+
+def test_companies_lists_finished_runs(client_store):
+    client, _ = client_store()
+    start(client, decision="Deposit partnership")
+    data = client.get("/api/companies").json()
+    assert data[0]["company"] == "SVB FINANCIAL GROUP" and len(data[0]["crash_tests"]) == 1
+
+
+def test_evaluation_results_are_served():
+    r = TestClient(app).get("/api/evaluation")
+    assert r.status_code == 200 and "pii" in r.json() and "injection" in r.json()

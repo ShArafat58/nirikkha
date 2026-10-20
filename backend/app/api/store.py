@@ -1,4 +1,4 @@
-"""Crash-Test run store in Supabase Postgres (table crash_tests, sql/003_crash_tests.sql).
+"""Crash-Test run store in Supabase Postgres (table crash_tests, sql/003 and sql/004).
 
 One short connection per call: fine for polling every few seconds on the free tier.
 """
@@ -14,9 +14,12 @@ from psycopg.types.json import Jsonb
 
 from app.db import connect
 
-COLUMNS = "id::text as id, cik, as_of, decision, decision_hash, status, events, report, error, source, created_at, updated_at"
+COLUMNS = ("id::text as id, cik, as_of, decision, decision_hash, status, events, report, memo, error, source, "
+           "created_at, updated_at")
 ACTIVE_WINDOW = timedelta(minutes=10)   # a queued/running job updated within this window blocks a new live run
-UPDATABLE = {"status", "events", "report", "error", "source"}
+UPDATABLE = {"status", "events", "report", "memo", "error", "source"}
+JSON_FIELDS = {"events", "report", "memo"}
+RUNS_PER_COMPANY = 5
 
 
 def _jsonb(value: Any) -> Jsonb:
@@ -53,7 +56,7 @@ class PostgresStore:
         sets, params = [], []
         for key, value in fields.items():
             sets.append(f"{key} = %s")
-            params.append(_jsonb(value) if key in ("events", "report") else value)
+            params.append(_jsonb(value) if key in JSON_FIELDS else value)
         sets.append("updated_at = now()")
         self._one(f"update crash_tests set {', '.join(sets)} where id = %s", (*params, job_id))
 
@@ -62,3 +65,31 @@ class PostgresStore:
 
     def delete(self, job_id: str) -> None:
         self._one("delete from crash_tests where id = %s", (job_id,))
+
+    def companies(self) -> list[dict]:
+        """Companies with loaded filings, chunk counts and their latest finished Crash-Tests."""
+        with connect(autocommit=True) as conn:
+            with conn.cursor(row_factory=dict_row) as cur:
+                cur.execute(
+                    "select f.cik, max(f.company) as company, count(*)::int as filing_count, "
+                    "json_agg(json_build_object('accession_no', f.accession_no, 'form', f.form, "
+                    "'filing_date', f.filing_date, 'has_page_markers', f.has_page_markers, 'url', f.url) "
+                    "order by f.filing_date) as filings "
+                    "from filings f group by f.cik order by max(f.company)")
+                companies = cur.fetchall()
+                cur.execute("select f.cik, count(*)::int as n from chunks c join filings f using (accession_no) "
+                            "group by f.cik")
+                chunks = {r["cik"]: r["n"] for r in cur.fetchall()}
+                cur.execute(
+                    "select id::text as id, cik, as_of, decision, source, updated_at, memo is not null as has_memo, "
+                    "(report->'health'->>'score')::int as score, report->'health'->>'band' as band, "
+                    "(report->'health'->'coverage'->>'pct')::int as coverage_pct "
+                    "from crash_tests where status = 'done' order by updated_at desc limit 100")
+                runs = cur.fetchall()
+        by_cik: dict[str, list[dict]] = {}
+        for r in runs:
+            by_cik.setdefault(r["cik"], []).append(r)
+        for c in companies:
+            c["chunk_count"] = chunks.get(c["cik"], 0)
+            c["crash_tests"] = by_cik.get(c["cik"], [])[:RUNS_PER_COMPANY]
+        return companies

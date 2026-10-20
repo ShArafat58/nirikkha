@@ -118,4 +118,5 @@ def test_omit_and_lack_count_as_absence_claims():
     from app.agents.sentinel import ABSENCE
     assert ABSENCE.search("Public filings omit liquidity ratios")
     assert ABSENCE.search("the 10-K lacks a table") and ABSENCE.search("the absence of an audit")
+    assert ABSENCE.search("undisclosed related-party transactions")
     assert not ABSENCE.search("Becker serves on the board")

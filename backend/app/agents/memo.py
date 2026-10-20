@@ -121,7 +121,7 @@ def validate_risks(data: Any, by_id: dict[str, dict], rules: list[str], cik: str
             "analysis": str(r.get("analysis", "")).strip()[:1200],
             "why_non_obvious": str(r.get("why_non_obvious", "")).strip()[:400],
             "recommended_action": str(r.get("recommended_action", "")).strip()[:400],
-            "needs_human_review": bool(RULE_WORDING.search(text)) or any((by_id[x].get("sentinel") or {}).get("human_review") for x in ids),
+            "needs_human_review": bool(RULE_WORDING.search(text) or ABSENCE.search(text)) or any((by_id[x].get("sentinel") or {}).get("human_review") for x in ids),
             "removed_ids": removed, "absence_claim": bool(ABSENCE.search(text)), "rule_wording": bool(RULE_WORDING.search(text)),
             "evidence": [{"finding_id": x, **_citation(by_id[x]["citations"][0], cik)}
                          for x in ids if by_id[x].get("citations")],

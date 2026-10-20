@@ -1,7 +1,11 @@
-"""Crash-Test API (polling).
+"""Nirikkha REST API (polling).
 
-POST /api/crash-tests        start a Crash-Test, or return the cached result for the same company, date and decision
-GET  /api/crash-tests/{id}   status, per-node events (for live progress) and, when done, the full report
+POST /api/crash-tests              start a Crash-Test, or return the cached result for the same company, date and decision
+GET  /api/crash-tests/{id}         status, per-node events (live progress) and, when done, the full report
+POST /api/crash-tests/{id}/memo    create (or return the cached) legal memo for a finished Crash-Test
+GET  /api/crash-tests/{id}/memo    the cached legal memo
+GET  /api/companies                companies with loaded filings and their latest finished Crash-Tests
+GET  /api/evaluation               latest evaluation results (python -m evaluation.run)
 
 The decision text is whitespace-normalized and PII-redacted BEFORE it is hashed, stored or sent to any model.
 Only one live run at a time (free-tier memory and token limits); a busy server answers 429 with a clear message.
@@ -10,6 +14,7 @@ Only one live run at a time (free-tier memory and token limits); a busy server a
 from __future__ import annotations
 
 import hashlib
+import json
 import re
 import uuid
 from datetime import date, datetime, timedelta, timezone
@@ -19,17 +24,21 @@ from typing import Any, Callable
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Response
 from pydantic import BaseModel, Field
 
+from app.agents.memo import to_markdown
+from app.config import BACKEND_DIR
 from app.db import DatabaseError
 from app.guardrails.pii import redact_pii
 
-router = APIRouter(prefix="/api", tags=["crash-tests"])
+router = APIRouter(prefix="/api")
 
 PIPELINE = ["redact", "guard", "collect", "plan", "gather", "analyze", "relationship", "consistency", "regulatory",
             "missing_evidence", "merge", "sentinel", "score"]
 STALE_AFTER = timedelta(minutes=15)
 MAX_DECISION_CHARS = 1500
+EVALUATION_FILE = BACKEND_DIR / "evaluation" / "results.json"
 
 Runner = Callable[[str, date, str, Callable[[list[dict]], None]], dict]
+MemoWriter = Callable[[dict], dict]
 
 
 class CrashTestRequest(BaseModel):
@@ -87,6 +96,14 @@ def get_runner() -> Runner:
     return graph_runner
 
 
+def get_memo_writer() -> MemoWriter:
+    def write(report: dict) -> dict:
+        from app.agents.memo import draft_memo
+        from app.llm.client import get_llm
+        return draft_memo(report, get_llm().complete)
+    return write
+
+
 def execute(job_id: str, cik: str, as_of: date, decision: str, store: Any, runner: Runner) -> None:
     events: list[dict] = []
 
@@ -112,7 +129,21 @@ def execute(job_id: str, cik: str, as_of: date, decision: str, store: Any, runne
             pass
 
 
-@router.post("/crash-tests", response_model=CrashTestStarted, status_code=202,
+def _row(store: Any, job_id: str) -> dict:
+    try:
+        uuid.UUID(job_id)
+    except ValueError:
+        raise HTTPException(404, "Crash-Test not found.")
+    try:
+        row = store.get(job_id)
+    except DatabaseError as exc:
+        raise HTTPException(503, f"Database unavailable: {exc}") from exc
+    if not row:
+        raise HTTPException(404, "Crash-Test not found.")
+    return dict(row)
+
+
+@router.post("/crash-tests", response_model=CrashTestStarted, status_code=202, tags=["crash-tests"],
              summary="Start a Crash-Test (or return the cached one)")
 def start_crash_test(req: CrashTestRequest, background: BackgroundTasks, response: Response,
                      store: Any = Depends(get_store), runner: Runner = Depends(get_runner)) -> CrashTestStarted:
@@ -135,19 +166,10 @@ def start_crash_test(req: CrashTestRequest, background: BackgroundTasks, respons
     return CrashTestStarted(id=job_id, status="queued", cached=False)
 
 
-@router.get("/crash-tests/{job_id}", summary="Poll a Crash-Test: status, live node events, report when done")
+@router.get("/crash-tests/{job_id}", tags=["crash-tests"],
+            summary="Poll a Crash-Test: status, live node events, report when done")
 def get_crash_test(job_id: str, store: Any = Depends(get_store)) -> dict:
-    try:
-        uuid.UUID(job_id)
-    except ValueError:
-        raise HTTPException(404, "Crash-Test not found.")
-    try:
-        row = store.get(job_id)
-    except DatabaseError as exc:
-        raise HTTPException(503, f"Database unavailable: {exc}") from exc
-    if not row:
-        raise HTTPException(404, "Crash-Test not found.")
-    row = dict(row)
+    row = _row(store, job_id)
     if row["status"] in ("queued", "running") and datetime.now(timezone.utc) - row["updated_at"] > STALE_AFTER:
         row["status"], row["error"] = "failed", "Timed out: no progress for 15 minutes."
         store.update(job_id, status="failed", error=row["error"])
@@ -155,3 +177,43 @@ def get_crash_test(job_id: str, store: Any = Depends(get_store)) -> dict:
     row["done_nodes"] = sorted({e.get("node") for e in row.get("events") or [] if e.get("node")},
                                key=lambda n: PIPELINE.index(n) if n in PIPELINE else 99)
     return row
+
+
+@router.post("/crash-tests/{job_id}/memo", tags=["legal memo"],
+             summary="Create (or return the cached) legal memo for a finished Crash-Test")
+def create_memo(job_id: str, store: Any = Depends(get_store), writer: MemoWriter = Depends(get_memo_writer)) -> dict:
+    row = _row(store, job_id)
+    if row["status"] != "done" or not row.get("report"):
+        raise HTTPException(409, f"The Crash-Test is not finished (status: {row['status']}).")
+    if row.get("memo"):
+        return {"cached": True, "memo": row["memo"], "markdown": to_markdown(row["memo"])}
+    memo = writer(row["report"])
+    if memo.get("status") != "unavailable":   # an unavailable model is retried next time, not cached
+        try:
+            store.update(job_id, memo=memo)
+        except DatabaseError:
+            pass
+    return {"cached": False, "memo": memo, "markdown": to_markdown(memo)}
+
+
+@router.get("/crash-tests/{job_id}/memo", tags=["legal memo"], summary="The cached legal memo")
+def get_memo(job_id: str, store: Any = Depends(get_store)) -> dict:
+    row = _row(store, job_id)
+    if not row.get("memo"):
+        raise HTTPException(404, "No memo yet. POST to this URL to create one.")
+    return {"cached": True, "memo": row["memo"], "markdown": to_markdown(row["memo"])}
+
+
+@router.get("/companies", tags=["companies"], summary="Companies with loaded filings and their latest Crash-Tests")
+def list_companies(store: Any = Depends(get_store)) -> list[dict]:
+    try:
+        return store.companies()
+    except DatabaseError as exc:
+        raise HTTPException(503, f"Database unavailable: {exc}") from exc
+
+
+@router.get("/evaluation", tags=["evaluation"], summary="Latest evaluation results")
+def evaluation() -> dict:
+    if not EVALUATION_FILE.exists():
+        raise HTTPException(404, "No evaluation results yet. Run: python -m evaluation.run")
+    return json.loads(EVALUATION_FILE.read_text(encoding="utf-8"))

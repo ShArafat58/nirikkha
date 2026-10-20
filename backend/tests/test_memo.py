@@ -86,6 +86,7 @@ def test_intent_words_are_dropped_and_absence_is_flagged():
     m = draft_memo(REPORT, llm({"executive_summary": "s", "risks": [bad, absent]}))
     assert any("implies intent (conceal)" in d for d in m["dropped"])
     assert [r["title"] for r in m["risks"]] == ["gap"] and m["risks"][0]["absence_claim"] is True
+    assert m["risks"][0]["needs_human_review"] is True
     assert "not found in the reviewed passages" in to_markdown(m)
 
 
