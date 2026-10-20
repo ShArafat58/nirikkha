@@ -251,7 +251,8 @@
         "risk function"
       ],
       "rules": [
-        "BP_CRO"
+        "BP_CRO",
+        "II_RISK_LEADERSHIP_CHANGE"
       ]
     },
     {

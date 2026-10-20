@@ -98,6 +98,16 @@ def resolve_people(names: list[str]) -> dict[str, str]:
     return mapping
 
 
+_GENERIC = {"committee", "and", "the", "of", "board"}
+
+
+def _names_committee(quote: str, org: str) -> bool:
+    """True when the quote mentions a distinctive word of the committee's name."""
+    words = [w for w in re.findall(r"[a-z]+", org.lower()) if len(w) >= 4 and w not in _GENERIC]
+    text = quote.lower()
+    return any(w in text for w in words)
+
+
 def build_rows(extracted: dict) -> list[dict]:
     """Turn an extraction file into graph rows: one row per verified, resolved relationship."""
     company, cik = extracted["company"], extracted["cik"]
@@ -142,6 +152,8 @@ def build_rows(extracted: dict) -> list[dict]:
             kind = "RELATED_TRANSACTION"
         else:
             continue
+        if kind == "MEMBER_OF" and "|" in r["quote"] and not _names_committee(r["quote"], org):
+            continue  # a table row of "X" marks cannot prove which committee: skip rather than guess
         rows.append({
             "kind": kind,
             "person_key": pkey,

@@ -33,6 +33,8 @@ RULE_QUERIES: dict[str, tuple[str, list[str]]] = {
     "financial_expert": ("audit committee financial expert", [*PROXY, "10-K"]),
     "other_directorships": ("other public company directorships held by directors", PROXY),
     "summary_compensation": ("summary compensation table named executive officers", PROXY),
+    "risk_leadership_change": ("chief risk officer separation agreement transition departure interim",
+                               [*PROXY, "10-K"]),
 }
 
 

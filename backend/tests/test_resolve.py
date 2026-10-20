@@ -64,6 +64,6 @@ def test_table_evidence_is_flagged():
     extracted = {"company": "SVB FINANCIAL GROUP", "cik": "0000719739", "relations": [
         {"person": "Eric Benhamou", "relation": "COMMITTEE_CHAIR", "organization": "Audit Committee",
          "accession_no": "a", "chunk_id": "c", "page_start": 5, "section_title": "S", "title": None,
-         "independent": None, "amount": None, "quote": "Eric Benhamou | 66 | 2005 | 2 | X | C", "verified": True},
+         "independent": None, "amount": None, "quote": "Eric Benhamou | 66 | 2005 | 2 | Audit (C)", "verified": True},
     ]}
     assert build_rows(extracted)[0]["props"]["from_table"] is True

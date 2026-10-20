@@ -43,6 +43,7 @@ RULE_PATTERNS: dict[str, str] = {
     "financial_expert": rf"(qualif|designat|determin|serv){SENT}{{0,160}}audit committee financial expert|audit committee financial experts?{SENT}{{0,40}}(as defined|within the meaning|under)",
     "other_directorships": r"public company (boards|directorships)|other public company",
     "summary_compensation": r"summary compensation table",
+    "risk_leadership_change": (r"(chief risk officer|chief financial officer).{0,150}(separation agreement|ceased serving|ceased to serve|stepped down|step down|resign|departure|departed|vacan|transition from|transition out|transitioned)|(separation agreement|ceased serving|ceased to serve|stepped down|resign|departure|departed|vacan|transition from|transition out|transitioned).{0,150}(chief risk officer|chief financial officer)"),
 }
 
 
@@ -306,6 +307,29 @@ def check_risk_committee(rule: Rule, facts: Facts):
     return _result(rule, "INSUFFICIENT_EVIDENCE", "No risk committee membership extracted.", "low", True)
 
 
+def check_risk_leadership_change(rule: Rule, facts: Facts):
+    proxy = facts.latest_proxy()
+    if proxy is None:
+        return _result(rule, "INSUFFICIENT_EVIDENCE", "No proxy statement available on or before the analysis date.",
+                       "low", True)
+    pattern = re.compile(RULE_PATTERNS["risk_leadership_change"], re.I | re.S)
+    for p in facts.passages.get("risk_leadership_change", []):
+        flat = " ".join(str(p.text).split())
+        m = pattern.search(flat)
+        if not m:
+            continue
+        start, end = max(0, m.start() - 120), min(len(flat), m.end() + 120)
+        quote = ("..." if start else "") + flat[start:end] + ("..." if end < len(flat) else "")
+        return _result(rule, "POTENTIAL_GAP",
+                       f"A change, departure or vacancy in the Chief Risk Officer or Chief Financial Officer role is "
+                       f"disclosed ({p.form} p.{p.page}). Check how long the role was unfilled and who covered it.",
+                       "medium", True,
+                       [Citation(accession_no=p.accession_no, form=p.form, filing_date=p.filing_date,
+                                 section=p.section, page=p.page, chunk_id=p.chunk_id, quote=quote)])
+    return _result(rule, "PASS", "No change or vacancy in the Chief Risk Officer or Chief Financial Officer role is "
+                   "disclosed in the latest proxy or 10-K.", "medium", False)
+
+
 def check_cro(rule: Rule, facts: Facts):
     if (missing := _no_relations(rule, facts)) is not None:
         return missing
@@ -413,6 +437,10 @@ RULES: list[Rule] = [
          "A board committee dedicated to enterprise risk oversight.", ["committee memberships"], check_risk_committee),
     Rule("BP_CRO", "Governance best practice", "best_practice", "Chief Risk Officer identified",
          "A designated Chief Risk Officer among executive officers.", ["executive officer titles"], check_cro),
+    Rule("II_RISK_LEADERSHIP_CHANGE", "Nirikkha internal indicator", "internal_indicator",
+         "Risk leadership change or vacancy",
+         "Flag a disclosed departure, transition or vacancy in the Chief Risk Officer or Chief Financial Officer role.",
+         ["sentence in latest proxy or 10-K"], check_risk_leadership_change),
     Rule("II_DISCLOSURE_FRESHNESS", "Nirikkha internal indicator", "internal_indicator", "Governance disclosure freshness",
          "The latest proxy should not be older than about 15 months at the analysis date.", ["proxy filing date"],
          check_freshness),
