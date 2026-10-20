@@ -11,6 +11,7 @@ from app.admin.routes import router as admin_router
 from app.auth.routes import router as auth_router
 from app.business.routes import router as billing_router
 from app.config import get_settings
+from app.api.replay_routes import router as replay_router
 
 APP_VERSION = "0.1.0"
 
@@ -36,6 +37,7 @@ app.include_router(admin_router)
 app.include_router(billing_router)
 
 
+app.include_router(replay_router)
 def _memory_mb() -> float | None:
     """Resident memory of this process on Linux (Render); None elsewhere."""
     try:

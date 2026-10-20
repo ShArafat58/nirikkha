@@ -16,6 +16,8 @@ def _report(extra_citation=None, yoy_text="Item 7A. Quantitative and Qualitative
          "statement": "Large held-to-maturity portfolio with unrealized loss", "citations": [cite]},
         {"id": "F2", "title": "Funding", "statement": "possible deposit outflow pressure", "citations": [cite]},
         {"id": "F3", "title": "Unrelated", "statement": "auditor tenure is long", "citations": [cite]},
+        {"id": "F5", "title": "Decision question: how does the risk committee set risk appetite?",
+         "decision_question": "q", "citations": [cite]},
     ]
     if extra_citation:
         findings.append({"id": "F4", "title": "Leaky", "statement": "x", "citations": [extra_citation]})
@@ -35,7 +37,7 @@ def _status(result):
 
 def test_collect_dedupes_findings_and_reads_rules():
     findings, rules = collect(_report())
-    assert len(findings) == 3
+    assert len(findings) == 4
     assert {r["rule_id"] for r in rules} == {"BP_CRO", "R407_RISK_OVERSIGHT", "II_YOY_CHANGE"}
 
 
@@ -44,8 +46,14 @@ def test_statuses(svb):
     assert st["ws_interest_rate"] == "detected"         # two keywords + market-risk rule
     assert st["ws_deposit_concentration"] == "partial"  # one keyword only
     assert st["ws_cro_vacancy"] == "detected"           # linked rule is a gap
-    assert st["ws_board_oversight"] == "missed"         # rule passed, no keywords
+    assert st["ws_board_oversight"] == "questioned"     # only an open question matched
+    assert st["ws_compensation"] == "missed"
     assert st["ws_supervisory_findings"] == "not_knowable"
+
+
+def test_question_evidence_is_labelled(svb):
+    board = next(s for s in compare(svb, _report(), {"A10K"})["signs"] if s["id"] == "ws_board_oversight")
+    assert board["evidence"][0]["type"] == "question"
 
 
 def test_rule_link_needs_its_keyword(svb):
@@ -65,5 +73,5 @@ def test_post_freeze_citation_invalidates_replay(svb):
 def test_summary_counts(svb):
     s = compare(svb, _report(), {"A10K"})["summary"]
     assert s["knowable"] == 5
-    assert s["detected"] + s["partial"] + s["missed"] + s["not_knowable"] == 6
+    assert sum(s[k] for k in ("detected", "questioned", "partial", "missed", "not_knowable")) == 6
     assert s["other_signals"] >= 1

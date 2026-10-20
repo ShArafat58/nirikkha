@@ -22,7 +22,7 @@ import re
 import sys
 from typing import Any, Iterator
 
-from app.replay.case import CaseError, frozen_events, is_knowable, load_case
+from app.replay.case import CASES_DIR, CaseError, frozen_events, is_knowable, load_case
 
 RESULTS = {"PASS", "POTENTIAL_GAP", "FAIL", "INSUFFICIENT_EVIDENCE"}
 FLAG = {"POTENTIAL_GAP", "FAIL"}
@@ -79,6 +79,12 @@ def _title(f: dict) -> str:
     return next(_strings(f), "(untitled finding)")
 
 
+def _is_question(f: dict) -> bool:
+    """True when the item is an open question the system raised, not a flagged finding."""
+    title = _title(f).lower()
+    return bool(f.get("decision_question")) or title.startswith("decision question") or title.endswith("?")
+
+
 def _hits(keywords: list[str], text: str) -> list[str]:
     return [k for k in keywords if re.search(r"\b" + re.escape(k.lower()), text)]
 
@@ -127,8 +133,11 @@ def compare(case: dict, report: dict, allowed_accessions: set[str] | None = None
                 rule_hits.append(r)
 
         strong = [s for s in scored if s[0] >= 2]
-        if strong or any(r["result"] in FLAG for r in rule_hits):
+        flagged = [s for s in strong if not _is_question(s[2])]
+        if flagged or any(r["result"] in FLAG for r in rule_hits):
             status = "detected"
+        elif strong:
+            status = "questioned"
         elif scored or rule_hits:
             status = "partial"
         else:
@@ -145,6 +154,7 @@ def compare(case: dict, report: dict, allowed_accessions: set[str] | None = None
             "status": status,
             "evidence": [{
                 "finding": _title(f)[:200],
+                "type": "question" if _is_question(f) else "finding",
                 "matched_keywords": hit,
                 "citations": [
                     {k: c.get(k) for k in ("form", "accession_no", "page", "section")}
@@ -159,7 +169,7 @@ def compare(case: dict, report: dict, allowed_accessions: set[str] | None = None
 
     knowable = [s for s in signs if s["knowable_before_freeze"]]
     count = {st: sum(1 for s in signs if s["status"] == st)
-             for st in ("detected", "partial", "missed", "not_knowable")}
+             for st in ("detected", "questioned", "partial", "missed", "not_knowable")}
     leaks = find_leaks(case, findings, allowed_accessions)
     other = [_title(f)[:160] for f in findings if _key(f) not in matched]
     return {
@@ -175,8 +185,10 @@ def compare(case: dict, report: dict, allowed_accessions: set[str] | None = None
             "signs": len(signs),
             "knowable": len(knowable),
             "detection_rate": round(count["detected"] / len(knowable), 2) if knowable else None,
+            "flagged_or_questioned_rate": round(
+                sum(s["status"] in ("detected", "questioned") for s in knowable) / len(knowable), 2) if knowable else None,
             "detection_rate_incl_partial": round(
-                sum(s["status"] in ("detected", "partial") for s in knowable) / len(knowable), 2) if knowable else None,
+                sum(s["status"] in ("detected", "questioned", "partial") for s in knowable) / len(knowable), 2) if knowable else None,
             "findings_in_report": len(findings),
             "other_signals": len(other),
         },
@@ -208,6 +220,7 @@ def main() -> int:
     src = parser.add_mutually_exclusive_group(required=True)
     src.add_argument("--job", help="crash-test id (prefix is enough)")
     src.add_argument("--report", help="path to a report JSON file")
+    parser.add_argument("--publish", action="store_true", help="also save as data/replay/<case>/result.json")
     args = parser.parse_args()
 
     try:
@@ -234,6 +247,13 @@ def main() -> int:
     out_dir.mkdir(parents=True, exist_ok=True)
     out = out_dir / f"{case['id']}_{str(job_id).split('/')[-1].split(chr(92))[-1][:12]}.json"
     out.write_text(json.dumps(result, indent=1, default=str), encoding="utf-8")
+    if args.publish:
+        if result["verdict"] != "VALID":
+            print("not published: replay is INVALID")
+        else:
+            published = CASES_DIR / case["id"] / "result.json"
+            published.write_text(json.dumps(result, indent=1, default=str) + "\n", encoding="utf-8")
+            print(f"published: {published}")
 
     s = result["summary"]
     print(f"{result['company']}  freeze {result['freeze_date']}  source {job_id}")
@@ -248,9 +268,9 @@ def main() -> int:
         for r in sign["rules"]:
             print(f"               rule: {r['rule_id']} {r['result']}")
     print("-" * 78)
-    print(f"detected {s['detected']}, partial {s['partial']}, missed {s['missed']}, "
+    print(f"detected {s['detected']}, questioned {s['questioned']}, partial {s['partial']}, missed {s['missed']}, "
           f"not knowable {s['not_knowable']}  |  detection rate {s['detection_rate']} "
-          f"(incl. partial {s['detection_rate_incl_partial']}) of {s['knowable']} knowable signs")
+          f"(with questions {s['flagged_or_questioned_rate']}, incl. partial {s['detection_rate_incl_partial']}) of {s['knowable']} knowable signs")
     print(f"other signals in the report (not in the documented outcome): {s['other_signals']}")
     print(f"saved: {out}")
     return 0 if result["verdict"] == "VALID" else 2
