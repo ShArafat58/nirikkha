@@ -1,6 +1,6 @@
 # PROGRESS - Nirikkha
 
-Last updated: 2026-10-20 14:20 (Day 3 in progress)
+Last updated: 2026-10-20 15:00 (Day 3 COMPLETE - one day ahead of plan)
 
 ## Decisions
 - Product name: **Nirikkha** - tagline "Trust less, Verify more". Challenge: GovernanceIQ.
@@ -8,55 +8,58 @@ Last updated: 2026-10-20 14:20 (Day 3 in progress)
 - Machine: Windows, 16 GB RAM, Intel UHD (no NVIDIA GPU) -> local models CPU-only; fine-tuning on Colab/Kaggle.
 - Backend: Render free (Python 3, root `backend`), manual deploy. Frontend: Next.js 16.4.2 + Tailwind on Vercel.
 - Data stores: Supabase Postgres 17 + pgvector (chunks), DuckDB (analytics), Neo4j Aura Free (governance graph).
-- Secrets: `backend/.env`, `frontend/.env.local` (git-ignored); passwords in `D:\AI_Buildfest\secrets\`.
-- Design: "Evidence Room", tokens in `docs/DESIGN.md`. Logo A.
-- Ingestion (local / precomputed): EDGAR API -> BeautifulSoup parser (sections, pages from filer page breaks) -> semantic + contextual chunks -> local bge-small embeddings -> Supabase.
+- Ingestion (local / precomputed): EDGAR API -> BeautifulSoup parser -> semantic + contextual chunks -> local bge-small embeddings -> Supabase.
 - Retrieval: hybrid (pgvector + full-text, RRF, one SQL round trip) -> local cross-encoder rerank.
-- LLM router `app/llm/client.py`, tasks and routes:
-  reason = gpt-oss-120b -> gemini-2.5-flash -> local; fast = gpt-oss-20b -> gemini-2.5-flash-lite -> local;
-  extract = qwen3.8-27b -> gpt-oss-20b -> gemini-2.5-flash -> local; safety = gpt-oss-safeguard-20b -> gpt-oss-20b;
-  bangla = gemini-2.5-flash -> qwen3.8-27b. Response cache, usage log (.cache/llm_usage.jsonl), per-model budgets.
-- Groq free-tier limits measured 2026-10-20: gpt-oss-120b / gpt-oss-20b / qwen3.8-27b = 30 RPM, 1K RPD, 8K TPM, 200K TPD;
-  gpt-oss-safeguard-20b = 3 RPM, 2K TPM. Gemini limits for our models not visible -> assumed conservative.
-- Budget logic: minute window counts reserved tokens (prompt + max output); daily totals from usage log; on 429 "try again in Xs" wait and retry once; batch jobs use max_wait=75 s.
-- Extraction: prompt `app/prompts/extract_governance.v2.md` (v1 kept); governance sections only; previous chunk tail as PRECEDING CONTEXT for split tables; every relation needs a verbatim quote; unverified relations never enter the graph.
-- Entity resolution: person key = first + last name, bare surname -> unique full name, multi-person phrases skipped; org key ignores suffixes; table-derived evidence flagged `from_table` (lower confidence later).
-- Graph model: (Person)-[DIRECTOR_OF|OFFICER_OF|CHAIRS_BOARD]->(Company); (Person)-[MEMBER_OF {chair}]->(Committee)-[COMMITTEE_OF]->(Company); (Person)-[BOARD_SEAT|EMPLOYED_BY]->(Organization); (Party)-[RELATED_TRANSACTION]->(Company); evidence (accession, chunk, page, quote) on every edge.
-- Extraction of one proxy takes ~30 min on the free tier -> demo companies are precomputed; live new companies would run in background.
+- LLM router `app/llm/client.py`, tasks: reason = gpt-oss-120b; fast = gpt-oss-20b; extract = qwen3.8-27b;
+  safety = gpt-oss-safeguard-20b; analyze = gemini-2.5-flash -> gpt-oss-120b; bangla = gemini-2.5-flash.
+  Cache, usage log, per-model RPM/TPM/TPD budgets, retry-after on 429. Groq free tier: 8K TPM / 200K TPD per model.
+- Extraction: prompt extract_governance.v2 with quote verification; table evidence flagged; unverified never enters the graph.
+- Graph: Person / Company / Committee / Organization / Party / Filing; evidence (accession, chunk, page, quote) on every edge.
+- Rule Engine `app/rules/engine.py`: 15 rules (Reg S-K 401(a), 401(e)(2), 402(c), 402(v), 404(a), 404(b), 407(a), 407(d)(5), 407(h);
+  2 best practice; 4 internal indicators). Deterministic; categories never mixed; PVP not applicable before FY ending 2022-12-16;
+  evidence = one sentence that matches the rule pattern (abbreviations like "Mr." allowed); phrase search + retrieval.
+- Crash-Test (LangGraph) `app/agents/graph.py`: guard -> collect -> plan -> gather -> analyze -> [relationship | consistency |
+  regulatory | missing_evidence] -> merge. Findings keep risk_severity and evidence_confidence separate; analyst answers only from
+  an evidence pack (E# passages, G# graph facts, R# rule results); answers without valid citations become "insufficient".
+- Prompts (versioned, all in `app/prompts/`): extract_governance v1/v2, guard_input v1, plan_decision v1/v2, analyze_questions v1/v2.
 
-## Findings so far (review signals, never conclusions)
-- SVB 10-K Item 7A shrank 45.1% FY2021 -> FY2022 filing; Apple has no large-change flags.
-- SVB 2022 proxy: CEO Greg Becker holds a board seat at the Federal Reserve Bank of San Francisco (p.10) -> potential conflict, review.
-- Shared prior employer: director Kate Mitchell and CRO Laura Izurieta (Bank of America).
-- Related-party items (p.25): BlackRock ~$30.0 million fee sharing revenue, Cachematrix ~$706,674 fees paid, Vanguard ~$322,391.
-- Audit Committee shows two chairs from table rows -> table-derived evidence needs human review.
-- No verified "board chair" quote extracted -> board leadership = insufficient evidence from extraction alone.
+## SVB Crash-Test as of 2023-03-10 (deposit-partnership decision) - review signals, not conclusions
+- 18 findings: 3 high, 10 medium, 5 low; 11 deterministic, 7 analyst (LLM); 3 LLM calls, ~8.6K tokens, $0.
+- CON: Item 7A (Market Risk) shrank 45.1% FY2021 -> FY2022 filing (high severity, medium confidence).
+- REL: CEO Greg Becker is a Class A director of the Federal Reserve Bank of San Francisco (high severity, high confidence).
+- REL: related-party items BlackRock ~$30.0M fee-sharing revenue, Cachematrix ~$706,674, Vanguard ~$322,391.
+- MIS: board and officer facts are from the 2022-03-04 proxy (371 days old) -> check Form 8-K Item 5.02.
+- Known analyst errors kept as Sentinel test cases: absence claims ("do not disclose" liquidity metrics, independent audit),
+  citing the 2021 proxy when the 2022 proxy is latest.
+- Rule Engine: 11 PASS, 3 POTENTIAL_GAP, PVP not applicable. Apple (today): extraction not run -> 6 rules INSUFFICIENT_EVIDENCE (no guessing).
 - CRO vacancy in 2022 (reported in post-mortems) MUST be verified from reliable sources in Replay Step 1 before stating.
 
 ## Done
 - [x] Day 1: accounts, repo + docs, live backend + frontend, CORS, logo, design tokens
 - [x] Day 2: EDGAR, parser, chunking, local embeddings, pgvector, hybrid search, reranker, DuckDB
-- [x] Step 3.1 LLM router with fallback, cache, usage log; Step 3.2a per-model rate-limit budgets
-- [x] Step 3.2b governance extraction (SVB 2022 proxy: 162 relations, 137 verified, 0 failed, 147K tokens, $0)
-- [x] Step 3.2c Neo4j graph + entity resolution + governance report queries; 67 tests passing
+- [x] Day 3: LLM router + budgets, governance extraction + Neo4j graph, Rule Engine, LangGraph Crash-Test with analyst; 90 tests
 
-## Next (Day 3)
-- [ ] Governance Rule Engine: Reg S-K Items 401, 402, 404, 407 -> PASS / POTENTIAL_GAP / FAIL / INSUFFICIENT_EVIDENCE
-- [ ] LangGraph agents for the 4 investigations (decision-focused)
-- [ ] Extract + load Apple 2026 proxy (needs fresh daily token budget) and SVB 2021 proxy (for year-over-year board changes)
+## Next (Day 4)
+- [ ] Reliability Sentinel (LLM-as-judge with a different model + deterministic checks: citation supports claim, contradictions,
+      authoritative source, correct reporting period, enough evidence, human review)
+- [ ] Explainable Governance Health Score (formula to agree with owner; severity and confidence separate; insufficient evidence visible)
+- [ ] Crash-Test Report (4 sections) + Legal memo (>= 3 non-obvious risks, verified citations, gpt-oss-120b)
+- [ ] PII redaction guardrail; evaluation set
+- [ ] FastAPI endpoints + Render memory test
+- [ ] Extract + load Apple 2026 proxy (fresh daily token budget)
 
 ## Live links
 - Frontend: https://nirikkha.vercel.app | Backend: https://nirikkha-api.onrender.com (/health, /docs)
 
 ## Score
-- See `docs/SCORE_LEDGER.md`. Built: 74 / 425. Verified: 0 / 425.
+- See `docs/SCORE_LEDGER.md`. Built: 89 / 425. Verified: 0 / 425.
 
 ## Known issues / risks
+- Crash-Test takes ~2.5 min locally (14 retrievals over BD -> Asia-Pacific network) -> precompute demo companies; measure on Render.
 - Groq daily token caps (200K per model) limit extraction to ~1 proxy per model per day -> precompute, cache.
+- Gemini free-tier limits for gemini-2.5-flash not measured -> watch for 429; analyst falls back to gpt-oss-120b with a compact pack.
 - Render auto-deploy does not trigger -> manual deploy; query embedding + reranker on Render need RAM test.
-- Local search latency 2-4 s (network distance); expected lower on Render.
 - Supabase Free pauses after 1 week idle; Neo4j Aura Free deletes after 30 days idle.
-- Parser / extraction label noise: committee name variants (e.g. "Compensation Committee" vs "Compensation & Human Capital Committee").
-- Starlette TestClient deprecation warning; frontend npm audit (5 high) to review; logo visuals not yet verified.
-- Team: 5th member + NRB member handled by a teammate.
+- Committee name variants and two-chair table reading (flagged as low-confidence consistency finding).
+- Frontend npm audit (5 high) to review; logo visuals not yet verified. Team: 5th + NRB member handled by a teammate.
 - AI Detail Usage table in brief sums to 237 vs stated 232 - confirm on live form.

@@ -43,6 +43,7 @@ GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:ge
 ROUTES: dict[str, list[tuple[str, str]]] = {
     "reason": [("groq", "openai/gpt-oss-120b"), ("gemini", "gemini-2.5-flash"), ("ollama", "qwen2.5:3b")],
     "fast": [("groq", "openai/gpt-oss-20b"), ("gemini", "gemini-2.5-flash-lite"), ("ollama", "qwen2.5:3b")],
+    "analyze": [("gemini", "gemini-2.5-flash"), ("groq", "openai/gpt-oss-120b"), ("ollama", "qwen2.5:3b")],
     "extract": [("groq", "qwen/qwen3.8-27b"), ("groq", "openai/gpt-oss-20b"), ("gemini", "gemini-2.5-flash"),
                 ("ollama", "qwen2.5:3b")],
     "safety": [("groq", "openai/gpt-oss-safeguard-20b"), ("groq", "openai/gpt-oss-20b")],
@@ -65,7 +66,7 @@ SAFETY_MARGIN = 0.9  # use at most 90% of each limit
 # USD per 1M tokens: {"model": (input, output)}. Empty = free tier, cost $0. Fill only from official pricing pages.
 PRICES: dict[str, tuple[float, float]] = {}
 
-REASONING_EFFORT = {"reason": "medium", "fast": "low", "extract": "low", "safety": "low", "bangla": "low"}
+REASONING_EFFORT = {"reason": "medium", "analyze": "medium", "fast": "low", "extract": "low", "safety": "low", "bangla": "low"}
 
 _RETRY_RE = re.compile(r"try again in (?:(\d+)m)?([\d.]+)(ms|s)", re.I)
 
