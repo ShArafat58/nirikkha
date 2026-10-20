@@ -5,6 +5,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.api.routes import execute, get_inline, get_memo_writer, get_runner, get_store
+from app.auth.deps import get_optional_user, get_user_store
 from app.main import app
 
 
@@ -24,10 +25,10 @@ class FakeStore:
         return any(r["status"] in ("queued", "running") and now() - r["updated_at"] < timedelta(minutes=10)
                    for r in self.rows.values())
 
-    def create(self, cik, as_of, decision, h, source="live"):
+    def create(self, cik, as_of, decision, h, source="live", user_id=None):
         i = str(uuid.uuid4())
         self.rows[i] = dict(id=i, cik=cik, as_of=as_of, decision=decision, decision_hash=h, status="queued",
-                            events=[], report=None, memo=None, error=None, source=source,
+                            events=[], report=None, memo=None, error=None, source=source, user_id=user_id,
                             created_at=now(), updated_at=now())
         return i
 
@@ -58,6 +59,18 @@ def ok_runner(cik, as_of, decision, on_event):
 MEMO_CALLS = []
 
 
+class Usage:
+    def __init__(self, used=0):
+        self.used = used
+
+    def usage_this_month(self, user_id):
+        return self.used
+
+
+DEMO = {"id": "u-demo", "role": "demo", "plan": "free"}
+USAGE = Usage()
+
+
 def fake_writer(report):
     MEMO_CALLS.append(report["cik"])
     return {"company": report["company"], "as_of": report["as_of"], "decision": report["decision"],
@@ -72,6 +85,8 @@ def client_store():
         app.dependency_overrides[get_store] = lambda: store
         app.dependency_overrides[get_runner] = lambda: runner
         app.dependency_overrides[get_memo_writer] = lambda: writer
+        app.dependency_overrides[get_optional_user] = lambda: DEMO
+        app.dependency_overrides[get_user_store] = lambda: USAGE
         MEMO_CALLS.clear()
         return TestClient(app), store
     yield make
@@ -208,6 +223,8 @@ def queue_client(store):
     app.dependency_overrides[get_store] = lambda: store
     app.dependency_overrides[get_inline] = lambda: False
     app.dependency_overrides[get_runner] = lambda: ok_runner
+    app.dependency_overrides[get_optional_user] = lambda: DEMO
+    app.dependency_overrides[get_user_store] = lambda: USAGE
     return TestClient(app)
 
 
@@ -260,3 +277,23 @@ def test_inline_run_skips_a_job_a_worker_already_claimed(client_store):
     calls = []
     execute_claimed(i, "0000719739", date(2023, 3, 10), "d", store, lambda *a: calls.append(1) or {})
     assert calls == [] and store.rows[i]["status"] == "running"
+
+def test_new_run_needs_login_but_cached_demo_does_not(client_store):
+    client, store = client_store()
+    first = start(client, decision="Deposit partnership").json()
+    app.dependency_overrides[get_optional_user] = lambda: None
+    cached = start(client, decision="Deposit partnership")
+    assert cached.status_code == 200 and cached.json()["id"] == first["id"]
+    new = start(client, decision="Something new")
+    assert new.status_code == 401 and "demo account" in new.json()["detail"]
+
+
+def test_free_plan_limit_is_enforced_and_demo_is_unlimited(client_store):
+    client, store = client_store()
+    app.dependency_overrides[get_optional_user] = lambda: {"id": "u1", "role": "user", "plan": "free"}
+    app.dependency_overrides[get_user_store] = lambda: Usage(used=3)
+    r = start(client, decision="fourth run")
+    assert r.status_code == 403 and "Free plan includes 3" in r.json()["detail"]
+    app.dependency_overrides[get_optional_user] = lambda: DEMO
+    assert start(client, decision="fourth run").status_code == 202
+    assert any(row.get("user_id") == "u-demo" for row in store.rows.values())

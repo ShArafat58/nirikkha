@@ -45,10 +45,11 @@ class PostgresStore:
                         (since,))
         return bool(row and row["n"])
 
-    def create(self, cik: str, as_of: date, decision: str, decision_hash: str, source: str = "live") -> str:
-        row = self._one("insert into crash_tests (cik, as_of, decision, decision_hash, status, source) "
-                        "values (%s, %s, %s, %s, 'queued', %s) returning id::text as id",
-                        (cik, as_of, decision, decision_hash, source))
+    def create(self, cik: str, as_of: date, decision: str, decision_hash: str, source: str = "live",
+               user_id: str | None = None) -> str:
+        row = self._one("insert into crash_tests (cik, as_of, decision, decision_hash, status, source, user_id) "
+                        "values (%s, %s, %s, %s, 'queued', %s, %s) returning id::text as id",
+                        (cik, as_of, decision, decision_hash, source, user_id))
         return row["id"]
 
     def update(self, job_id: str, **fields: Any) -> None:

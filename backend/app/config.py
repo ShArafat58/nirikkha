@@ -49,6 +49,8 @@ class Settings(BaseSettings):
     # true: the API process runs Crash-Tests itself. false (Render): jobs are queued in Postgres and run by
     # 'python -m app.api.worker' on a machine with enough memory.
     run_jobs_inline: bool = True
+    # Signs login tokens (HS256). Required in production, at least 32 characters. Never commit it.
+    auth_secret: str = ""
     embedding_model: str = "gemini-embedding-001"
     embedding_dim: int = 768
     gemini_embed_tpm: int = 25000

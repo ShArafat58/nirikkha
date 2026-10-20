@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.analytics.warehouse import resolve_db
 from app.api.routes import router as api_router
+from app.auth.routes import router as auth_router
 from app.config import get_settings
 
 APP_VERSION = "0.1.0"
@@ -28,6 +29,7 @@ app.add_middleware(
 )
 
 app.include_router(api_router)
+app.include_router(auth_router)
 
 
 def _memory_mb() -> float | None:

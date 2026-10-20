@@ -28,6 +28,8 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Response
 from pydantic import BaseModel, Field
 
 from app.agents.memo import to_markdown
+from app.auth.deps import get_optional_user, get_user_store
+from app.business.plans import monthly_limit, plan
 from app.config import BACKEND_DIR, get_settings
 from app.db import DatabaseError
 from app.guardrails.pii import redact_pii
@@ -176,7 +178,8 @@ def _row(store: Any, job_id: str) -> dict:
              summary="Start a Crash-Test (or return the cached one)")
 def start_crash_test(req: CrashTestRequest, background: BackgroundTasks, response: Response,
                      store: Any = Depends(get_store), runner: Runner = Depends(get_runner),
-                     inline: bool = Depends(get_inline)) -> CrashTestStarted:
+                     inline: bool = Depends(get_inline), user: dict | None = Depends(get_optional_user),
+                     users: Any = Depends(get_user_store)) -> CrashTestStarted:
     cik = normalize_cik(req.cik)
     as_of = req.as_of or date.today()
     if as_of > date.today():
@@ -187,9 +190,16 @@ def start_crash_test(req: CrashTestRequest, background: BackgroundTasks, respons
         if cached:
             response.status_code = 200
             return CrashTestStarted(id=cached["id"], status="done", cached=True)
+        if user is None:
+            raise HTTPException(401, "Log in, or use the demo account, to run a new Crash-Test. "
+                                     "Precomputed demos open without an account.")
+        limit = monthly_limit(user["role"], user["plan"])
+        if limit is not None and users.usage_this_month(user["id"]) >= limit:
+            raise HTTPException(403, f"Your {plan(user['plan'])['name']} plan includes {limit} Crash-Tests per month "
+                                     f"and they are used. Upgrade or request a pilot on the Pricing page.")
         if store.busy():
             raise HTTPException(429, "Another live Crash-Test is running. Try again in a minute, or open a precomputed demo.")
-        job_id = store.create(cik, as_of, decision, key)
+        job_id = store.create(cik, as_of, decision, key, user_id=user["id"])
     except DatabaseError as exc:
         raise HTTPException(503, f"Database unavailable: {exc}") from exc
     if inline:
