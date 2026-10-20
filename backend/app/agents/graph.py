@@ -1,6 +1,6 @@
 """LangGraph orchestration of a Governance Crash-Test.
 
-    guard -> collect -> plan -> gather -> analyze -> [relationship | consistency | regulatory | missing_evidence]
+    redact -> guard -> collect -> plan -> gather -> analyze -> [relationship | consistency | regulatory | missing_evidence]
           -> merge -> sentinel -> score
 
 - guard:    heuristic checks, then the safety model (gpt-oss-safeguard) classifies the decision text.
@@ -43,6 +43,7 @@ from app.agents.findings import (
 from app.agents.report import build_sections
 from app.agents.score import health_score
 from app.agents.sentinel import review_findings
+from app.guardrails.pii import redact_pii
 from app.llm.client import LLMError
 from app.rules.engine import evaluate
 
@@ -69,6 +70,7 @@ class CrashTestState(TypedDict, total=False):
     decision: str
     allowed: bool
     guard_result: dict
+    pii: dict
     questions: list[dict]
     facts: Any
     rule_report: dict
@@ -112,6 +114,13 @@ def _usage(node: str, r: Any) -> dict:
 
 
 def build_graph(services: Services):
+    def redact(state: CrashTestState) -> dict:
+        started = time.perf_counter()
+        decision, pii = redact_pii((state.get("decision") or "").strip())
+        message = ("No personal data found" if not pii
+                   else "Redacted " + ", ".join(f"{n} {k.lower()}" for k, n in sorted(pii.items())))
+        return {"decision": decision, "pii": pii, "events": [_event("redact", message, started)]}
+
     def guard(state: CrashTestState) -> dict:
         started = time.perf_counter()
         decision = (state.get("decision") or "").strip()
@@ -215,7 +224,7 @@ def build_graph(services: Services):
         facts, usage = state["facts"], state.get("usage", [])
         report = {
             "company": facts.company, "cik": facts.cik, "as_of": facts.as_of.isoformat(),
-            "decision": state.get("decision", ""), "guard": state.get("guard_result"),
+            "decision": state.get("decision", ""), "pii_redacted": state.get("pii", {}), "guard": state.get("guard_result"),
             "questions": state.get("questions", []), "analysis": state.get("analysis", []),
             "findings": [f.model_dump(mode="json") for f in findings],
             "rule_report": state["rule_report"],
@@ -267,7 +276,9 @@ def build_graph(services: Services):
     graph.add_node("merge", merge)
     graph.add_node("sentinel", sentinel)
 
-    graph.add_edge(START, "guard")
+    graph.add_node("redact", redact)
+    graph.add_edge(START, "redact")
+    graph.add_edge("redact", "guard")
     graph.add_conditional_edges("guard", lambda s: "collect" if s.get("allowed") else "end",
                                 {"collect": "collect", "end": END})
     graph.add_edge("collect", "plan")

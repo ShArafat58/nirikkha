@@ -59,7 +59,7 @@ def run(decision="Before we proceed with a deposit partnership, identify governa
 def test_full_crash_test_runs_every_node_and_ranks_findings():
     state = run()
     nodes = {e["node"] for e in state["events"]}
-    assert nodes == {"guard", "collect", "plan", "gather", "analyze", "relationship", "consistency", "regulatory",
+    assert nodes == {"redact", "guard", "collect", "plan", "gather", "analyze", "relationship", "consistency", "regulatory",
                      "missing_evidence", "merge", "sentinel", "score"}
     report = state["report"]
     assert len(report["questions"]) == 2

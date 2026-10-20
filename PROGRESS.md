@@ -42,6 +42,7 @@ Last updated: 2026-10-20 15:35 (Day 4 in progress - one day ahead of plan)
 - [x] Step 4.2: Explainable Health Score (score.py, node sentinel -> score). SVB as of 2023-03-10: 42/100 elevated_concern, coverage 86%, 2 insufficient, 6 human review, relationship capped at 30; 105 tests
 - [x] Step 4.3a: Crash-Test Report sections (report.py): 4 sections, EDGAR source links, rules law -> best practice -> internal, de-duplicated actions, human review first; 109 tests
 - [x] Step 4.3b: Legal memo (memo.py, prompt legal_memo.v3, gpt-oss-120b). Code verifies: >=2 known finding ids per risk, rules only from the evaluated Reg S-K list with exact meanings, intent words dropped, absence and conduct-wording flagged for legal review, evidence gaps + disclaimer by code. SVB: complete, 4 risks; 118 tests
+- [x] Step 4.4a: PII redaction guardrail (app/guardrails/pii.py, graph node redact before guard): email, phone, SSN, card (Luhn), IBAN, IP; accession, CIK and dates protected; only counts stored; 122 tests
 
 ## Next (Day 4)
 - [ ] Reliability Sentinel (LLM-as-judge with a different model + deterministic checks: citation supports claim, contradictions,
