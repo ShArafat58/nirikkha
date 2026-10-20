@@ -1,7 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from app.admin.routes import get_admin_store
+from app.admin.routes import get_admin_store, require_admin
 from app.auth.admin import create_or_promote
 from app.auth.deps import get_current_user
 from app.main import app
@@ -36,6 +36,12 @@ class Admin:
     def jobs(self):
         return []
 
+    def demos(self):
+        return [{"id": "c1", "featured": True}]
+
+    def set_featured(self, crash_test_id, featured):
+        return crash_test_id == "c1"
+
     def review_queue(self):
         return [{"crash_test_id": "c1", "finding_id": "MIS-1", "review": None}]
 
@@ -50,15 +56,13 @@ class Admin:
 def admin_client():
     store = Admin()
     app.dependency_overrides[get_admin_store] = lambda: store
-    app.dependency_overrides[get_current_user] = lambda: {"id": "admin-1", "role": "admin", "plan": "enterprise"}
+    app.dependency_overrides[require_admin] = lambda: {"id": "admin-1", "role": "admin", "plan": "enterprise"}
     yield TestClient(app), store
     app.dependency_overrides.clear()
 
 
-def test_only_admins(admin_client):
-    client, _ = admin_client
-    app.dependency_overrides[get_current_user] = lambda: {"id": "u1", "role": "demo", "plan": "free"}
-    assert client.get("/api/admin/overview").status_code == 403
+def test_admin_endpoints_need_a_step_up_token():
+    assert TestClient(app).get("/api/admin/overview").status_code == 401
 
 
 def test_overview_has_labelled_projection_and_unit_economics(admin_client):
@@ -114,3 +118,44 @@ def test_admin_cli_helper():
         assert False
     except ValueError as exc:
         assert "upper-case" in str(exc)
+
+def test_demo_curation(admin_client):
+    client, _ = admin_client
+    assert client.get("/api/admin/demos").json()[0]["featured"] is True
+    assert client.post("/api/admin/demos/c1", json={"featured": False}).json() == {"id": "c1", "featured": False}
+    assert client.post("/api/admin/demos/zz", json={"featured": True}).status_code == 404
+
+
+def test_step_up_flow():
+    from app.auth.deps import get_user_store, secret
+    from app.auth.security import create_token, hash_secret
+
+    class Users:
+        def __init__(self):
+            self.rows = {"a1": {"id": "a1", "role": "admin", "plan": "enterprise", "password_hash": hash_secret("Strong1pass"),
+                                "login_failures": 0, "login_locked_until": None},
+                         "u1": {"id": "u1", "role": "user", "plan": "free", "password_hash": hash_secret("Strong1pass"),
+                                "login_failures": 0, "login_locked_until": None}}
+
+        def get(self, user_id):
+            return self.rows.get(user_id)
+
+        def update(self, user_id, **f):
+            self.rows[user_id].update(f)
+
+    users = Users()
+    app.dependency_overrides[get_user_store] = lambda: users
+    app.dependency_overrides[get_admin_store] = lambda: Admin()
+    try:
+        client = TestClient(app)
+        normal = {"Authorization": f"Bearer {create_token('a1', 'admin', secret())}"}
+        r = client.get("/api/admin/overview", headers=normal)
+        assert r.status_code == 401 and "re-authentication" in r.json()["detail"]
+        assert client.post("/api/admin/session", json={"password": "Wrong1pass"}, headers=normal).status_code == 401
+        step = client.post("/api/admin/session", json={"password": "Strong1pass"}, headers=normal).json()
+        assert step["expires_in"] == 1800
+        assert client.get("/api/admin/overview", headers={"Authorization": f"Bearer {step['token']}"}).status_code == 200
+        user = {"Authorization": f"Bearer {create_token('u1', 'user', secret())}"}
+        assert client.post("/api/admin/session", json={"password": "Strong1pass"}, headers=user).status_code == 403
+    finally:
+        app.dependency_overrides.clear()

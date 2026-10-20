@@ -98,8 +98,16 @@ class PostgresStore:
     def worker_offline(self, worker_id: str) -> None:
         self._one("delete from workers where worker_id = %s", (worker_id,))
 
-    # ---------- companies ----------
+    def list_for_user(self, user_id: str) -> list[dict]:
+        with connect(autocommit=True) as conn:
+            with conn.cursor(row_factory=dict_row) as cur:
+                cur.execute(
+                    "select id::text as id, cik, report->>'company' as company, as_of, decision, status, error, "
+                    "created_at, updated_at, (report->'health'->>'score')::int as score, report->'health'->>'band' as band "
+                    "from crash_tests where user_id::text = %s order by created_at desc limit 50", (user_id,))
+                return cur.fetchall()
 
+    # ---------- companies ----------
     def companies(self) -> list[dict]:
         """Companies with loaded filings, chunk counts and their latest finished Crash-Tests."""
         with connect(autocommit=True) as conn:
@@ -118,7 +126,7 @@ class PostgresStore:
                     "select id::text as id, cik, as_of, decision, source, updated_at, memo is not null as has_memo, "
                     "(report->'health'->>'score')::int as score, report->'health'->>'band' as band, "
                     "(report->'health'->'coverage'->>'pct')::int as coverage_pct "
-                    "from crash_tests where status = 'done' order by updated_at desc limit 100")
+                    "from crash_tests where status = 'done' and featured order by updated_at desc limit 100")
                 runs = cur.fetchall()
         by_cik: dict[str, list[dict]] = {}
         for r in runs:

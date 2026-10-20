@@ -90,9 +90,11 @@ def auth_secret(configured: str, app_env: str) -> str:
     return _dev_secret   # development only: tokens stop working when the process restarts
 
 
-def create_token(user_id: str, role: str, secret: str, ttl: int = TOKEN_TTL_SECONDS, now: int | None = None) -> str:
+def create_token(user_id: str, role: str, secret: str, ttl: int = TOKEN_TTL_SECONDS, now: int | None = None,
+                 extra: dict | None = None) -> str:
     issued = int(now if now is not None else time.time())
-    return jwt.encode({"sub": user_id, "role": role, "iat": issued, "exp": issued + ttl}, secret, algorithm="HS256")
+    payload = {"sub": user_id, "role": role, "iat": issued, "exp": issued + ttl, **(extra or {})}
+    return jwt.encode(payload, secret, algorithm="HS256")
 
 
 def read_token(token: str, secret: str) -> dict | None:

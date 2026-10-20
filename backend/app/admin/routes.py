@@ -1,5 +1,6 @@
-"""Admin API (role admin only).
+"""Admin API (role admin, with step-up re-authentication).
 
+POST /api/admin/session               re-enter the password -> 30-minute admin token (kept in memory by the frontend)
 GET  /api/admin/overview              accounts by plan, projected revenue (labelled), usage, model tokens, unit economics
 GET  /api/admin/users                 accounts with this month's usage
 POST /api/admin/users/{id}/plan       set a plan (e.g. after a pilot is agreed; no payment in the prototype)
@@ -8,6 +9,10 @@ POST /api/admin/plan-requests/{id}    set request status
 GET  /api/admin/jobs                  recent Crash-Tests
 GET  /api/admin/reviews               human review queue (Sentinel-flagged findings, latest decision)
 POST /api/admin/reviews               approve / reject a flagged finding with a note (kept as an audit trail)
+GET  /api/admin/demos                 finished runs and whether each is a public demo
+POST /api/admin/demos/{id}            feature or hide a run as a public demo
+
+Every admin endpoint except /session needs a step-up token: a normal login token is not enough.
 """
 
 from __future__ import annotations
@@ -15,14 +20,19 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Any, Literal
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel, Field
 
-from app.auth.deps import get_current_user
+from app.auth.deps import get_current_user, get_user_store, secret
+from app.auth.routes import _db as _auth_db, _fail, _locked_minutes
+from app.auth.security import create_token, read_token, verify_secret
 from app.business.plans import PLAN_IDS, PLANS, projected_mrr
 from app.db import DatabaseError
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
+
+ADMIN_SESSION_TTL = 30 * 60
+STEP_UP_REQUIRED = "Admin re-authentication required: enter your password again."
 
 
 @lru_cache
@@ -31,8 +41,14 @@ def get_admin_store():
     return PostgresAdminStore()
 
 
-def require_admin(user: dict = Depends(get_current_user)) -> dict:
-    if user.get("role") != "admin":
+def require_admin(authorization: str | None = Header(None), users: Any = Depends(get_user_store)) -> dict:
+    if not authorization or not authorization.lower().startswith("bearer "):
+        raise HTTPException(401, STEP_UP_REQUIRED)
+    claims = read_token(authorization[7:].strip(), secret())
+    if not claims or not claims.get("adm"):
+        raise HTTPException(401, STEP_UP_REQUIRED)
+    user = _auth_db(users.get, claims["sub"])
+    if not user or user.get("role") != "admin":
         raise HTTPException(403, "Admin access only.")
     return user
 
@@ -42,6 +58,10 @@ def _db(fn, *args):
         return fn(*args)
     except DatabaseError as exc:
         raise HTTPException(503, f"Database unavailable: {exc}") from exc
+
+
+class StepUp(BaseModel):
+    password: str = Field(..., max_length=200)
 
 
 class PlanChange(BaseModel):
@@ -59,6 +79,10 @@ class Review(BaseModel):
     note: str | None = Field(None, max_length=1000)
 
 
+class Featured(BaseModel):
+    featured: bool
+
+
 def unit_economics(per_test: dict | None) -> dict:
     per_test = per_test or {}
     revenue = [{"plan": p["id"], "revenue_per_crash_test_usd": round(p["price_usd"] / p["crash_tests_per_month"], 2)}
@@ -73,6 +97,22 @@ def unit_economics(per_test: dict | None) -> dict:
     }
 
 
+@router.post("/session", summary="Step-up: re-enter the password for a 30-minute admin token")
+def admin_session(body: StepUp, user: dict = Depends(get_current_user), users: Any = Depends(get_user_store)) -> dict:
+    if user.get("role") != "admin":
+        raise HTTPException(403, "Admin access only.")
+    fresh = _auth_db(users.get, user["id"]) or user
+    minutes = _locked_minutes(fresh.get("login_locked_until"))
+    if minutes:
+        raise HTTPException(429, f"Too many failed attempts. Try again in {minutes} minute(s).")
+    if not verify_secret(fresh["password_hash"], body.password):
+        _fail(users, fresh, "login")
+        raise HTTPException(401, "Password is incorrect.")
+    _auth_db(users.update, fresh["id"], login_failures=0, login_locked_until=None)
+    return {"token": create_token(fresh["id"], "admin", secret(), ttl=ADMIN_SESSION_TTL, extra={"adm": True}),
+            "expires_in": ADMIN_SESSION_TTL}
+
+
 @router.get("/overview", summary="Business and operations overview")
 def overview(_: dict = Depends(require_admin), store: Any = Depends(get_admin_store)) -> dict:
     data = _db(store.overview)
@@ -85,7 +125,7 @@ def overview(_: dict = Depends(require_admin), store: Any = Depends(get_admin_st
 
 
 @router.get("/users", summary="Accounts with this month's usage")
-def users(_: dict = Depends(require_admin), store: Any = Depends(get_admin_store)) -> list[dict]:
+def users_list(_: dict = Depends(require_admin), store: Any = Depends(get_admin_store)) -> list[dict]:
     return _db(store.users)
 
 
@@ -129,3 +169,16 @@ def add_review(body: Review, admin: dict = Depends(require_admin), store: Any = 
     if review_id is None:
         raise HTTPException(404, "Finding not found in that Crash-Test.")
     return {"id": review_id, "decision": body.decision}
+
+
+@router.get("/demos", summary="Finished runs and whether each is a public demo")
+def demos(_: dict = Depends(require_admin), store: Any = Depends(get_admin_store)) -> list[dict]:
+    return _db(store.demos)
+
+
+@router.post("/demos/{crash_test_id}", summary="Feature or hide a run as a public demo")
+def set_demo(crash_test_id: str, body: Featured, _: dict = Depends(require_admin),
+             store: Any = Depends(get_admin_store)) -> dict:
+    if not _db(store.set_featured, crash_test_id, body.featured):
+        raise HTTPException(404, "Finished Crash-Test not found.")
+    return {"id": crash_test_id, "featured": body.featured}

@@ -28,7 +28,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Response
 from pydantic import BaseModel, Field
 
 from app.agents.memo import to_markdown
-from app.auth.deps import get_optional_user, get_user_store
+from app.auth.deps import get_current_user, get_optional_user, get_user_store
 from app.business.plans import monthly_limit, plan
 from app.config import BACKEND_DIR, get_settings
 from app.db import DatabaseError
@@ -276,3 +276,10 @@ def status(store: Any = Depends(get_store), inline: bool = Depends(get_inline)) 
     return {"live_mode": "worker", "worker_online": worker is not None,
             "worker": {"last_seen": worker["last_seen"], "busy": bool(worker["current_job"])} if worker else None,
             "rerank_enabled": worker["rerank_enabled"] if worker else None}
+
+@router.get("/crash-tests", tags=["crash-tests"], summary="My Crash-Tests (private to the account)")
+def my_crash_tests(user: dict = Depends(get_current_user), store: Any = Depends(get_store)) -> list[dict]:
+    try:
+        return store.list_for_user(user["id"])
+    except DatabaseError as exc:
+        raise HTTPException(503, f"Database unavailable: {exc}") from exc

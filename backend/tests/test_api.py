@@ -44,6 +44,9 @@ class FakeStore:
         self.rows[i].update(status="running", updated_at=now())
         return True
 
+    def list_for_user(self, user_id):
+        return [r for r in self.rows.values() if r.get("user_id") == user_id]
+
     def companies(self):
         return [{"cik": "0000719739", "company": "SVB FINANCIAL GROUP", "filing_count": 4, "chunk_count": 900,
                  "filings": [], "crash_tests": [r for r in self.rows.values() if r["status"] == "done"]}]
@@ -297,3 +300,10 @@ def test_free_plan_limit_is_enforced_and_demo_is_unlimited(client_store):
     app.dependency_overrides[get_optional_user] = lambda: DEMO
     assert start(client, decision="fourth run").status_code == 202
     assert any(row.get("user_id") == "u-demo" for row in store.rows.values())
+
+def test_my_crash_tests_are_private_to_the_account(client_store):
+    client, store = client_store()
+    start(client, decision="Mine")
+    store.create("0000000001", date.today(), "someone else", "h2", user_id="u-other")
+    mine = client.get("/api/crash-tests").json()
+    assert len(mine) == 1 and mine[0]["decision"] == "Mine"

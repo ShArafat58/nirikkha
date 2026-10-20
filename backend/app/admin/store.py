@@ -96,3 +96,14 @@ class PostgresAdminStore:
                         "values (%s, %s, %s, %s, %s) returning id::text as id",
                         (crash_test_id, finding_id, decision, note, reviewer_id))
         return row["id"]
+
+    def demos(self) -> list[dict]:
+        return self._all(
+            "select t.id::text as id, t.cik, t.report->>'company' as company, t.as_of, t.decision, t.featured, t.source, "
+            "t.updated_at, (t.report->'health'->>'score')::int as score, t.report->'health'->>'band' as band, u.email "
+            "from crash_tests t left join users u on u.id = t.user_id where t.status = 'done' "
+            "order by t.featured desc, t.updated_at desc limit 100")
+
+    def set_featured(self, crash_test_id: str, featured: bool) -> bool:
+        return self._one("update crash_tests set featured = %s where id::text = %s and status = 'done' returning id",
+                         (featured, crash_test_id)) is not None

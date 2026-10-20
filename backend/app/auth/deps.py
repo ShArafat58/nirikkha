@@ -7,11 +7,12 @@ from typing import Any
 
 from fastapi import Depends, Header, HTTPException
 
-from app.auth.security import auth_secret, create_token, read_token
+from app.auth.security import TOKEN_TTL_SECONDS, auth_secret, create_token, read_token
 from app.business.plans import monthly_limit
 from app.config import get_settings
 from app.db import DatabaseError
 
+ADMIN_TOKEN_TTL = 2 * 3600          # admins: shorter normal session
 PUBLIC_FIELDS = ("id", "email", "name", "organization", "job_role", "role", "plan", "created_at")
 
 
@@ -52,7 +53,8 @@ def public_user(user: dict) -> dict:
 
 
 def session(user: dict) -> dict:
-    return {"token": create_token(user["id"], user["role"], secret()), "user": public_user(user)}
+    ttl = ADMIN_TOKEN_TTL if user["role"] == "admin" else TOKEN_TTL_SECONDS
+    return {"token": create_token(user["id"], user["role"], secret(), ttl=ttl), "user": public_user(user)}
 
 
 def usage(users: Any, user: dict) -> dict:
