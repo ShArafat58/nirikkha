@@ -25,7 +25,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Response
 from pydantic import BaseModel, Field
 
 from app.agents.memo import to_markdown
-from app.config import BACKEND_DIR
+from app.config import BACKEND_DIR, get_settings
 from app.db import DatabaseError
 from app.guardrails.pii import redact_pii
 
@@ -118,7 +118,8 @@ def execute(job_id: str, cik: str, as_of: date, decision: str, store: Any, runne
             reason = (state.get("guard_result") or {}).get("reason") or "input guard"
             store.update(job_id, status="blocked", events=events, error=f"Blocked by the input guard: {reason}")
         elif state.get("report"):
-            store.update(job_id, status="done", events=events, report=state["report"])
+            mode = "hybrid + cross-encoder rerank" if get_settings().rerank_enabled else "hybrid (reranker disabled on this server)"
+            store.update(job_id, status="done", events=events, report={**state["report"], "retrieval_mode": mode})
         else:
             store.update(job_id, status="failed", events=events, error="The Crash-Test produced no report.")
     except Exception as exc:  # last resort: a job must never stay "running" forever

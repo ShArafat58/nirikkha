@@ -44,6 +44,8 @@ class Settings(BaseSettings):
     # Cross-encoder reranker (local, fastembed) and how many hybrid candidates it re-scores.
     reranker_model: str = "Xenova/ms-marco-MiniLM-L-6-v2"
     rerank_candidates: int = 20
+    # Set RERANK_ENABLED=false on small servers (Render free, 512 MB): hybrid order is kept, recorded in each report.
+    rerank_enabled: bool = True
     embedding_model: str = "gemini-embedding-001"
     embedding_dim: int = 768
     gemini_embed_tpm: int = 25000

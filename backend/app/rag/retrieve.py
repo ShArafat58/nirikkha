@@ -63,6 +63,7 @@ def retrieve(query: str, k: int = 8, cik: str | None = None, before: date | None
              forms: list[str] | None = None, rerank: bool = True) -> tuple[list[Hit], dict]:
     """Return the top-k evidence passages and timings in milliseconds."""
     settings = get_settings()
+    rerank = rerank and settings.rerank_enabled
     timings: dict[str, int] = {}
 
     started = time.perf_counter()

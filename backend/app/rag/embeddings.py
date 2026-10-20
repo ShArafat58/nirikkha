@@ -84,7 +84,8 @@ class LocalEmbedder:
                 from fastembed import TextEmbedding
             except ImportError as exc:
                 raise EmbeddingError("fastembed is not installed. Run: pip install -r requirements-ingest.txt") from exc
-            model = TextEmbedding(model_name=model_name)
+            import os
+            model = TextEmbedding(model_name=model_name, threads=int(os.environ.get("ONNX_THREADS", "0")) or None)
         self.model = model_name
         self._model = model
         self._cache = _DiskCache(cache_dir, f"local|{model_name}")

@@ -57,6 +57,7 @@ def health() -> dict:
         "time_utc": datetime.now(timezone.utc).isoformat(),
         "memory_mb": _memory_mb(),
         "warehouse_snapshot": resolve_db(settings.cache_dir) is not None,
+        "rerank_enabled": settings.rerank_enabled,
         "providers_configured": {
             "groq": bool(settings.groq_api_key),
             "gemini": bool(settings.gemini_api_key),

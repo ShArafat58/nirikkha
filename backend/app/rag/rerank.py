@@ -24,7 +24,8 @@ class CrossEncoderReranker:
                 from fastembed.rerank.cross_encoder import TextCrossEncoder
             except ImportError as exc:
                 raise RerankError("fastembed is not installed. Run: pip install -r requirements-ingest.txt") from exc
-            model = TextCrossEncoder(model_name=model_name)
+            import os
+            model = TextCrossEncoder(model_name=model_name, threads=int(os.environ.get("ONNX_THREADS", "0")) or None)
         self.model_name = model_name
         self._model = model
         self.max_chars = max_chars

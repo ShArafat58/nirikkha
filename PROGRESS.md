@@ -48,6 +48,8 @@ Last updated: 2026-10-20 15:35 (Day 4 in progress - one day ahead of plan)
 - Note: score varies between live runs because judge verdicts vary; the DB run is the frozen demo result
 - [x] Step 4.5c: GET /api/companies, POST+GET /api/crash-tests/{id}/memo (cached in crash_tests.memo, sql/004; unavailable not cached), GET /api/evaluation; 135 tests. Absence regex covers 'undisclosed'; absence statements in memo risks require human review
 - [x] Step 4.5d (part 1): docs/API.md; /health shows memory_mb + warehouse_snapshot; fastembed + onnxruntime pinned in requirements.txt; DuckDB snapshot committed at backend/data/analytics.duckdb (resolve_db: .cache first, then data/). After new ingestion: rebuild warehouse and copy the snapshot. 136 tests
+- Render RAM test 1: full pipeline (2 ONNX models, 20 rerank candidates) peaked ~401 MB then the instance restarted (512 MB limit); job timed out cleanly.
+- [x] Step 4.5f: RERANK_ENABLED, ONNX_THREADS settings; report records retrieval_mode; /health shows rerank_enabled. Retrieval ablation (10 gold questions): hybrid only hit@1 50% / hit@3 70% / MRR 0.567; rerank top-10 80% / 100% / 0.883; rerank top-20 90% / 100% / 0.933
 
 ## Next (Day 4)
 - [ ] Reliability Sentinel (LLM-as-judge with a different model + deterministic checks: citation supports claim, contradictions,
