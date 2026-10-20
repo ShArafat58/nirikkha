@@ -44,6 +44,8 @@ class PostgresAdminStore:
             "crash_tests_this_month": self._one("select count(*)::int as n from crash_tests "
                                                 "where created_at >= date_trunc('month', now())")["n"],
             "open_plan_requests": self._one("select count(*)::int as n from plan_requests where status = 'open'")["n"],
+            "simulated_payments": self._one("select count(*) filter (where amount_usd > 0)::int as n, "
+                                            "coalesce(sum(amount_usd), 0)::float as total_usd from payment_simulations"),
             "model_usage": self._all(
                 "select c->>'model' as model, c->>'node' as node, count(*)::int as calls, "
                 "sum((c->>'input_tokens')::int)::int as input_tokens, sum((c->>'output_tokens')::int)::int as output_tokens, "
