@@ -3,9 +3,11 @@
 import Link from "next/link";
 
 import { useApp } from "../components/providers";
+import { useSession } from "../components/session";
 
 export default function Home() {
   const { t } = useApp();
+  const { signedIn: user } = useSession();
   return (
     <main data-theme="dark" className="bg-landing text-text">
       <section className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-7xl items-center px-5 py-12 sm:px-6 sm:py-16">
@@ -18,9 +20,9 @@ export default function Home() {
                   className="rounded-lg bg-accent px-5 py-3.5 text-center font-semibold text-accent-contrast shadow-lg shadow-accent/20 hover:opacity-90">
               {t("hero.cta")}
             </Link>
-            <Link href="/login?demo=1"
+            <Link href={user ? "/dashboard" : "/login?demo=1"}
                   className="rounded-lg border border-accent/60 bg-bg/40 px-5 py-3.5 text-center font-semibold text-accent backdrop-blur hover:bg-accent/10">
-              {t("hero.demo")}
+              {user ? t("hero.goDashboard") : t("hero.demo")}
             </Link>
             <Link href="/pricing" className="rounded-lg px-5 py-3 text-center font-semibold text-text underline decoration-accent/70 underline-offset-4 hover:text-accent">
               {t("hero.plans")} →

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { IBM_Plex_Mono, IBM_Plex_Sans, Noto_Sans_Bengali } from "next/font/google";
 
 import { Providers } from "../components/providers";
+import { SessionProvider } from "../components/session";
 import { SiteHeader } from "../components/site-header";
 import "./globals.css";
 
@@ -24,10 +25,12 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <head>
         <script dangerouslySetInnerHTML={{ __html: BOOT }} />
       </head>
-      <body className="min-h-screen antialiased">
+      <body className="min-h-screen bg-bg text-text antialiased">
         <Providers>
-          <SiteHeader />
-          {children}
+          <SessionProvider>
+            <SiteHeader />
+            {children}
+          </SessionProvider>
         </Providers>
       </body>
     </html>

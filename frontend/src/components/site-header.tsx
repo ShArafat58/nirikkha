@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 
 import { getStatus, type Status } from "../lib/api";
 import { useApp } from "./providers";
+import { useSession } from "./session";
 
 type ServerState = "checking" | "live" | "demo" | "offline";
 
@@ -26,6 +27,7 @@ export function SiteHeader() {
   const [server, setServer] = useState<ServerState>("checking");
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const { signedIn, signOut } = useSession();
 
   useEffect(() => {
     let alive = true;
@@ -53,7 +55,7 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-bg/90 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 sm:px-6">
-        <Link href="/" className="flex shrink-0 items-center gap-2.5" aria-label="Nirikkha home">
+        <Link href={signedIn ? "/dashboard" : "/"} className="flex shrink-0 items-center gap-2.5" aria-label="Nirikkha home">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/brand/icon.svg" alt="" className="h-9 w-9 sm:h-10 sm:w-10" />
           <span className="flex flex-col leading-none">
@@ -84,10 +86,20 @@ export function SiteHeader() {
           <button type="button" onClick={toggleLang} className={`hidden sm:inline-flex ${ghost}`}>
             {t("lang.toggle")}
           </button>
-          <Link href="/login"
-                className="whitespace-nowrap rounded-md bg-accent px-3 py-1.5 text-sm font-semibold text-accent-contrast hover:opacity-90">
-            {t("nav.login")}
-          </Link>
+          {signedIn ? (
+            <>
+              <Link href="/dashboard"
+                    className="whitespace-nowrap rounded-md bg-accent px-3 py-1.5 text-sm font-semibold text-accent-contrast hover:opacity-90">
+                {t("nav.dashboard")}
+              </Link>
+              <button type="button" onClick={signOut} className={`hidden sm:inline-flex ${ghost}`}>{t("nav.logout")}</button>
+            </>
+          ) : (
+            <Link href="/login"
+                  className="whitespace-nowrap rounded-md bg-accent px-3 py-1.5 text-sm font-semibold text-accent-contrast hover:opacity-90">
+              {t("nav.login")}
+            </Link>
+          )}
           <button type="button" onClick={() => setOpen((v) => !v)}
                   className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border text-text lg:hidden"
                   aria-label="Menu" aria-expanded={open} aria-controls="mobile-menu">
@@ -108,6 +120,7 @@ export function SiteHeader() {
           <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border pt-3">
             <button type="button" onClick={toggleTheme} className={ghost}>{themeLabel}</button>
             <button type="button" onClick={toggleLang} className={ghost}>{t("lang.toggle")}</button>
+            {signedIn && <button type="button" onClick={signOut} className={ghost}>{t("nav.logout")}</button>}
             <span className="inline-flex items-center gap-2 text-xs text-muted">
               <span className={`h-2 w-2 rounded-full ${dot}`} aria-hidden />
               {label}
