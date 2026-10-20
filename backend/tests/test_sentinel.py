@@ -113,3 +113,9 @@ def test_judge_sees_only_llm_findings_and_unknown_ids_ignored():
     assert "REL-1" in seen[0] and "REL-3" not in seen[0]
     assert by_id(rep)["REL-1"]["sentinel"]["verdict"] == "verified"
     assert rep["summary"]["sentinel"]["verified"] == 2
+
+def test_omit_and_lack_count_as_absence_claims():
+    from app.agents.sentinel import ABSENCE
+    assert ABSENCE.search("Public filings omit liquidity ratios")
+    assert ABSENCE.search("the 10-K lacks a table") and ABSENCE.search("the absence of an audit")
+    assert not ABSENCE.search("Becker serves on the board")
