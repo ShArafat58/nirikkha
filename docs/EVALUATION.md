@@ -1,8 +1,25 @@
 # Evaluation
 
-Run: 2026-10-20 15:51 (Asia/Dhaka). Command: `python -m evaluation.run`. No LLM calls; cost $0.
+Run: 2026-10-20 15:52 (Asia/Dhaka). Command: `python -m evaluation.run`. No LLM calls; cost $0.
 
 These are small gold sets used as regression checks, not a statistical benchmark.
+
+## Retrieval (hybrid pgvector + full-text, RRF, cross-encoder rerank, evidence frozen at analysis date)
+
+10 gold questions: **hit@1 90%**, **hit@3 100%**, MRR 0.933, 79.6 s total.
+
+| Question | Company | Rank of first correct passage |
+|---|---|---|
+| Which outside boards does Greg Becker serve on? | SVB | 1 |
+| What fees did the company pay to Cachematrix? | SVB | 1 |
+| How much fee sharing revenue was earned with BlackRock? | SVB | 1 |
+| What is the policy for reviewing related party transactions? | SVB | 1 |
+| Which committee oversees the liquidity management process? | SVB | 1 |
+| Who is the independent registered public accounting firm? | SVB | 1 |
+| Does the audit committee have an audit committee financial expert? | SVB | 3 |
+| How does the board oversee enterprise risk management? | SVB | 1 |
+| Who is the independent registered public accounting firm? | Apple | 1 |
+| Who is the Chief Executive Officer? | Apple | 1 |
 
 ## Guardrails
 
