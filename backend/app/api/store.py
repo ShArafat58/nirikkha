@@ -1,6 +1,7 @@
-"""Crash-Test run store in Supabase Postgres (table crash_tests, sql/003 and sql/004).
+"""Crash-Test run store and job queue in Supabase Postgres (sql/003, 004, 005).
 
 One short connection per call: fine for polling every few seconds on the free tier.
+Workers claim queued jobs with FOR UPDATE SKIP LOCKED, so two workers never take the same job.
 """
 
 from __future__ import annotations
@@ -16,7 +17,8 @@ from app.db import connect
 
 COLUMNS = ("id::text as id, cik, as_of, decision, decision_hash, status, events, report, memo, error, source, "
            "created_at, updated_at")
-ACTIVE_WINDOW = timedelta(minutes=10)   # a queued/running job updated within this window blocks a new live run
+ACTIVE_WINDOW = timedelta(minutes=5)    # a queued/running job updated within this window blocks a new live run
+WORKER_ONLINE_SECONDS = 90              # a worker is online if its heartbeat is newer than this
 UPDATABLE = {"status", "events", "report", "memo", "error", "source"}
 JSON_FIELDS = {"events", "report", "memo"}
 RUNS_PER_COMPANY = 5
@@ -65,6 +67,32 @@ class PostgresStore:
 
     def delete(self, job_id: str) -> None:
         self._one("delete from crash_tests where id = %s", (job_id,))
+
+    # ---------- job queue ----------
+
+    def claim_next(self) -> dict | None:
+        """Atomically take the oldest queued job (status -> running)."""
+        return self._one(
+            "update crash_tests set status = 'running', updated_at = now() where id = ("
+            "  select id from crash_tests where status = 'queued' order by created_at "
+            "  for update skip locked limit 1) "
+            "returning id::text as id, cik, as_of, decision")
+
+    def heartbeat(self, worker_id: str, current_job: str | None, rerank_enabled: bool) -> None:
+        self._one("insert into workers (worker_id, last_seen, current_job, rerank_enabled) values (%s, now(), %s, %s) "
+                  "on conflict (worker_id) do update set last_seen = now(), current_job = excluded.current_job, "
+                  "rerank_enabled = excluded.rerank_enabled", (worker_id, current_job, rerank_enabled))
+
+    def worker_online(self) -> dict | None:
+        return self._one(
+            "select last_seen, current_job::text as current_job, rerank_enabled from workers "
+            "where last_seen > now() - make_interval(secs => %s) order by last_seen desc limit 1",
+            (WORKER_ONLINE_SECONDS,))
+
+    def worker_offline(self, worker_id: str) -> None:
+        self._one("delete from workers where worker_id = %s", (worker_id,))
+
+    # ---------- companies ----------
 
     def companies(self) -> list[dict]:
         """Companies with loaded filings, chunk counts and their latest finished Crash-Tests."""

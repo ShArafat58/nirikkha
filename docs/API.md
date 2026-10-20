@@ -21,6 +21,7 @@ All responses are JSON. Errors use `{"detail": "<human-readable message>"}`; sho
 | POST | `/api/crash-tests/{id}/memo` | Create (or return the cached) legal memo |
 | GET | `/api/crash-tests/{id}/memo` | The cached legal memo (404 if none yet) |
 | GET | `/api/evaluation` | Latest evaluation results |
+| GET | `/api/status` | Live mode (`inline` or `worker`), whether an analysis worker is online, reranker on/off |
 
 ## Start a Crash-Test
 
@@ -129,6 +130,18 @@ Use `crash_tests` to offer precomputed demos that open instantly.
 
 `GET /api/evaluation` returns the latest `python -m evaluation.run` results: `retrieval` (`hit_at_1`, `hit_at_3`, `mrr`, `rows`),
 `injection`, `pii`, `reports` (`rules`, `sentinel`, `health`, `memo`), `run_at`.
+
+## Live modes
+
+| `RUN_JOBS_INLINE` | Who runs a new Crash-Test |
+|---|---|
+| `true` (local default) | The API process itself |
+| `false` (Render free, 512 MB) | The API only queues it. `python -m app.api.worker` on a machine with enough memory claims it, runs the full pipeline and writes progress to the same database. |
+
+In worker mode `POST /api/crash-tests` and `GET /api/crash-tests/{id}` (while `queued`) include `worker_online`.
+If no worker picks a job up within 5 minutes it becomes `failed` with a clear message. Before offering a new live
+analysis, call `GET /api/status`; when `worker_online` is false, offer the precomputed demos instead.
+Each finished report states its `retrieval_mode`.
 
 ## Changing the API
 

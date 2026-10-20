@@ -50,6 +50,8 @@ Last updated: 2026-10-20 15:35 (Day 4 in progress - one day ahead of plan)
 - [x] Step 4.5d (part 1): docs/API.md; /health shows memory_mb + warehouse_snapshot; fastembed + onnxruntime pinned in requirements.txt; DuckDB snapshot committed at backend/data/analytics.duckdb (resolve_db: .cache first, then data/). After new ingestion: rebuild warehouse and copy the snapshot. 136 tests
 - Render RAM test 1: full pipeline (2 ONNX models, 20 rerank candidates) peaked ~401 MB then the instance restarted (512 MB limit); job timed out cleanly.
 - [x] Step 4.5f: RERANK_ENABLED, ONNX_THREADS settings; report records retrieval_mode; /health shows rerank_enabled. Retrieval ablation (10 gold questions): hybrid only hit@1 50% / hit@3 70% / MRR 0.567; rerank top-10 80% / 100% / 0.883; rerank top-20 90% / 100% / 0.933
+- Render RAM test 2 (1 ONNX thread, 10 candidates): still exceeded 512 MB -> Render only queues.
+- [x] Step 4.6: job queue + analysis worker. RUN_JOBS_INLINE=false on Render; sql/005 workers heartbeat; claim with FOR UPDATE SKIP LOCKED; GET /api/status; 5-min no-worker timeout; python -m app.api.worker runs the full pipeline locally; 141 tests
 
 ## Next (Day 4)
 - [ ] Reliability Sentinel (LLM-as-judge with a different model + deterministic checks: citation supports claim, contradictions,

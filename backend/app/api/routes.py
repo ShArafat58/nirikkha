@@ -6,7 +6,10 @@ POST /api/crash-tests/{id}/memo    create (or return the cached) legal memo for 
 GET  /api/crash-tests/{id}/memo    the cached legal memo
 GET  /api/companies                companies with loaded filings and their latest finished Crash-Tests
 GET  /api/evaluation               latest evaluation results (python -m evaluation.run)
+GET  /api/status                   live mode (inline or worker) and whether an analysis worker is online
 
+Live modes: RUN_JOBS_INLINE=true runs the Crash-Test inside the API process. RUN_JOBS_INLINE=false (Render free,
+512 MB) only queues it; `python -m app.api.worker` on a machine with enough memory runs it with the full pipeline.
 The decision text is whitespace-normalized and PII-redacted BEFORE it is hashed, stored or sent to any model.
 Only one live run at a time (free-tier memory and token limits); a busy server answers 429 with a clear message.
 """
@@ -34,8 +37,11 @@ router = APIRouter(prefix="/api")
 PIPELINE = ["redact", "guard", "collect", "plan", "gather", "analyze", "relationship", "consistency", "regulatory",
             "missing_evidence", "merge", "sentinel", "score"]
 STALE_AFTER = timedelta(minutes=15)
+QUEUE_TIMEOUT = timedelta(minutes=5)
 MAX_DECISION_CHARS = 1500
 EVALUATION_FILE = BACKEND_DIR / "evaluation" / "results.json"
+NO_WORKER = ("No analysis worker picked up this Crash-Test within 5 minutes. Open a precomputed demo, "
+             "or try again when the analysis worker is online.")
 
 Runner = Callable[[str, date, str, Callable[[list[dict]], None]], dict]
 MemoWriter = Callable[[dict], dict]
@@ -53,6 +59,7 @@ class CrashTestStarted(BaseModel):
     id: str
     status: str
     cached: bool
+    worker_online: bool | None = None
 
 
 def normalize_cik(raw: str) -> str:
@@ -71,6 +78,10 @@ def decision_key(decision: str) -> tuple[str, str]:
 def get_store():
     from app.api.store import PostgresStore
     return PostgresStore()
+
+
+def get_inline() -> bool:
+    return get_settings().run_jobs_inline
 
 
 def graph_runner(cik: str, as_of: date, decision: str, on_event: Callable[[list[dict]], None]) -> dict:
@@ -130,6 +141,13 @@ def execute(job_id: str, cik: str, as_of: date, decision: str, store: Any, runne
             pass
 
 
+def _worker(store: Any) -> dict | None:
+    try:
+        return store.worker_online()
+    except DatabaseError:
+        return None
+
+
 def _row(store: Any, job_id: str) -> dict:
     try:
         uuid.UUID(job_id)
@@ -147,7 +165,8 @@ def _row(store: Any, job_id: str) -> dict:
 @router.post("/crash-tests", response_model=CrashTestStarted, status_code=202, tags=["crash-tests"],
              summary="Start a Crash-Test (or return the cached one)")
 def start_crash_test(req: CrashTestRequest, background: BackgroundTasks, response: Response,
-                     store: Any = Depends(get_store), runner: Runner = Depends(get_runner)) -> CrashTestStarted:
+                     store: Any = Depends(get_store), runner: Runner = Depends(get_runner),
+                     inline: bool = Depends(get_inline)) -> CrashTestStarted:
     cik = normalize_cik(req.cik)
     as_of = req.as_of or date.today()
     if as_of > date.today():
@@ -163,17 +182,25 @@ def start_crash_test(req: CrashTestRequest, background: BackgroundTasks, respons
         job_id = store.create(cik, as_of, decision, key)
     except DatabaseError as exc:
         raise HTTPException(503, f"Database unavailable: {exc}") from exc
-    background.add_task(execute, job_id, cik, as_of, decision, store, runner)
-    return CrashTestStarted(id=job_id, status="queued", cached=False)
+    if inline:
+        background.add_task(execute, job_id, cik, as_of, decision, store, runner)
+        return CrashTestStarted(id=job_id, status="queued", cached=False)
+    return CrashTestStarted(id=job_id, status="queued", cached=False, worker_online=_worker(store) is not None)
 
 
 @router.get("/crash-tests/{job_id}", tags=["crash-tests"],
             summary="Poll a Crash-Test: status, live node events, report when done")
-def get_crash_test(job_id: str, store: Any = Depends(get_store)) -> dict:
+def get_crash_test(job_id: str, store: Any = Depends(get_store), inline: bool = Depends(get_inline)) -> dict:
     row = _row(store, job_id)
-    if row["status"] in ("queued", "running") and datetime.now(timezone.utc) - row["updated_at"] > STALE_AFTER:
+    now = datetime.now(timezone.utc)
+    if not inline and row["status"] == "queued" and now - row["created_at"] > QUEUE_TIMEOUT:
+        row["status"], row["error"] = "failed", NO_WORKER
+        store.update(job_id, status="failed", error=NO_WORKER)
+    elif row["status"] in ("queued", "running") and now - row["updated_at"] > STALE_AFTER:
         row["status"], row["error"] = "failed", "Timed out: no progress for 15 minutes."
         store.update(job_id, status="failed", error=row["error"])
+    if row["status"] == "queued" and not inline:
+        row["worker_online"] = _worker(store) is not None
     row["pipeline"] = PIPELINE
     row["done_nodes"] = sorted({e.get("node") for e in row.get("events") or [] if e.get("node")},
                                key=lambda n: PIPELINE.index(n) if n in PIPELINE else 99)
@@ -218,3 +245,14 @@ def evaluation() -> dict:
     if not EVALUATION_FILE.exists():
         raise HTTPException(404, "No evaluation results yet. Run: python -m evaluation.run")
     return json.loads(EVALUATION_FILE.read_text(encoding="utf-8"))
+
+
+@router.get("/status", tags=["status"], summary="Live mode and analysis worker status")
+def status(store: Any = Depends(get_store), inline: bool = Depends(get_inline)) -> dict:
+    if inline:
+        return {"live_mode": "inline", "worker_online": True, "worker": None,
+                "rerank_enabled": get_settings().rerank_enabled}
+    worker = _worker(store)
+    return {"live_mode": "worker", "worker_online": worker is not None,
+            "worker": {"last_seen": worker["last_seen"], "busy": bool(worker["current_job"])} if worker else None,
+            "rerank_enabled": worker["rerank_enabled"] if worker else None}

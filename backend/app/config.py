@@ -46,6 +46,9 @@ class Settings(BaseSettings):
     rerank_candidates: int = 20
     # Set RERANK_ENABLED=false on small servers (Render free, 512 MB): hybrid order is kept, recorded in each report.
     rerank_enabled: bool = True
+    # true: the API process runs Crash-Tests itself. false (Render): jobs are queued in Postgres and run by
+    # 'python -m app.api.worker' on a machine with enough memory.
+    run_jobs_inline: bool = True
     embedding_model: str = "gemini-embedding-001"
     embedding_dim: int = 768
     gemini_embed_tpm: int = 25000

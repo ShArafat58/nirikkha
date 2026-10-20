@@ -4,7 +4,7 @@ from datetime import date, datetime, timedelta, timezone
 import pytest
 from fastapi.testclient import TestClient
 
-from app.api.routes import get_memo_writer, get_runner, get_store
+from app.api.routes import execute, get_inline, get_memo_writer, get_runner, get_store
 from app.main import app
 
 
@@ -90,7 +90,7 @@ def test_same_decision_is_served_from_cache(client_store):
     client, _ = client_store()
     first = start(client, decision="Deposit  partnership").json()
     again = client.post("/api/crash-tests", json={"cik": "0000719739", "as_of": "2023-03-10", "decision": "deposit partnership "})
-    assert again.status_code == 200 and again.json() == {"id": first["id"], "status": "done", "cached": True}
+    assert again.status_code == 200 and again.json() == {"id": first["id"], "status": "done", "cached": True, "worker_online": None}
 
 
 def test_decision_is_redacted_before_storage_and_model(client_store):
@@ -181,3 +181,67 @@ def test_companies_lists_finished_runs(client_store):
 def test_evaluation_results_are_served():
     r = TestClient(app).get("/api/evaluation")
     assert r.status_code == 200 and "pii" in r.json() and "injection" in r.json()
+
+class QueueStore(FakeStore):
+    def __init__(self, worker=True):
+        super().__init__()
+        self.worker = worker
+
+    def claim_next(self):
+        queued = sorted((r for r in self.rows.values() if r["status"] == "queued"), key=lambda r: r["created_at"])
+        if not queued:
+            return None
+        queued[0].update(status="running", updated_at=now())
+        return {k: queued[0][k] for k in ("id", "cik", "as_of", "decision")}
+
+    def worker_online(self):
+        return {"last_seen": now(), "current_job": None, "rerank_enabled": True} if self.worker else None
+
+
+def queue_client(store):
+    app.dependency_overrides[get_store] = lambda: store
+    app.dependency_overrides[get_inline] = lambda: False
+    app.dependency_overrides[get_runner] = lambda: ok_runner
+    return TestClient(app)
+
+
+def test_queue_mode_only_queues_then_worker_runs_it():
+    store = QueueStore()
+    try:
+        client = queue_client(store)
+        r = start(client, decision="Deposit partnership").json()
+        assert r["status"] == "queued" and r["worker_online"] is True
+        assert store.rows[r["id"]]["status"] == "queued"            # the API did not run it
+        job = store.claim_next()
+        assert job["id"] == r["id"] and store.claim_next() is None   # claimed once
+        execute(job["id"], job["cik"], job["as_of"], job["decision"], store, ok_runner)
+        polled = client.get(f"/api/crash-tests/{r['id']}").json()
+        assert polled["status"] == "done" and polled["report"]["retrieval_mode"].startswith("hybrid")
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_queued_job_without_worker_fails_after_timeout():
+    store = QueueStore(worker=False)
+    try:
+        client = queue_client(store)
+        r = start(client).json()
+        assert r["worker_online"] is False
+        assert client.get(f"/api/crash-tests/{r['id']}").json()["worker_online"] is False
+        store.rows[r["id"]]["created_at"] = now() - timedelta(minutes=6)
+        job = client.get(f"/api/crash-tests/{r['id']}").json()
+        assert job["status"] == "failed" and "No analysis worker" in job["error"]
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_status_endpoint_reports_worker():
+    try:
+        client = queue_client(QueueStore(worker=True))
+        s = client.get("/api/status").json()
+        assert s["live_mode"] == "worker" and s["worker_online"] is True and s["rerank_enabled"] is True
+        app.dependency_overrides[get_store] = lambda: QueueStore(worker=False)
+        s = client.get("/api/status").json()
+        assert s["worker_online"] is False and s["worker"] is None
+    finally:
+        app.dependency_overrides.clear()
