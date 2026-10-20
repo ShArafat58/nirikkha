@@ -37,6 +37,12 @@ class FakeStore:
     def get(self, i):
         return self.rows.get(i)
 
+    def claim(self, i):
+        if self.rows[i]["status"] != "queued":
+            return False
+        self.rows[i].update(status="running", updated_at=now())
+        return True
+
     def companies(self):
         return [{"cik": "0000719739", "company": "SVB FINANCIAL GROUP", "filing_count": 4, "chunk_count": 900,
                  "filings": [], "crash_tests": [r for r in self.rows.values() if r["status"] == "done"]}]
@@ -245,3 +251,12 @@ def test_status_endpoint_reports_worker():
         assert s["worker_online"] is False and s["worker"] is None
     finally:
         app.dependency_overrides.clear()
+
+def test_inline_run_skips_a_job_a_worker_already_claimed(client_store):
+    from app.api.routes import execute_claimed
+    client, store = client_store()
+    i = store.create("0000719739", date(2023, 3, 10), "d", "h")
+    store.rows[i]["status"] = "running"            # a worker claimed it first
+    calls = []
+    execute_claimed(i, "0000719739", date(2023, 3, 10), "d", store, lambda *a: calls.append(1) or {})
+    assert calls == [] and store.rows[i]["status"] == "running"

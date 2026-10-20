@@ -70,6 +70,11 @@ class PostgresStore:
 
     # ---------- job queue ----------
 
+    def claim(self, job_id: str) -> bool:
+        """Atomically take one specific queued job; False if someone else already took it."""
+        return self._one("update crash_tests set status = 'running', updated_at = now() "
+                         "where id = %s and status = 'queued' returning id::text as id", (job_id,)) is not None
+
     def claim_next(self) -> dict | None:
         """Atomically take the oldest queued job (status -> running)."""
         return self._one(

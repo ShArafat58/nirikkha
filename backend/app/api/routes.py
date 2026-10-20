@@ -141,6 +141,16 @@ def execute(job_id: str, cik: str, as_of: date, decision: str, store: Any, runne
             pass
 
 
+def execute_claimed(job_id: str, cik: str, as_of: date, decision: str, store: Any, runner: Runner) -> None:
+    """Inline mode: run only if this process wins the atomic claim (a worker may have taken the job first)."""
+    try:
+        if not store.claim(job_id):
+            return
+    except DatabaseError:
+        return
+    execute(job_id, cik, as_of, decision, store, runner)
+
+
 def _worker(store: Any) -> dict | None:
     try:
         return store.worker_online()
@@ -183,7 +193,7 @@ def start_crash_test(req: CrashTestRequest, background: BackgroundTasks, respons
     except DatabaseError as exc:
         raise HTTPException(503, f"Database unavailable: {exc}") from exc
     if inline:
-        background.add_task(execute, job_id, cik, as_of, decision, store, runner)
+        background.add_task(execute_claimed, job_id, cik, as_of, decision, store, runner)
         return CrashTestStarted(id=job_id, status="queued", cached=False)
     return CrashTestStarted(id=job_id, status="queued", cached=False, worker_online=_worker(store) is not None)
 
