@@ -7,11 +7,11 @@ Status: `planned` -> `built` (in repo) -> `verified` (checked live / in form).
 | Section | Max | Built | Verified |
 |---|---|---|---|
 | Basics | 149 | 27 | 0 |
-| AI Detail Usage | 232 (brief table sums 237 - confirm with live form) | 59 | 0 |
+| AI Detail Usage | 232 (brief table sums 237 - confirm with live form) | 71 | 0 |
 | Links | 17 | 3 | 0 |
 | Build Provenance | 20 | 3 | 0 |
 | Team | 7 | - | - |
-| **Total** | **425** | **92** | **0** |
+| **Total** | **425** | **104** | **0** |
 
 ## Basics (149)
 | # | Field | Pts | What we build / write | Evidence path | Status |
@@ -74,8 +74,8 @@ Status: `planned` -> `built` (in repo) -> `verified` (checked live / in form).
 | A26 | Agent orchestration notes (>=80) | 5 | Real description (2+3) | `docs/AI_DETAILS.md` | planned |
 | A27 | AI-DLC frameworks + process notes | 18 | AGENTS.md (root + frontend), SPEC.md, PROGRESS.md really followed (3+8+3+4) | `AGENTS.md`, `docs/SPEC.md` | built (partial) |
 | A28 | Fine-tuning (>=80) | 4 | Small LoRA on Colab/Kaggle (2+2) | `notebooks/` | planned |
-| A29 | Evaluation (>=80) | 6 | 98 pytest tests, quote verification rate, LLM-as-judge (Sentinel, different model than analyst), Replay (3+3) | `backend/tests/`, `notebooks/` | planned |
-| A30 | Guardrails (>=80) | 6 | Built so far: input guard (heuristic + safety model), JSON/Pydantic output validation, quote + evidence-id verification. Reliability Sentinel (source, period, sufficiency, contradiction, judge support, human review). Planned: PII redaction | `backend/app/agents/graph.py`, `backend/app/graph/extract.py` | planned |
+| A29 | Evaluation (>=80) | 6 | 98 pytest tests, quote verification rate, LLM-as-judge (Sentinel, different model than analyst), evaluation suite: retrieval hit@1 90% / hit@3 100% / MRR 0.933 on 10 gold questions, guardrail sets, rule regression, memo citation pass rate; Replay to add (3+3) | `backend/evaluation/`, `docs/EVALUATION.md`, `backend/tests/` | built |
+| A30 | Guardrails (>=80) | 6 | Built so far: input guard (heuristic + safety model), JSON/Pydantic output validation, quote + evidence-id verification. Reliability Sentinel (source, period, sufficiency, contradiction, judge support, human review), PII redaction node (Luhn, protected accession/CIK/dates), legal-memo wording guardrails | `backend/app/guardrails/`, `backend/app/agents/sentinel.py`, `backend/app/agents/memo.py` | built |
 | A31 | Open-source tools + other notes | 4 | Real list (3+1) | `docs/AI_DETAILS.md` | planned |
 
 Note: A1-A31 as listed in the brief sum to 237; the form says 232. Fix rows after checking the live form.
@@ -111,4 +111,4 @@ Note: A1-A31 as listed in the brief sum to 237; the form says 232. Fix rows afte
 | T3 | >=1 female member | done |
 
 Built total = Basics (B1 1 + B9 5 + B10 3 + B11 3 + B12 2 + B13 3 + B14 1 + B15 4 + B16 2 + B18 3 = 27)
-+ AI (A1 15 + A3 5 + A4 10 + A10 12 + A11 5 + A12 5 + A13 3 + A14 3 + A25 1 = 59) + Links (3) + Provenance (3) = 92.
++ AI (A1 15 + A29 6 + A30 6 + A3 5 + A4 10 + A10 12 + A11 5 + A12 5 + A13 3 + A14 3 + A25 1 = 71) + Links (3) + Provenance (3) = 104.

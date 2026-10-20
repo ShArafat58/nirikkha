@@ -43,6 +43,7 @@ Last updated: 2026-10-20 15:35 (Day 4 in progress - one day ahead of plan)
 - [x] Step 4.3a: Crash-Test Report sections (report.py): 4 sections, EDGAR source links, rules law -> best practice -> internal, de-duplicated actions, human review first; 109 tests
 - [x] Step 4.3b: Legal memo (memo.py, prompt legal_memo.v3, gpt-oss-120b). Code verifies: >=2 known finding ids per risk, rules only from the evaluated Reg S-K list with exact meanings, intent words dropped, absence and conduct-wording flagged for legal review, evidence gaps + disclaimer by code. SVB: complete, 4 risks; 118 tests
 - [x] Step 4.4a: PII redaction guardrail (app/guardrails/pii.py, graph node redact before guard): email, phone, SSN, card (Luhn), IBAN, IP; accession, CIK and dates protected; only counts stored; 122 tests
+- [x] Step 4.4b: Evaluation suite (python -m evaluation.run -> docs/EVALUATION.md): retrieval hit@1 90%, hit@3 100%, MRR 0.933; injection 6/6 (optimistic), PII 8/8 with 0/6 false positives; rule regression OK
 
 ## Next (Day 4)
 - [ ] Reliability Sentinel (LLM-as-judge with a different model + deterministic checks: citation supports claim, contradictions,
@@ -57,7 +58,7 @@ Last updated: 2026-10-20 15:35 (Day 4 in progress - one day ahead of plan)
 - Frontend: https://nirikkha.vercel.app | Backend: https://nirikkha-api.onrender.com (/health, /docs)
 
 ## Score
-- See `docs/SCORE_LEDGER.md`. Built: 92 / 425. Verified: 0 / 425.
+- See `docs/SCORE_LEDGER.md`. Built: 104 / 425. Verified: 0 / 425.
 
 ## Known issues / risks
 - Crash-Test takes ~2.5 min locally (14 retrievals over BD -> Asia-Pacific network) -> precompute demo companies; measure on Render.

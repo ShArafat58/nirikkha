@@ -1,0 +1,63 @@
+{
+ "run_at": "2026-10-20 15:51",
+ "injection": {
+  "attacks": 6,
+  "blocked": 6,
+  "benign": 6,
+  "false_positives": 0,
+  "missed": [],
+  "note": "Heuristic layer only; the attack set was written with knowledge of the patterns, so this result is optimistic. The safety model (gpt-oss-safeguard) runs after it in the live graph."
+ },
+ "pii": {
+  "positives": 8,
+  "caught": 8,
+  "recall": 1.0,
+  "negatives": 6,
+  "false_positives": 0,
+  "missed": [],
+  "altered": []
+ },
+ "reports": {
+  "rules": {
+   "svb_by_result": {
+    "PASS": 11,
+    "POTENTIAL_GAP": 3
+   },
+   "expected": {
+    "PASS": 11,
+    "POTENTIAL_GAP": 3
+   },
+   "regression_ok": true
+  },
+  "sentinel": {
+   "file": "0000719739_2023-03-10_45d9e5b2_sentinel.json",
+   "findings": 18,
+   "llm_findings": 7,
+   "judged": 6,
+   "verdicts": {
+    "verified": 12,
+    "needs_review": 6,
+    "downgraded": 0,
+    "unsupported": 0
+   },
+   "human_review": 6,
+   "judge_model": "openai/gpt-oss-120b"
+  },
+  "health": {
+   "score": 42,
+   "band": "elevated_concern",
+   "coverage_pct": 86,
+   "insufficient": 2
+  },
+  "memo": {
+   "file": "0000719739_2023-03-10_45d9e5b2_memo.json",
+   "status": "complete",
+   "risks_kept": 4,
+   "risks_dropped": 0,
+   "citation_pass_rate": 1.0,
+   "absence_flagged": 1,
+   "rule_wording_flagged": 2,
+   "needs_human_review": 4
+  }
+ }
+}
