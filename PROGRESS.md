@@ -40,6 +40,7 @@ Last updated: 2026-10-20 15:35 (Day 4 in progress - one day ahead of plan)
 - [x] Day 3: LLM router + budgets, governance extraction + Neo4j graph, Rule Engine, LangGraph Crash-Test with analyst; 90 tests
 - [x] Step 4.1: AI Reliability Sentinel (sentinel.py, judge gpt-oss-120b in batches of 4, node merge -> sentinel). SVB: 12 verified, 6 human review, 0 judge errors; 98 tests
 - [x] Step 4.2: Explainable Health Score (score.py, node sentinel -> score). SVB as of 2023-03-10: 42/100 elevated_concern, coverage 86%, 2 insufficient, 6 human review, relationship capped at 30; 105 tests
+- [x] Step 4.3a: Crash-Test Report sections (report.py): 4 sections, EDGAR source links, rules law -> best practice -> internal, de-duplicated actions, human review first; 109 tests
 
 ## Next (Day 4)
 - [ ] Reliability Sentinel (LLM-as-judge with a different model + deterministic checks: citation supports claim, contradictions,

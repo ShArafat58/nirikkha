@@ -40,6 +40,7 @@ from app.agents.findings import (
     Finding, consistency_findings, missing_evidence_findings, number_findings, regulatory_findings,
     relationship_findings,
 )
+from app.agents.report import build_sections
 from app.agents.score import health_score
 from app.agents.sentinel import review_findings
 from app.llm.client import LLMError
@@ -248,7 +249,7 @@ def build_graph(services: Services):
         health = health_score(state["report"])
         message = (f"Health {health['score']}/100 ({health['band']}), coverage {health['coverage']['pct']}%, "
                    f"{health['insufficient_evidence']['count']} insufficient")
-        return {"report": {**state["report"], "health": health}, "events": [_event("score", message, started)]}
+        return {"report": {**state["report"], "health": health, "sections": build_sections(state["report"])}, "events": [_event("score", message, started)]}
 
     graph = StateGraph(CrashTestState)
     graph.add_node("guard", guard)
