@@ -88,3 +88,32 @@ def test_parse_json_handles_fences_and_prose():
     assert parse_json('```json\n{"x": 2}\n```') == {"x": 2}
     assert parse_json('Here you go: {"y": 3} thanks') == {"y": 3}
     assert parse_json("no json here") is None
+
+def test_daily_budget_used_skips_provider_without_calling_it():
+    groq_calls = []
+
+    def handler(request):
+        if "groq" in request.url.host:
+            groq_calls.append(request)
+            return groq_ok("should not be called")
+        return gemini_ok("gemini answer")
+
+    client = LLMClient(groq_key="gk", gemini_key="mk", routes=ROUTES,
+                       limits={"g-model": {"rpm": 30, "tpm": 8000, "tpd": 10}},
+                       transport=httpx.MockTransport(handler))
+    result = client.complete("t", MSG, max_tokens=50)
+    assert result.provider == "gemini"
+    assert groq_calls == []
+    assert "daily token budget used" in result.attempts[0]
+
+
+def test_minute_window_waits_then_calls():
+    sleeps = []
+    client = LLMClient(groq_key="gk", gemini_key="mk", routes=ROUTES,
+                       limits={"g-model": {"rpm": 30, "tpm": 70, "tpd": 0}},
+                       transport=httpx.MockTransport(lambda r: groq_ok("ok")),
+                       sleep=sleeps.append, clock=lambda: 1000.0, max_wait=120)
+    client.complete("t", MSG, max_tokens=50, use_cache=False)
+    second = client.complete("t", MSG, max_tokens=50, use_cache=False)
+    assert second.provider == "groq"
+    assert sleeps and sleeps[0] > 0

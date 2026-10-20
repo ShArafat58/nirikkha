@@ -1,16 +1,20 @@
-"""LLM client with task-based model routing, fallback, response cache and usage logging.
+"""LLM client with task-based model routing, rate-limit budgets, fallback, response cache and usage log.
 
 Providers: Groq (OpenAI-compatible API), Gemini (generateContent), Ollama (local, optional).
-Each task has an ordered route. If a provider fails (rate limit, server error, timeout,
-empty or invalid JSON output) the next one is tried, so the demo never dies.
+Each task has an ordered route. Before calling a model, the client checks that model's
+per-minute and per-day budget (LIMITS): it waits briefly if the minute window is full,
+or skips to the next model if the wait is too long or the daily tokens are used up.
+If a provider fails (rate limit, server error, timeout, empty or invalid JSON output)
+the next one is tried, so the demo never dies.
 
-Every call is logged to backend/.cache/llm_usage.jsonl: task, provider, model, tokens,
-latency, cache hit and cost. Free-tier calls cost $0; PRICES (USD per 1M tokens) is left
-empty on purpose and is only filled from the providers' official pricing pages.
+Every call is logged to backend/.cache/llm_usage.jsonl (task, provider, model, tokens,
+latency, cache hit, cost). Daily budgets are rebuilt from this log on start.
+Free-tier calls cost $0; PRICES (USD per 1M tokens) is filled only from official pricing pages.
 
 Run directly:
     python -m app.llm.client --task fast "Reply with exactly one word: ok"
-    python -m app.llm.client --task extract --json "Return JSON with keys name and role for: Laura Izurieta, Chief Risk Officer"
+    python -m app.llm.client --task extract --json "Return JSON with keys name and role for: ..."
+    python -m app.llm.client --budget
 """
 
 from __future__ import annotations
@@ -21,9 +25,11 @@ import json
 import re
 import sys
 import time
+from collections import deque
 from dataclasses import asdict, dataclass, field
+from datetime import date
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 import httpx
 
@@ -35,10 +41,24 @@ GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:ge
 ROUTES: dict[str, list[tuple[str, str]]] = {
     "reason": [("groq", "openai/gpt-oss-120b"), ("gemini", "gemini-2.5-flash"), ("ollama", "qwen2.5:3b")],
     "fast": [("groq", "openai/gpt-oss-20b"), ("gemini", "gemini-2.5-flash-lite"), ("ollama", "qwen2.5:3b")],
-    "extract": [("groq", "qwen/qwen3.8-27b"), ("gemini", "gemini-2.5-flash"), ("ollama", "qwen2.5:3b")],
+    "extract": [("groq", "qwen/qwen3.8-27b"), ("groq", "openai/gpt-oss-20b"), ("gemini", "gemini-2.5-flash"),
+                ("ollama", "qwen2.5:3b")],
     "safety": [("groq", "openai/gpt-oss-safeguard-20b"), ("groq", "openai/gpt-oss-20b")],
     "bangla": [("gemini", "gemini-2.5-flash"), ("groq", "qwen/qwen3.8-27b")],
 }
+
+# Free-tier limits. Groq values measured on 2026-10-20 at console.groq.com/settings/limits.
+# Gemini values are ASSUMED (not visible on ai.dev/rate-limit for this project) and kept conservative.
+# tpd = 0 means no client-side daily token cap.
+LIMITS: dict[str, dict[str, int]] = {
+    "openai/gpt-oss-120b": {"rpm": 30, "tpm": 8000, "tpd": 200000},
+    "openai/gpt-oss-20b": {"rpm": 30, "tpm": 8000, "tpd": 200000},
+    "qwen/qwen3.8-27b": {"rpm": 30, "tpm": 8000, "tpd": 200000},
+    "openai/gpt-oss-safeguard-20b": {"rpm": 3, "tpm": 2000, "tpd": 200000},
+    "gemini-2.5-flash": {"rpm": 10, "tpm": 250000, "tpd": 0},
+    "gemini-2.5-flash-lite": {"rpm": 15, "tpm": 250000, "tpd": 0},
+}
+SAFETY_MARGIN = 0.9  # use at most 90% of each limit
 
 # USD per 1M tokens: {"model": (input, output)}. Empty = free tier, cost $0. Fill only from official pricing pages.
 PRICES: dict[str, tuple[float, float]] = {}
@@ -92,6 +112,65 @@ def cost_usd(model: str, input_tokens: int, output_tokens: int) -> float:
     return round(input_tokens / 1e6 * price[0] + output_tokens / 1e6 * price[1], 6)
 
 
+def estimate_request_tokens(messages: list[dict[str, str]], max_tokens: int) -> int:
+    """Upper-bound estimate used for budgeting: prompt (~3 chars/token) + max output."""
+    return sum(len(m["content"]) for m in messages) // 3 + max_tokens
+
+
+class _Budget:
+    """Per-model rolling minute window + per-day token totals."""
+
+    def __init__(self, limits: dict[str, dict[str, int]], clock: Callable[[], float] = time.monotonic) -> None:
+        self.limits = limits
+        self.clock = clock
+        self.window: dict[str, deque[tuple[float, int]]] = {}
+        self.day = date.today()
+        self.day_tokens: dict[str, int] = {}
+
+    def _roll_day(self) -> None:
+        if date.today() != self.day:
+            self.day = date.today()
+            self.day_tokens = {}
+
+    def wait_seconds(self, model: str, est_tokens: int) -> float | None:
+        """0 = go now; >0 = seconds to wait for the minute window; None = daily budget used up."""
+        limit = self.limits.get(model)
+        if not limit:
+            return 0.0
+        self._roll_day()
+        tpd = limit.get("tpd", 0)
+        if tpd and self.day_tokens.get(model, 0) + est_tokens > tpd * SAFETY_MARGIN:
+            return None
+        now = self.clock()
+        win = self.window.setdefault(model, deque())
+        while win and now - win[0][0] >= 60:
+            win.popleft()
+        used = sum(t for _, t in win)
+        rpm_ok = len(win) < limit.get("rpm", 10**9) * SAFETY_MARGIN
+        tpm_ok = used + est_tokens <= limit.get("tpm", 10**12) * SAFETY_MARGIN
+        if (rpm_ok and tpm_ok) or not win:
+            return 0.0
+        return max(0.5, 60 - (now - win[0][0]) + 0.5)
+
+    def record(self, model: str, tokens: int) -> None:
+        self._roll_day()
+        self.window.setdefault(model, deque()).append((self.clock(), tokens))
+        self.day_tokens[model] = self.day_tokens.get(model, 0) + tokens
+
+    def load_today(self, usage_log: Path | None) -> None:
+        if usage_log is None or not usage_log.exists():
+            return
+        today = date.today().isoformat()
+        for line in usage_log.read_text(encoding="utf-8").splitlines():
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if row.get("ts", "").startswith(today) and not row.get("cached"):
+                model = row.get("model", "")
+                self.day_tokens[model] = self.day_tokens.get(model, 0) + row.get("input_tokens", 0) + row.get("output_tokens", 0)
+
+
 class LLMClient:
     def __init__(
         self,
@@ -102,7 +181,11 @@ class LLMClient:
         usage_log: Path | None = None,
         transport: httpx.BaseTransport | None = None,
         routes: dict[str, list[tuple[str, str]]] | None = None,
+        limits: dict[str, dict[str, int]] | None = None,
         timeout: float = 90.0,
+        max_wait: float = 20.0,
+        sleep: Callable[[float], None] = time.sleep,
+        clock: Callable[[], float] = time.monotonic,
     ) -> None:
         self.groq_key = groq_key
         self.gemini_key = gemini_key
@@ -110,6 +193,10 @@ class LLMClient:
         self.cache_dir = cache_dir
         self.usage_log = usage_log
         self.routes = routes or ROUTES
+        self.max_wait = max_wait
+        self._sleep = sleep
+        self.budget = _Budget(LIMITS if limits is None else limits, clock)
+        self.budget.load_today(usage_log)
         self._http = httpx.Client(timeout=timeout, transport=transport)
 
     def close(self) -> None:
@@ -211,6 +298,7 @@ class LLMClient:
         payload = {"messages": messages, "json": json_mode, "max_tokens": max_tokens, "temperature": temperature}
         attempts: list[str] = []
         callers = {"groq": self._call_groq, "gemini": self._call_gemini, "ollama": self._call_ollama}
+        est_tokens = estimate_request_tokens(messages, max_tokens)
 
         for provider, model in self.routes[task]:
             path = self._cache_path(provider, model, payload) if use_cache else None
@@ -220,6 +308,16 @@ class LLMClient:
                 self._log(result)
                 return result
 
+            wait = self.budget.wait_seconds(model, est_tokens)
+            if wait is None:
+                attempts.append(f"{provider}:{model} -> daily token budget used")
+                continue
+            if wait > self.max_wait:
+                attempts.append(f"{provider}:{model} -> minute window busy ({wait:.0f}s)")
+                continue
+            if wait > 0:
+                self._sleep(wait)
+
             started = time.perf_counter()
             try:
                 text, tokens_in, tokens_out = callers[provider](task, model, messages, json_mode, max_tokens, temperature)
@@ -227,6 +325,7 @@ class LLMClient:
                 attempts.append(f"{provider}:{model} -> {exc}")
                 continue
             latency = int((time.perf_counter() - started) * 1000)
+            self.budget.record(model, tokens_in + tokens_out)
 
             if not text.strip():
                 attempts.append(f"{provider}:{model} -> empty output")
@@ -251,6 +350,15 @@ class LLMClient:
 
         raise LLMError(f"All providers failed for task {task!r}: " + " | ".join(attempts))
 
+    def budget_report(self) -> list[dict]:
+        rows = []
+        for model, limit in self.budget.limits.items():
+            used = self.budget.day_tokens.get(model, 0)
+            tpd = limit.get("tpd", 0)
+            rows.append({"model": model, "used_today": used, "tpd": tpd,
+                         "pct": round(100.0 * used / tpd, 1) if tpd else None})
+        return rows
+
 
 _client: LLMClient | None = None
 
@@ -274,11 +382,20 @@ def get_llm() -> LLMClient:
 
 def _main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description="Call the LLM router")
-    parser.add_argument("prompt")
+    parser.add_argument("prompt", nargs="?")
     parser.add_argument("--task", default="fast", choices=sorted(ROUTES))
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--no-cache", action="store_true")
+    parser.add_argument("--budget", action="store_true", help="show today's token use per model")
     args = parser.parse_args(argv[1:])
+
+    if args.budget:
+        for row in get_llm().budget_report():
+            pct = f"{row['pct']}%" if row["pct"] is not None else "no daily cap"
+            print(f"  {row['model']:32} used today {row['used_today']:>8,} / {row['tpd'] or '-':>8}  ({pct})")
+        return 0
+    if not args.prompt:
+        parser.error("prompt is required unless --budget is used")
 
     system = "You are a careful governance analyst."
     if args.json:
