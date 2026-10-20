@@ -2,10 +2,12 @@
 
 Providers: Groq (OpenAI-compatible API), Gemini (generateContent), Ollama (local, optional).
 Each task has an ordered route. Before calling a model, the client checks that model's
-per-minute and per-day budget (LIMITS): it waits briefly if the minute window is full,
-or skips to the next model if the wait is too long or the daily tokens are used up.
-If a provider fails (rate limit, server error, timeout, empty or invalid JSON output)
-the next one is tried, so the demo never dies.
+per-minute and per-day budget (LIMITS): it waits if the minute window is full (up to
+max_wait seconds, configurable per call), or skips to the next model if the wait is too long
+or the daily tokens are used up. The minute window counts the full reserved request size
+(prompt + max output), like the providers do. On HTTP 429 with "try again in Xs", the client
+waits X seconds and retries the same model once. Other failures (server error, timeout, empty
+or invalid JSON output) move to the next model, so the demo never dies.
 
 Every call is logged to backend/.cache/llm_usage.jsonl (task, provider, model, tokens,
 latency, cache hit, cost). Daily budgets are rebuilt from this log on start.
@@ -65,13 +67,17 @@ PRICES: dict[str, tuple[float, float]] = {}
 
 REASONING_EFFORT = {"reason": "medium", "fast": "low", "extract": "low", "safety": "low", "bangla": "low"}
 
+_RETRY_RE = re.compile(r"try again in (?:(\d+)m)?([\d.]+)(ms|s)", re.I)
+
 
 class LLMError(RuntimeError):
     """All providers in the route failed."""
 
 
 class _ProviderError(Exception):
-    pass
+    def __init__(self, message: str, retry_after: float | None = None) -> None:
+        super().__init__(message)
+        self.retry_after = retry_after
 
 
 @dataclass
@@ -105,6 +111,24 @@ def parse_json(text: str) -> Any | None:
     return None
 
 
+def parse_retry_after(headers: httpx.Headers, body: str) -> float | None:
+    """Seconds to wait from a Retry-After header or a 'try again in 1m2.5s' message."""
+    header = headers.get("retry-after")
+    if header:
+        try:
+            return float(header)
+        except ValueError:
+            pass
+    match = _RETRY_RE.search(body)
+    if match:
+        minutes = int(match.group(1) or 0)
+        value = float(match.group(2))
+        if match.group(3).lower() == "ms":
+            value /= 1000.0
+        return minutes * 60 + value
+    return None
+
+
 def cost_usd(model: str, input_tokens: int, output_tokens: int) -> float:
     price = PRICES.get(model)
     if not price:
@@ -113,12 +137,12 @@ def cost_usd(model: str, input_tokens: int, output_tokens: int) -> float:
 
 
 def estimate_request_tokens(messages: list[dict[str, str]], max_tokens: int) -> int:
-    """Upper-bound estimate used for budgeting: prompt (~3 chars/token) + max output."""
+    """Reserved request size used for budgeting: prompt (~3 chars/token) + max output."""
     return sum(len(m["content"]) for m in messages) // 3 + max_tokens
 
 
 class _Budget:
-    """Per-model rolling minute window + per-day token totals."""
+    """Per-model rolling minute window (reserved tokens) + per-day totals (actual tokens)."""
 
     def __init__(self, limits: dict[str, dict[str, int]], clock: Callable[[], float] = time.monotonic) -> None:
         self.limits = limits
@@ -152,10 +176,10 @@ class _Budget:
             return 0.0
         return max(0.5, 60 - (now - win[0][0]) + 0.5)
 
-    def record(self, model: str, tokens: int) -> None:
+    def record(self, model: str, reserved_tokens: int, actual_tokens: int) -> None:
         self._roll_day()
-        self.window.setdefault(model, deque()).append((self.clock(), tokens))
-        self.day_tokens[model] = self.day_tokens.get(model, 0) + tokens
+        self.window.setdefault(model, deque()).append((self.clock(), reserved_tokens))
+        self.day_tokens[model] = self.day_tokens.get(model, 0) + actual_tokens
 
     def load_today(self, usage_log: Path | None) -> None:
         if usage_log is None or not usage_log.exists():
@@ -226,7 +250,8 @@ class LLMClient:
         except httpx.HTTPError as exc:
             raise _ProviderError(f"network error: {exc.__class__.__name__}") from exc
         if resp.status_code != 200:
-            raise _ProviderError(f"HTTP {resp.status_code}: {resp.text[:160]}")
+            retry = parse_retry_after(resp.headers, resp.text) if resp.status_code == 429 else None
+            raise _ProviderError(f"HTTP {resp.status_code}: {resp.text[:400]}", retry_after=retry)
         return resp.json()
 
     def _call_groq(self, task, model, messages, json_mode, max_tokens, temperature):
@@ -292,9 +317,12 @@ class LLMClient:
         max_tokens: int = 1024,
         temperature: float = 0.2,
         use_cache: bool = True,
+        max_wait: float | None = None,
     ) -> LLMResult:
+        """Run a task through its route. max_wait overrides how long to wait for a busy model."""
         if task not in self.routes:
             raise LLMError(f"Unknown task {task!r}. Known: {sorted(self.routes)}")
+        limit_wait = self.max_wait if max_wait is None else max_wait
         payload = {"messages": messages, "json": json_mode, "max_tokens": max_tokens, "temperature": temperature}
         attempts: list[str] = []
         callers = {"groq": self._call_groq, "gemini": self._call_gemini, "ollama": self._call_ollama}
@@ -308,45 +336,51 @@ class LLMClient:
                 self._log(result)
                 return result
 
-            wait = self.budget.wait_seconds(model, est_tokens)
-            if wait is None:
-                attempts.append(f"{provider}:{model} -> daily token budget used")
-                continue
-            if wait > self.max_wait:
-                attempts.append(f"{provider}:{model} -> minute window busy ({wait:.0f}s)")
-                continue
-            if wait > 0:
-                self._sleep(wait)
+            retried = False
+            while True:
+                wait = self.budget.wait_seconds(model, est_tokens)
+                if wait is None:
+                    attempts.append(f"{provider}:{model} -> daily token budget used")
+                    break
+                if wait > limit_wait:
+                    attempts.append(f"{provider}:{model} -> minute window busy ({wait:.0f}s)")
+                    break
+                if wait > 0:
+                    self._sleep(wait)
 
-            started = time.perf_counter()
-            try:
-                text, tokens_in, tokens_out = callers[provider](task, model, messages, json_mode, max_tokens, temperature)
-            except _ProviderError as exc:
-                attempts.append(f"{provider}:{model} -> {exc}")
-                continue
-            latency = int((time.perf_counter() - started) * 1000)
-            self.budget.record(model, tokens_in + tokens_out)
+                started = time.perf_counter()
+                try:
+                    text, tokens_in, tokens_out = callers[provider](task, model, messages, json_mode, max_tokens, temperature)
+                except _ProviderError as exc:
+                    if exc.retry_after is not None and not retried and exc.retry_after <= limit_wait:
+                        retried = True
+                        self._sleep(exc.retry_after + 0.5)
+                        continue
+                    attempts.append(f"{provider}:{model} -> {exc}")
+                    break
+                latency = int((time.perf_counter() - started) * 1000)
+                self.budget.record(model, est_tokens, tokens_in + tokens_out)
 
-            if not text.strip():
-                attempts.append(f"{provider}:{model} -> empty output")
-                continue
-            data = None
-            if json_mode:
-                data = parse_json(text)
-                if data is None:
-                    attempts.append(f"{provider}:{model} -> invalid JSON")
-                    continue
+                if not text.strip():
+                    attempts.append(f"{provider}:{model} -> empty output")
+                    break
+                data = None
+                if json_mode:
+                    data = parse_json(text)
+                    if data is None:
+                        attempts.append(f"{provider}:{model} -> invalid JSON")
+                        break
 
-            result = LLMResult(
-                text=text, data=data, task=task, provider=provider, model=model,
-                input_tokens=tokens_in, output_tokens=tokens_out, latency_ms=latency, cached=False,
-                cost_usd=cost_usd(model, tokens_in, tokens_out), attempts=attempts,
-            )
-            if path is not None:
-                path.parent.mkdir(parents=True, exist_ok=True)
-                path.write_text(json.dumps(asdict(result)), encoding="utf-8")
-            self._log(result)
-            return result
+                result = LLMResult(
+                    text=text, data=data, task=task, provider=provider, model=model,
+                    input_tokens=tokens_in, output_tokens=tokens_out, latency_ms=latency, cached=False,
+                    cost_usd=cost_usd(model, tokens_in, tokens_out), attempts=attempts,
+                )
+                if path is not None:
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    path.write_text(json.dumps(asdict(result)), encoding="utf-8")
+                self._log(result)
+                return result
 
         raise LLMError(f"All providers failed for task {task!r}: " + " | ".join(attempts))
 

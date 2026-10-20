@@ -117,3 +117,30 @@ def test_minute_window_waits_then_calls():
     second = client.complete("t", MSG, max_tokens=50, use_cache=False)
     assert second.provider == "groq"
     assert sleeps and sleeps[0] > 0
+
+
+def test_rate_limit_retry_after_waits_and_retries_same_model():
+    state = {"n": 0}
+    sleeps = []
+
+    def handler(request):
+        if "groq" in request.url.host:
+            state["n"] += 1
+            if state["n"] == 1:
+                return httpx.Response(429, text="Rate limit reached. Please try again in 2.5s.")
+            return groq_ok("after wait")
+        return gemini_ok("should not be needed")
+
+    client = LLMClient(groq_key="gk", gemini_key="mk", routes=ROUTES, limits={},
+                       transport=httpx.MockTransport(handler), sleep=sleeps.append)
+    result = client.complete("t", MSG, use_cache=False)
+    assert result.provider == "groq" and result.text == "after wait"
+    assert sleeps == [3.0]
+
+
+def test_parse_retry_after_formats():
+    from app.llm.client import parse_retry_after
+
+    assert parse_retry_after(httpx.Headers({}), "Please try again in 1m2.5s") == 62.5
+    assert parse_retry_after(httpx.Headers({}), "try again in 450ms") == 0.45
+    assert parse_retry_after(httpx.Headers({"retry-after": "7"}), "") == 7.0
