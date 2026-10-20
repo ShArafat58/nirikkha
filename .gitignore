@@ -42,3 +42,5 @@ desktop.ini
 .idea/
 # backend download cache
 .cache/
+# original background images (converted copies live in frontend/public/images/bg)
+frontend/bg_img/
