@@ -203,7 +203,12 @@
         "available-for-sale",
         "unrealized loss",
         "interest rate risk",
-        "duration"
+        "market risk",
+        "duration",
+        "rising rates"
+      ],
+      "rules": [
+        "II_YOY_CHANGE:market risk"
       ]
     },
     {
@@ -218,12 +223,15 @@
         "ev_failure"
       ],
       "keywords": [
-        "uninsured deposits",
-        "concentration",
-        "technology",
+        "uninsured deposit",
+        "deposit concentration",
         "venture capital",
-        "client funds"
-      ]
+        "early-stage",
+        "client funds",
+        "deposit outflow",
+        "liquidity"
+      ],
+      "rules": []
     },
     {
       "id": "ws_cro_vacancy",
@@ -236,10 +244,14 @@
         "ev_barr_review"
       ],
       "keywords": [
-        "Chief Risk Officer",
+        "chief risk officer",
         "separation agreement",
-        "transition",
+        "interim",
+        "vacan",
         "risk function"
+      ],
+      "rules": [
+        "BP_CRO"
       ]
     },
     {
@@ -254,10 +266,15 @@
         "ev_barr_review"
       ],
       "keywords": [
-        "Risk Committee",
+        "risk committee",
+        "risk oversight",
         "board oversight",
         "risk appetite",
-        "committee charter"
+        "risk management framework"
+      ],
+      "rules": [
+        "R407_RISK_OVERSIGHT",
+        "BP_RISK_COMMITTEE"
       ]
     },
     {
@@ -273,11 +290,14 @@
       ],
       "keywords": [
         "incentive compensation",
-        "performance metrics",
+        "annual incentive",
+        "performance metric",
         "return on equity",
         "earnings per share",
-        "risk adjustment"
-      ]
+        "pay versus performance",
+        "risk adjust"
+      ],
+      "rules": []
     },
     {
       "id": "ws_supervisory_findings",
@@ -290,9 +310,10 @@
       ],
       "keywords": [
         "matters requiring attention",
-        "supervisory findings",
-        "examination"
-      ]
+        "supervisory finding",
+        "examination findings"
+      ],
+      "rules": []
     }
   ]
 }
