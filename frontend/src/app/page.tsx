@@ -1,55 +1,42 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { API_URL, USE_MOCK, getHealth, type Health } from "@/lib/api";
+import Link from "next/link";
+
+import { useApp } from "../components/providers";
 
 export default function Home() {
-  const [health, setHealth] = useState<Health | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    getHealth()
-      .then(setHealth)
-      .catch((e: unknown) => setError(e instanceof Error ? e.message : "Unknown error"));
-  }, []);
-
+  const { t } = useApp();
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-950 p-6 text-slate-100">
-      <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-8 shadow-xl">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/brand/logo.svg" alt="Nirikkha logo" width={232} height={77} className="h-auto w-56" />
-        <p className="mt-3 text-slate-400">Trust less, Verify more.</p>
+    <main data-theme="dark" className="bg-landing text-text">
+      <section className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-7xl items-center px-5 py-12 sm:px-6 sm:py-16">
+        <div className="w-full max-w-xl">
+          <h1 className="hero-shadow text-[2.6rem] font-bold leading-[1.15] sm:text-6xl sm:leading-tight">{t("hero.title")}</h1>
+          <p className="hero-shadow mt-6 max-w-lg text-xl text-text/85 sm:text-2xl">{t("hero.subtitle")}</p>
 
-        <div className="mt-6 space-y-2 text-sm">
-          <p className="text-slate-400">
-            Backend: <code className="text-slate-200">{API_URL}</code>
-            {USE_MOCK && <span className="ml-2 rounded bg-amber-500/20 px-2 py-0.5 text-amber-300">mock mode</span>}
-          </p>
+          <div className="mt-10 flex flex-col gap-3 sm:mt-8 sm:flex-row sm:flex-wrap">
+            <Link href="/crash-test"
+                  className="rounded-lg bg-accent px-5 py-3.5 text-center font-semibold text-accent-contrast shadow-lg shadow-accent/20 hover:opacity-90">
+              {t("hero.cta")}
+            </Link>
+            <Link href="/login?demo=1"
+                  className="rounded-lg border border-accent/60 bg-bg/40 px-5 py-3.5 text-center font-semibold text-accent backdrop-blur hover:bg-accent/10">
+              {t("hero.demo")}
+            </Link>
+            <Link href="/pricing" className="rounded-lg px-5 py-3 text-center font-semibold text-text underline decoration-accent/70 underline-offset-4 hover:text-accent">
+              {t("hero.plans")} →
+            </Link>
+          </div>
 
-          {!health && !error && (
-            <p className="text-amber-400">Checking backend... (first call can take ~50 s while the free server wakes up)</p>
-          )}
-
-          {error && <p className="text-red-400">Backend unreachable: {error}</p>}
-
-          {health && (
-            <div className="rounded-lg border border-slate-800 p-4">
-              <p>
-                Status: <span className="font-semibold text-emerald-400">{health.status}</span>
-              </p>
-              <p>Version: {health.version}</p>
-              <p>Environment: {health.env}</p>
-              <ul className="mt-2 space-y-1">
-                {Object.entries(health.providers_configured).map(([name, ok]) => (
-                  <li key={name}>
-                    {ok ? "OK" : "MISSING"} - {name}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+          <ul className="hero-shadow mt-10 flex flex-col gap-2.5 text-sm text-text/85 sm:flex-row sm:flex-wrap sm:gap-x-6 sm:gap-y-2">
+            {(["hero.point1", "hero.point2", "hero.point3"] as const).map((key) => (
+              <li key={key} className="flex items-center gap-2">
+                <span className="mt-0.5 text-accent" aria-hidden>✓</span>
+                {t(key)}
+              </li>
+            ))}
+          </ul>
         </div>
-      </div>
+      </section>
     </main>
   );
 }

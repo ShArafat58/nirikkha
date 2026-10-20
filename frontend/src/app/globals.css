@@ -1,26 +1,141 @@
 @import "tailwindcss";
 
+/* Design tokens: docs/DESIGN.md ("Evidence Room"). Dark is the default; "Paper" is the light reading mode. */
+:root,
+[data-theme="dark"] {
+  --bg: #0b1220;
+  --surface: #111a2e;
+  --surface-2: #18233b;
+  --border: #24304a;
+  --text: #f5f1e8;
+  --muted: #8b95a7;
+  --accent: #f2b33d;
+  --accent-contrast: #0b1220;
+  --highlight: rgba(242, 179, 61, 0.35);
+  --overlay: rgba(11, 18, 32, 0.82);
+  color-scheme: dark;
+}
+
+[data-theme="paper"] {
+  --bg: #f5f1e8;
+  --surface: #ffffff;
+  --surface-2: #efe9db;
+  --border: #e2dccb;
+  --text: #1a2233;
+  --muted: #5b6475;
+  --accent: #b7791f;
+  --accent-contrast: #ffffff;
+  --highlight: rgba(242, 179, 61, 0.45);
+  --overlay: rgba(245, 241, 232, 0.86);
+  color-scheme: light;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --sev-critical: #e5484d;
+  --sev-high: #f76b15;
+  --sev-medium: #ffc53d;
+  --sev-low: #30a46c;
+  --conf-high: #30a46c;
+  --conf-medium: #4c9aff;
+  --conf-low: #8b95a7;
+  --rule-pass: #30a46c;
+  --rule-gap: #ffc53d;
+  --rule-fail: #e5484d;
+  --rule-insufficient: #8b95a7;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-contrast: var(--accent-contrast);
+  --color-highlight: var(--highlight);
+  --color-sev-critical: var(--sev-critical);
+  --color-sev-high: var(--sev-high);
+  --color-sev-medium: var(--sev-medium);
+  --color-sev-low: var(--sev-low);
+  --color-conf-high: var(--conf-high);
+  --color-conf-medium: var(--conf-medium);
+  --color-conf-low: var(--conf-low);
+  --color-rule-pass: var(--rule-pass);
+  --color-rule-gap: var(--rule-gap);
+  --color-rule-fail: var(--rule-fail);
+  --color-rule-insufficient: var(--rule-insufficient);
+  --font-sans: var(--font-plex-sans), var(--font-noto-bn), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html,
+body {
+  background: var(--bg);
+  color: var(--text);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+html[lang="bn"] body {
+  font-family: var(--font-noto-bn), var(--font-plex-sans), sans-serif;
+  line-height: 1.65;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Backgrounds (docs/IMAGES.md) */
+.bg-landing {
+  background: var(--bg) url("/images/bg/landing.svg") center / cover no-repeat;
+}
+.bg-app {
+  background: var(--bg) url("/images/bg/app.svg") repeat;
+}
+.bg-admin {
+  background: var(--bg) url("/images/bg/admin.svg") repeat;
+}
+.bg-auth {
+  background-image: linear-gradient(180deg, rgba(11, 18, 32, 0.1), rgba(11, 18, 32, 0.55)),
+    url("/images/bg/auth.webp");
+  background-size: cover;
+  background-position: center;
+}
+.bg-pricing {
+  background-image: linear-gradient(90deg, var(--bg) 0%, var(--overlay) 45%, rgba(0, 0, 0, 0) 100%),
+    url("/images/bg/pricing.webp");
+  background-size: cover;
+  background-position: right center;
+}
+
+/* "Insufficient evidence" is never shown as a plain colour: always striped */
+.stripes {
+  background-image: repeating-linear-gradient(135deg, transparent 0 6px, rgba(139, 149, 167, 0.4) 6px 9px);
+}
+
+/* A cited passage */
+.mark {
+  background: var(--highlight);
+  border-radius: 2px;
+  padding: 0 2px;
+}
+
+/* Small screens: the art sits behind the text as a soft watermark */
+@media (max-width: 768px) {
+  .bg-landing {
+    background-image: radial-gradient(ellipse 120% 80% at 50% 50%, rgba(11, 18, 32, 0.6) 0%, rgba(11, 18, 32, 0.86) 75%),
+      url("/images/bg/landing.svg");
+    background-size: cover, 260% auto;
+    background-position: center, 76% 32%;
+    background-repeat: no-repeat;
+  }
+}
+
+.hero-shadow {
+  text-shadow: 0 2px 18px rgba(11, 18, 32, 0.95), 0 1px 2px rgba(11, 18, 32, 0.9);
 }
