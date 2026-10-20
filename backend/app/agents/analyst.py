@@ -12,6 +12,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from app.ingest.forms import form_of
 from app.agents.findings import Finding
 from app.rules.engine import Citation
 
@@ -64,7 +65,7 @@ def build_pack(answers: list[dict], facts: Any, rule_report: dict, compact: bool
             gid = f"G{i}"
             quote = r["props"].get("quote") or ""
             lines.append(f"{gid}: {r['person_name']} {r['kind']} {r['org_name']} (p.{r['props'].get('page')}): \"{quote[:200]}\"")
-            index[gid] = Citation(accession_no=r["props"]["accession_no"], form="DEF 14A", section=r["props"].get("section"),
+            index[gid] = Citation(accession_no=r["props"]["accession_no"], form=form_of(r["props"]["accession_no"]), section=r["props"].get("section"),
                                   page=r["props"].get("page"), chunk_id=r["props"].get("chunk_id"), quote=quote)
 
     results = rule_report.get("results", [])

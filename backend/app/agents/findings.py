@@ -53,8 +53,10 @@ class Finding(BaseModel):
 
 
 def _cite(row: dict) -> Citation:
+    from app.ingest.forms import form_of
+
     pr = row["props"]
-    return Citation(accession_no=pr["accession_no"], form="DEF 14A", section=pr.get("section"), page=pr.get("page"),
+    return Citation(accession_no=pr["accession_no"], form=form_of(pr["accession_no"]), section=pr.get("section"), page=pr.get("page"),
                     chunk_id=pr.get("chunk_id"), quote=pr.get("quote") or "")
 
 
@@ -214,7 +216,7 @@ def missing_evidence_findings(rule_report: dict, facts: Facts, answers: list[dic
             recommended_actions=["Request the information from the company or check other filings."],
         ))
 
-    proxy = facts.latest("DEF 14A")
+    proxy = facts.latest_proxy()
     if proxy is not None:
         age = (facts.as_of - proxy["filing_date"]).days
         if age > STALE_FACTS_DAYS:
@@ -224,9 +226,9 @@ def missing_evidence_findings(rule_report: dict, facts: Facts, answers: list[dic
                 claim=(f"Director, committee and officer information comes from the proxy filed {proxy['filing_date']}, "
                        f"{age} days before the analysis date. Changes after that date are not visible in this filing."),
                 risk_severity="medium", evidence_confidence="insufficient",
-                citations=[Citation(accession_no=proxy["accession_no"], form="DEF 14A",
+                citations=[Citation(accession_no=proxy["accession_no"], form=proxy["form"],
                                     filing_date=proxy["filing_date"].isoformat(),
-                                    quote=f"DEF 14A filed {proxy['filing_date'].isoformat()}")],
+                                    quote=f"{proxy['form']} filed {proxy['filing_date'].isoformat()}")],
                 recommended_actions=[
                     f"Check Form 8-K Item 5.02 filings since {proxy['filing_date']} for director or officer departures and appointments.",
                     "Confirm the current holders of key roles (CEO, CFO, Chief Risk Officer) before relying on them.",

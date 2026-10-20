@@ -28,6 +28,8 @@ SUBMISSIONS_EXTRA_URL = "https://data.sec.gov/submissions/{name}"
 ARCHIVE_URL = "https://www.sec.gov/Archives/edgar/data/{cik_int}/{acc_nodash}/{doc}"
 
 DEFAULT_FORMS = ("10-K", "DEF 14A")
+# Definitive and preliminary proxy statements share the same governance disclosures.
+PROXY_FORMS = ("DEF 14A", "PRE 14A")
 METADATA_TTL_SECONDS = 24 * 3600
 RETRY_STATUS = {403, 429, 500, 502, 503, 504}
 

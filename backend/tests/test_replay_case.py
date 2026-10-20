@@ -20,7 +20,7 @@ def test_svb_case_is_valid(svb):
 def test_freeze_hides_crisis_news(svb):
     visible = {e["id"] for e in visible_events(svb)}
     frozen = {e["id"] for e in frozen_events(svb)}
-    assert {"ev_10k_fy2022", "ev_def14a_2022", "ev_def14a_2023"} <= visible
+    assert {"ev_10k_fy2022", "ev_def14a_2022", "ev_pre14a_2023"} <= visible
     assert {"ev_8k_afs_sale", "ev_run", "ev_failure", "ev_barr_review"} <= frozen
 
 

@@ -8,128 +8,291 @@
   "freeze_rationale": "Freeze the day before the 8 March 2023 announcement of the securities sale and capital raise, so that no crisis news is visible to the system.",
   "timeline": [
     {
-      "id": "ev_def14a_2021", "kind": "filing", "precision": "day",
-      "event_date": "2021-03-04", "public_date": "2021-03-04",
+      "id": "ev_def14a_2021",
+      "kind": "filing",
+      "precision": "day",
+      "event_date": "2021-03-04",
+      "public_date": "2021-03-04",
       "title": "DEF 14A proxy statement (2021 annual meeting)",
-      "sources": [{"title": "SEC EDGAR filing index, SVB Financial Group", "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0000719739&type=DEF+14A"}]
-    },
-    {
-      "id": "ev_10k_fy2021", "kind": "filing", "precision": "day",
-      "event_date": "2022-03-01", "public_date": "2022-03-01",
-      "title": "Form 10-K for fiscal year 2021",
-      "sources": [{"title": "SEC EDGAR filing index, SVB Financial Group", "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0000719739&type=10-K"}]
-    },
-    {
-      "id": "ev_def14a_2022", "kind": "filing", "precision": "day",
-      "event_date": "2022-03-04", "public_date": "2022-03-04",
-      "title": "DEF 14A proxy statement (2022 annual meeting)",
-      "sources": [{"title": "SEC EDGAR filing index, SVB Financial Group", "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0000719739&type=DEF+14A"}]
-    },
-    {
-      "id": "ev_cro_exit", "kind": "disclosure", "precision": "day",
-      "event_date": "2022-04-29", "public_date": "2023-03-03",
-      "title": "Chief Risk Officer stops serving in the role; permanent successor named only around the turn of the year",
-      "note": "The vacancy was disclosed in the 2023 proxy statement. public_date to be confirmed against EDGAR in Step 6.2.",
       "sources": [
-        {"title": "Insurance Journal (Bloomberg): SVB's lack of risk officer emerges as focus in Fed probe", "url": "https://www.insurancejournal.com/news/national/2023/03/15/712253.htm"},
-        {"title": "Fortune: SVB had no official chief risk officer for 8 months", "url": "https://fortune.com/2023/03/10/silicon-valley-bank-chief-risk-officer/"}
+        {
+          "title": "SEC EDGAR filing index, SVB Financial Group",
+          "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0000719739&type=DEF+14A"
+        }
       ]
     },
     {
-      "id": "ev_fed_irr_finding", "kind": "regulatory", "precision": "month",
-      "event_date": "2022-11-01", "public_date": "2023-04-28",
+      "id": "ev_10k_fy2021",
+      "kind": "filing",
+      "precision": "day",
+      "event_date": "2022-03-01",
+      "public_date": "2022-03-01",
+      "title": "Form 10-K for fiscal year 2021",
+      "sources": [
+        {
+          "title": "SEC EDGAR filing index, SVB Financial Group",
+          "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0000719739&type=10-K"
+        }
+      ]
+    },
+    {
+      "id": "ev_def14a_2022",
+      "kind": "filing",
+      "precision": "day",
+      "event_date": "2022-03-04",
+      "public_date": "2022-03-04",
+      "title": "DEF 14A proxy statement (2022 annual meeting)",
+      "sources": [
+        {
+          "title": "SEC EDGAR filing index, SVB Financial Group",
+          "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0000719739&type=DEF+14A"
+        }
+      ]
+    },
+    {
+      "id": "ev_cro_exit",
+      "kind": "disclosure",
+      "precision": "day",
+      "event_date": "2022-04-29",
+      "public_date": "2023-03-03",
+      "title": "Chief Risk Officer stops serving in the role; permanent successor named only around the turn of the year",
+      "note": "The vacancy was disclosed in the 2023 preliminary proxy (PRE 14A) filed 2023-03-03.",
+      "sources": [
+        {
+          "title": "Insurance Journal (Bloomberg): SVB's lack of risk officer emerges as focus in Fed probe",
+          "url": "https://www.insurancejournal.com/news/national/2023/03/15/712253.htm"
+        },
+        {
+          "title": "Fortune: SVB had no official chief risk officer for 8 months",
+          "url": "https://fortune.com/2023/03/10/silicon-valley-bank-chief-risk-officer/"
+        }
+      ]
+    },
+    {
+      "id": "ev_fed_irr_finding",
+      "kind": "regulatory",
+      "precision": "month",
+      "event_date": "2022-11-01",
+      "public_date": "2023-04-28",
       "title": "Federal Reserve supervisory finding on interest rate risk (confidential at the time)",
-      "sources": [{"title": "Federal Reserve: Review of the Supervision and Regulation of SVB (April 2023)", "url": "https://www.federalreserve.gov/publications/files/svb-review-20230428.pdf"}]
+      "sources": [
+        {
+          "title": "Federal Reserve: Review of the Supervision and Regulation of SVB (April 2023)",
+          "url": "https://www.federalreserve.gov/publications/files/svb-review-20230428.pdf"
+        }
+      ]
     },
     {
-      "id": "ev_10k_fy2022", "kind": "filing", "precision": "day",
-      "event_date": "2023-02-24", "public_date": "2023-02-24",
+      "id": "ev_10k_fy2022",
+      "kind": "filing",
+      "precision": "day",
+      "event_date": "2023-02-24",
+      "public_date": "2023-02-24",
       "title": "Form 10-K for fiscal year 2022",
-      "sources": [{"title": "SEC EDGAR filing index, SVB Financial Group", "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0000719739&type=10-K"}]
+      "sources": [
+        {
+          "title": "SEC EDGAR filing index, SVB Financial Group",
+          "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0000719739&type=10-K"
+        }
+      ]
     },
     {
-      "id": "ev_def14a_2023", "kind": "filing", "precision": "day",
-      "event_date": "2023-03-03", "public_date": "2023-03-03",
-      "title": "DEF 14A proxy statement (2023 annual meeting)",
-      "note": "Filing date to be confirmed against EDGAR in Step 6.2.",
-      "sources": [{"title": "SEC EDGAR filing index, SVB Financial Group", "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0000719739&type=DEF+14A"}]
+      "id": "ev_pre14a_2023",
+      "kind": "filing",
+      "precision": "day",
+      "event_date": "2023-03-03",
+      "public_date": "2023-03-03",
+      "title": "PRE 14A preliminary proxy statement (2023 annual meeting); no definitive proxy was ever filed",
+      "note": "Filing date confirmed against EDGAR: 2023-03-03, accession 0000719739-23-000032.",
+      "sources": [
+        {
+          "title": "SVB Financial Group PRE 14A (3 March 2023)",
+          "url": "https://www.sec.gov/Archives/edgar/data/719739/000071973923000032/sivb-20230303.htm"
+        }
+      ]
     },
     {
-      "id": "ev_8k_afs_sale", "kind": "market", "precision": "day",
-      "event_date": "2023-03-08", "public_date": "2023-03-08",
+      "id": "ev_8k_afs_sale",
+      "kind": "market",
+      "precision": "day",
+      "event_date": "2023-03-08",
+      "public_date": "2023-03-08",
       "title": "8-K: sale of about $21B of available-for-sale securities, about $1.8B after-tax loss, $2.25B capital raise",
-      "sources": [{"title": "SVB Financial Group Form 8-K, Exhibit 99.2 (8 March 2023)", "url": "https://www.sec.gov/Archives/edgar/data/719739/000119312523064680/d430920dex992.htm"}]
+      "sources": [
+        {
+          "title": "SVB Financial Group Form 8-K, Exhibit 99.2 (8 March 2023)",
+          "url": "https://www.sec.gov/Archives/edgar/data/719739/000119312523064680/d430920dex992.htm"
+        }
+      ]
     },
     {
-      "id": "ev_run", "kind": "market", "precision": "day",
-      "event_date": "2023-03-09", "public_date": "2023-03-09",
+      "id": "ev_run",
+      "kind": "market",
+      "precision": "day",
+      "event_date": "2023-03-09",
+      "public_date": "2023-03-09",
       "title": "Deposit run: more than $42B withdrawn in one day",
-      "sources": [{"title": "CNBC: SVB customers tried to withdraw nearly all deposits over two days, Barr testifies", "url": "https://www.cnbc.com/2023/03/28/svb-customers-tried-to-pull-nearly-all-deposits-in-two-days-barr-says.html"}]
+      "sources": [
+        {
+          "title": "CNBC: SVB customers tried to withdraw nearly all deposits over two days, Barr testifies",
+          "url": "https://www.cnbc.com/2023/03/28/svb-customers-tried-to-pull-nearly-all-deposits-in-two-days-barr-says.html"
+        }
+      ]
     },
     {
-      "id": "ev_failure", "kind": "outcome", "precision": "day",
-      "event_date": "2023-03-10", "public_date": "2023-03-10",
+      "id": "ev_failure",
+      "kind": "outcome",
+      "precision": "day",
+      "event_date": "2023-03-10",
+      "public_date": "2023-03-10",
       "title": "Bank closed by California DFPI; FDIC appointed receiver",
-      "sources": [{"title": "FDIC press release (10 March 2023)", "url": "https://www.fdic.gov/news/press-releases/2023/pr23016.html"}]
+      "sources": [
+        {
+          "title": "FDIC press release (10 March 2023)",
+          "url": "https://www.fdic.gov/news/press-releases/2023/pr23016.html"
+        }
+      ]
     },
     {
-      "id": "ev_systemic", "kind": "regulatory", "precision": "day",
-      "event_date": "2023-03-12", "public_date": "2023-03-12",
+      "id": "ev_systemic",
+      "kind": "regulatory",
+      "precision": "day",
+      "event_date": "2023-03-12",
+      "public_date": "2023-03-12",
       "title": "Joint Treasury, Federal Reserve and FDIC statement: systemic risk exception, all depositors protected",
-      "sources": [{"title": "Federal Reserve: Joint statement (12 March 2023)", "url": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20230312b.htm"}]
+      "sources": [
+        {
+          "title": "Federal Reserve: Joint statement (12 March 2023)",
+          "url": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20230312b.htm"
+        }
+      ]
     },
     {
-      "id": "ev_barr_review", "kind": "review", "precision": "day",
-      "event_date": "2023-04-28", "public_date": "2023-04-28",
+      "id": "ev_barr_review",
+      "kind": "review",
+      "precision": "day",
+      "event_date": "2023-04-28",
+      "public_date": "2023-04-28",
       "title": "Federal Reserve publishes its review of SVB's failure (Barr review)",
       "sources": [
-        {"title": "Federal Reserve press release (28 April 2023)", "url": "https://www.federalreserve.gov/newsevents/pressreleases/bcreg20230428a.htm"},
-        {"title": "Federal Reserve: Review of the Supervision and Regulation of SVB", "url": "https://www.federalreserve.gov/publications/files/svb-review-20230428.pdf"}
+        {
+          "title": "Federal Reserve press release (28 April 2023)",
+          "url": "https://www.federalreserve.gov/newsevents/pressreleases/bcreg20230428a.htm"
+        },
+        {
+          "title": "Federal Reserve: Review of the Supervision and Regulation of SVB",
+          "url": "https://www.federalreserve.gov/publications/files/svb-review-20230428.pdf"
+        }
       ]
     }
   ],
   "warning_signs": [
     {
-      "id": "ws_interest_rate", "category": "interest_rate_risk",
+      "id": "ws_interest_rate",
+      "category": "interest_rate_risk",
       "statement": "A large, long-duration securities portfolio left the bank exposed to rising interest rates.",
-      "pre_freeze_evidence": ["ev_10k_fy2022"],
-      "confirmed_by": ["ev_8k_afs_sale", "ev_barr_review"],
-      "keywords": ["held-to-maturity", "available-for-sale", "unrealized loss", "interest rate risk", "duration"]
+      "pre_freeze_evidence": [
+        "ev_10k_fy2022"
+      ],
+      "confirmed_by": [
+        "ev_8k_afs_sale",
+        "ev_barr_review"
+      ],
+      "keywords": [
+        "held-to-maturity",
+        "available-for-sale",
+        "unrealized loss",
+        "interest rate risk",
+        "duration"
+      ]
     },
     {
-      "id": "ws_deposit_concentration", "category": "funding_concentration",
+      "id": "ws_deposit_concentration",
+      "category": "funding_concentration",
       "statement": "Deposits were concentrated in one client sector and mostly above the insured limit, making a fast run possible.",
-      "pre_freeze_evidence": ["ev_10k_fy2022"],
-      "confirmed_by": ["ev_run", "ev_failure"],
-      "keywords": ["uninsured deposits", "concentration", "technology", "venture capital", "client funds"]
+      "pre_freeze_evidence": [
+        "ev_10k_fy2022"
+      ],
+      "confirmed_by": [
+        "ev_run",
+        "ev_failure"
+      ],
+      "keywords": [
+        "uninsured deposits",
+        "concentration",
+        "technology",
+        "venture capital",
+        "client funds"
+      ]
     },
     {
-      "id": "ws_cro_vacancy", "category": "risk_leadership_gap",
+      "id": "ws_cro_vacancy",
+      "category": "risk_leadership_gap",
       "statement": "The Chief Risk Officer role was without a permanent holder for most of 2022.",
-      "pre_freeze_evidence": ["ev_def14a_2023"],
-      "confirmed_by": ["ev_barr_review"],
-      "keywords": ["Chief Risk Officer", "separation agreement", "transition", "risk function"]
+      "pre_freeze_evidence": [
+        "ev_pre14a_2023"
+      ],
+      "confirmed_by": [
+        "ev_barr_review"
+      ],
+      "keywords": [
+        "Chief Risk Officer",
+        "separation agreement",
+        "transition",
+        "risk function"
+      ]
     },
     {
-      "id": "ws_board_oversight", "category": "board_risk_oversight",
+      "id": "ws_board_oversight",
+      "category": "board_risk_oversight",
       "statement": "The board and management did not manage the bank's risks effectively. Filings show only the oversight structure, not whether it worked.",
-      "pre_freeze_evidence": ["ev_def14a_2022", "ev_def14a_2023"],
-      "confirmed_by": ["ev_barr_review"],
-      "keywords": ["Risk Committee", "board oversight", "risk appetite", "committee charter"]
+      "pre_freeze_evidence": [
+        "ev_def14a_2022",
+        "ev_pre14a_2023"
+      ],
+      "confirmed_by": [
+        "ev_barr_review"
+      ],
+      "keywords": [
+        "Risk Committee",
+        "board oversight",
+        "risk appetite",
+        "committee charter"
+      ]
     },
     {
-      "id": "ws_compensation", "category": "compensation_incentives",
+      "id": "ws_compensation",
+      "category": "compensation_incentives",
       "statement": "Executive incentives were not tied to risk management outcomes.",
-      "pre_freeze_evidence": ["ev_def14a_2022", "ev_def14a_2023"],
-      "confirmed_by": ["ev_barr_review"],
-      "keywords": ["incentive compensation", "performance metrics", "return on equity", "earnings per share", "risk adjustment"]
+      "pre_freeze_evidence": [
+        "ev_def14a_2022",
+        "ev_pre14a_2023"
+      ],
+      "confirmed_by": [
+        "ev_barr_review"
+      ],
+      "keywords": [
+        "incentive compensation",
+        "performance metrics",
+        "return on equity",
+        "earnings per share",
+        "risk adjustment"
+      ]
     },
     {
-      "id": "ws_supervisory_findings", "category": "supervisory_findings",
+      "id": "ws_supervisory_findings",
+      "category": "supervisory_findings",
       "statement": "Supervisors had raised many open findings, far more than peer banks. These were confidential and not visible in public filings.",
       "pre_freeze_evidence": [],
-      "confirmed_by": ["ev_fed_irr_finding", "ev_barr_review"],
-      "keywords": ["matters requiring attention", "supervisory findings", "examination"]
+      "confirmed_by": [
+        "ev_fed_irr_finding",
+        "ev_barr_review"
+      ],
+      "keywords": [
+        "matters requiring attention",
+        "supervisory findings",
+        "examination"
+      ]
     }
   ]
 }

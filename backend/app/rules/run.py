@@ -21,16 +21,18 @@ import duckdb
 
 from app.config import get_settings
 from app.db import DatabaseError, connect
-from app.ingest.edgar import normalize_cik
+from app.ingest.edgar import PROXY_FORMS, normalize_cik
 from app.rules.engine import RULE_PATTERNS, Facts, Passage, evaluate
 
+PROXY = list(PROXY_FORMS)
+
 RULE_QUERIES: dict[str, tuple[str, list[str]]] = {
-    "independence": ("board determined directors are independent director independence", ["DEF 14A"]),
-    "rpt_policy": ("policies and procedures for review and approval of related person transactions", ["DEF 14A"]),
-    "risk_oversight": ("board role in risk oversight and board leadership structure", ["DEF 14A"]),
-    "financial_expert": ("audit committee financial expert", ["DEF 14A", "10-K"]),
-    "other_directorships": ("other public company directorships held by directors", ["DEF 14A"]),
-    "summary_compensation": ("summary compensation table named executive officers", ["DEF 14A"]),
+    "independence": ("board determined directors are independent director independence", PROXY),
+    "rpt_policy": ("policies and procedures for review and approval of related person transactions", PROXY),
+    "risk_oversight": ("board role in risk oversight and board leadership structure", PROXY),
+    "financial_expert": ("audit committee financial expert", [*PROXY, "10-K"]),
+    "other_directorships": ("other public company directorships held by directors", PROXY),
+    "summary_compensation": ("summary compensation table named executive officers", PROXY),
 }
 
 
@@ -64,7 +66,7 @@ def collect_facts(cik: str, as_of: date | None = None) -> Facts:
             raise ValueError(f"No filings for CIK {cik} on or before {as_of} in the database.")
         filings = [{"accession_no": r[0], "form": r[1], "filing_date": r[2]} for r in rows]
         facts = Facts(company=rows[-1][3], cik=cik, as_of=as_of, filings=filings)
-        proxy, latest_10k = facts.latest("DEF 14A"), facts.latest("10-K")
+        proxy, latest_10k = facts.latest_proxy(), facts.latest("10-K")
         latest_ids = [f["accession_no"] for f in (proxy, latest_10k) if f]
 
         # Deterministic phrase search first (exact rule patterns in the latest proxy / 10-K).

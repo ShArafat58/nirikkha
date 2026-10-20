@@ -100,6 +100,13 @@ class Facts:
     passages: dict[str, list[Passage]] = field(default_factory=dict)
     yoy: list[dict] = field(default_factory=list)                # app.analytics.warehouse.section_yoy rows
 
+    def latest_proxy(self) -> dict | None:
+        """Newest proxy statement (DEF 14A or PRE 14A) on or before as_of."""
+        from app.ingest.edgar import PROXY_FORMS
+
+        found = [f for f in (self.latest(form) for form in PROXY_FORMS) if f]
+        return max(found, key=lambda f: f["filing_date"]) if found else None
+
     def latest(self, form: str) -> dict | None:
         candidates = [f for f in self.filings if f["form"] == form and f["filing_date"] <= self.as_of]
         return max(candidates, key=lambda f: f["filing_date"]) if candidates else None
@@ -169,7 +176,7 @@ def _result(rule: Rule, result: Result, rationale: str, confidence: Confidence, 
 
 
 def _no_relations(rule: Rule, facts: Facts) -> RuleResult | None:
-    if facts.latest("DEF 14A") is None:
+    if facts.latest_proxy() is None:
         return _result(rule, "INSUFFICIENT_EVIDENCE", "No proxy statement (DEF 14A) available on or before the analysis date.",
                        "low", True)
     if facts.relations_source is None:
@@ -205,12 +212,12 @@ def check_other_boards(rule: Rule, facts: Facts):
     return _result(rule, "INSUFFICIENT_EVIDENCE", "No disclosure of other directorships found.", "low", True)
 
 def check_sct(rule: Rule, facts: Facts):
-    proxy = facts.latest("DEF 14A")
+    proxy = facts.latest_proxy()
     if proxy is None:
         return _result(rule, "INSUFFICIENT_EVIDENCE", "No proxy statement available.", "low", True)
     if "summary_compensation_table" in facts.sections.get(proxy["accession_no"], set()):
         cite = _find(facts, "summary_compensation")
-        evidence = [cite] if cite else [Citation(accession_no=proxy["accession_no"], form="DEF 14A",
+        evidence = [cite] if cite else [Citation(accession_no=proxy["accession_no"], form=proxy["form"],
                                                  filing_date=proxy["filing_date"].isoformat(),
                                                  section="Summary Compensation Table", quote="Summary Compensation Table")]
         return _result(rule, "PASS", "A Summary Compensation Table section is present in the latest proxy.", "high",
@@ -220,7 +227,7 @@ def check_sct(rule: Rule, facts: Facts):
 
 
 def check_pvp(rule: Rule, facts: Facts):
-    proxy = facts.latest("DEF 14A")
+    proxy = facts.latest_proxy()
     if proxy is None:
         return _result(rule, "INSUFFICIENT_EVIDENCE", "No proxy statement available.", "low", True)
     if proxy["filing_date"] < date(2023, 1, 1):
@@ -230,7 +237,7 @@ def check_pvp(rule: Rule, facts: Facts):
                                      f"{proxy['filing_date'].isoformat()}."))
     if "pay_versus_performance" in facts.sections.get(proxy["accession_no"], set()):
         return _result(rule, "PASS", "A Pay versus Performance section is present in the latest proxy.", "high", False,
-                       [Citation(accession_no=proxy["accession_no"], form="DEF 14A",
+                       [Citation(accession_no=proxy["accession_no"], form=proxy["form"],
                                  filing_date=proxy["filing_date"].isoformat(), section="Pay versus Performance",
                                  quote="Pay versus Performance")])
     return _result(rule, "POTENTIAL_GAP", "No Pay versus Performance section detected in a proxy where it is required.",
@@ -241,7 +248,7 @@ def check_rpt_policy(rule: Rule, facts: Facts):
     cite = _find(facts, "rpt_policy")
     if cite:
         return _result(rule, "PASS", "A related-person transaction review policy is described.", "high", False, [cite])
-    proxy = facts.latest("DEF 14A")
+    proxy = facts.latest_proxy()
     if proxy and "related_person_transactions" in facts.sections.get(proxy["accession_no"], set()):
         return _result(rule, "POTENTIAL_GAP", "Related transactions section exists but no review policy sentence was found.",
                        "medium", True)
@@ -274,7 +281,7 @@ def check_financial_expert(rule: Rule, facts: Facts):
     cite = _find(facts, "financial_expert")
     if cite:
         return _result(rule, "PASS", "An audit committee financial expert is identified.", "high", False, [cite])
-    if facts.latest("DEF 14A") or facts.latest("10-K"):
+    if facts.latest_proxy() or facts.latest("10-K"):
         return _result(rule, "POTENTIAL_GAP",
                        "No audit committee financial expert statement found in the latest proxy and 10-K.", "medium", True)
     return _result(rule, "INSUFFICIENT_EVIDENCE", "No proxy or 10-K available.", "low", True)
@@ -302,7 +309,7 @@ def check_risk_committee(rule: Rule, facts: Facts):
 def check_cro(rule: Rule, facts: Facts):
     if (missing := _no_relations(rule, facts)) is not None:
         return missing
-    proxy = facts.latest("DEF 14A")
+    proxy = facts.latest_proxy()
     pattern = re.compile(r"chief risk officer", re.I)
     rows = [r for r in facts.rows("OFFICER_OF")
             if pattern.search(r["props"].get("title") or "") or pattern.search(r["props"].get("quote") or "")]
@@ -316,12 +323,12 @@ def check_cro(rule: Rule, facts: Facts):
 
 
 def check_freshness(rule: Rule, facts: Facts):
-    proxy = facts.latest("DEF 14A")
+    proxy = facts.latest_proxy()
     if proxy is None:
         return _result(rule, "INSUFFICIENT_EVIDENCE", "No proxy statement available on or before the analysis date.", "low", True)
     age = (facts.as_of - proxy["filing_date"]).days
-    evidence = [Citation(accession_no=proxy["accession_no"], form="DEF 14A", filing_date=proxy["filing_date"].isoformat(),
-                         quote=f"DEF 14A filed {proxy['filing_date'].isoformat()}")]
+    evidence = [Citation(accession_no=proxy["accession_no"], form=proxy["form"], filing_date=proxy["filing_date"].isoformat(),
+                         quote=f"{proxy['form']} filed {proxy['filing_date'].isoformat()}")]
     if age > STALE_PROXY_DAYS:
         return _result(rule, "POTENTIAL_GAP",
                        f"Latest governance disclosure is {age} days old at the analysis date; board and officer facts may be outdated.",
