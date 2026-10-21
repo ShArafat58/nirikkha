@@ -1,5 +1,7 @@
 """Nirikkha backend - FastAPI entry point."""
 
+import os
+import threading
 from datetime import datetime, timezone
 
 from fastapi import FastAPI
@@ -43,6 +45,29 @@ app.include_router(radar_router)
 app.include_router(graph_router)
 app.include_router(help_router)
 
+# Embedded worker: on hosts without a separate background-worker service (Render free plan),
+# run the queue worker in a daemon thread inside the API process. Enabled with EMBEDDED_WORKER=true.
+_EMBEDDED = {"started": False}
+
+
+@app.on_event("startup")
+def _start_embedded_worker() -> None:
+    if os.getenv("EMBEDDED_WORKER", "false").strip().lower() != "true" or _EMBEDDED["started"]:
+        return
+    from app.api.worker import run as run_worker
+
+    def _loop() -> None:
+        while True:  # restart the worker loop if it ever stops with an error
+            try:
+                run_worker(warm=False, log=lambda m: print(f"[embedded-worker] {m}", flush=True))
+            except Exception as exc:  # keep the API alive whatever happens in a job
+                print(f"[embedded-worker] crashed: {type(exc).__name__}: {exc}; restarting in 10 s", flush=True)
+                threading.Event().wait(10)
+
+    threading.Thread(target=_loop, name="embedded-worker", daemon=True).start()
+    _EMBEDDED["started"] = True
+
+
 def _memory_mb() -> float | None:
     """Resident memory of this process on Linux (Render); None elsewhere."""
     try:
@@ -71,6 +96,7 @@ def health() -> dict:
         "memory_mb": _memory_mb(),
         "warehouse_snapshot": resolve_db(settings.cache_dir) is not None,
         "rerank_enabled": settings.rerank_enabled,
+        "embedded_worker": _EMBEDDED["started"],
         "providers_configured": {
             "groq": bool(settings.groq_api_key),
             "gemini": bool(settings.gemini_api_key),
