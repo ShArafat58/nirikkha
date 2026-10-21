@@ -1,0 +1,191 @@
+{
+  "name": "Radar daily scan → Telegram",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * *"
+            }
+          ]
+        }
+      },
+      "name": "Every day 09:00 (Dhaka)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -512,
+        -96
+      ],
+      "id": "186c2459-4166-4f25-b4c7-a164fd6d930c"
+    },
+    {
+      "parameters": {},
+      "name": "Run now (manual)",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -512,
+        112
+      ],
+      "id": "c0e18af8-6e91-4b8a-bef2-e0f5b821fb4f"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://nirikkha-api.onrender.com/api/radar/scan",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 180000
+        }
+      },
+      "name": "Run Radar scan",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -256,
+        16
+      ],
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "id": "491754c0-4f73-487b-b16e-bd8645b1a645",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "46togMbiqH68io9i",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://nirikkha-api.onrender.com/api/radar",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "name": "Get alerts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        16,
+        16
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "id": "614daf78-e86f-4f3a-806c-b592246e0e1b"
+    },
+    {
+      "parameters": {
+        "jsCode": "const scan = $('Run Radar scan').first().json;\nconst data = $('Get alerts').first().json;\nconst alerts = data.alerts || [];\nconst s = data.summary || {};\nconst rank = { high: 0, medium: 1, low: 2 };\nconst pending = alerts\n  .filter(a => a.status === 'pending' && (a.priority === 'high' || a.priority === 'medium'))\n  .sort((a, b) => rank[a.priority] - rank[b.priority]);\nconst streams = Object.entries(s.by_stream || {}).map(([k, v]) => k + ' ' + v).join(', ');\nconst lines = [];\nlines.push('Nirikkha - Regulatory Change Radar');\nlines.push('Scan checked ' + (scan.saved ?? 0) + ' alerts (' + streams + ')');\nlines.push('Waiting for review: ' + (s.pending ?? 0) + ' | Approved: ' + (s.approved ?? 0) + ' | Rejected: ' + (s.rejected ?? 0));\nlines.push('');\nif (pending.length === 0) {\n  lines.push('No high or medium priority alert is waiting for a decision.');\n} else {\n  lines.push('Needs a human decision:');\n  pending.slice(0, 5).forEach((a, i) => {\n    lines.push((i + 1) + '. [' + a.priority.toUpperCase() + '] ' + (a.company || a.cik || '') + ': ' + a.title);\n    if (a.follow_up) lines.push('   Next step: ' + a.follow_up);\n  });\n  if (pending.length > 5) lines.push('...and ' + (pending.length - 5) + ' more');\n}\nlines.push('');\nlines.push('Approve or reject: https://nirikkha.vercel.app/radar');\nlines.push('No follow-up action starts until a person approves it.');\nreturn [{ json: { text: lines.join('\\n'), pending: pending.length } }];"
+      },
+      "name": "Build message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        272,
+        16
+      ],
+      "id": "6fb69c6f-0cdd-4116-845d-a5c545c44db2"
+    },
+    {
+      "parameters": {
+        "chatId": "6233960045",
+        "text": "={{ $json.text }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "name": "Send to Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        528,
+        16
+      ],
+      "id": "51ccb81e-44d2-4250-ae21-6c368ae4abfd",
+      "webhookId": "f8ead1bd-af67-4494-9db7-09c51652441f",
+      "credentials": {
+        "telegramApi": {
+          "id": "jz7xEGbhBjPIZIzI",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Every day 09:00 (Dhaka)": {
+      "main": [
+        [
+          {
+            "node": "Run Radar scan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run now (manual)": {
+      "main": [
+        [
+          {
+            "node": "Run Radar scan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Radar scan": {
+      "main": [
+        [
+          {
+            "node": "Get alerts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get alerts": {
+      "main": [
+        [
+          {
+            "node": "Build message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build message": {
+      "main": [
+        [
+          {
+            "node": "Send to Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "f701de28-6554-460a-acf5-4743ef564b8d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a42526a671048d2ceb8c90ea0926f5b4dd8fa38416ea019f4fc5a428c28c3508"
+  },
+  "nodeGroups": [],
+  "id": "qM7q7nm4ChIfhirC",
+  "tags": []
+}
