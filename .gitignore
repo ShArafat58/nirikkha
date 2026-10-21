@@ -48,3 +48,7 @@ frontend/bg_img/
 mcp-servers/.venv-ext/
 
 mcp-servers/.venv-neo4j/
+
+# Gemini agent folder: keep only Spec Kit commands
+.gemini/*
+!.gemini/commands/
