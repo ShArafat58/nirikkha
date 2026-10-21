@@ -19,7 +19,8 @@
           "title": "SEC EDGAR filing index, SVB Financial Group",
           "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0000719739&type=DEF+14A"
         }
-      ]
+      ],
+      "title_bn": "DEF 14A প্রক্সি স্টেটমেন্ট (২০২১ সালের বার্ষিক সভা)"
     },
     {
       "id": "ev_10k_fy2021",
@@ -33,7 +34,8 @@
           "title": "SEC EDGAR filing index, SVB Financial Group",
           "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0000719739&type=10-K"
         }
-      ]
+      ],
+      "title_bn": "২০২১ অর্থবছরের Form 10-K বার্ষিক প্রতিবেদন"
     },
     {
       "id": "ev_def14a_2022",
@@ -47,7 +49,8 @@
           "title": "SEC EDGAR filing index, SVB Financial Group",
           "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0000719739&type=DEF+14A"
         }
-      ]
+      ],
+      "title_bn": "DEF 14A প্রক্সি স্টেটমেন্ট (২০২২ সালের বার্ষিক সভা)"
     },
     {
       "id": "ev_cro_exit",
@@ -66,7 +69,8 @@
           "title": "Fortune: SVB had no official chief risk officer for 8 months",
           "url": "https://fortune.com/2023/03/10/silicon-valley-bank-chief-risk-officer/"
         }
-      ]
+      ],
+      "title_bn": "চিফ রিস্ক অফিসার পদ ছাড়েন; স্থায়ী উত্তরসূরি নিয়োগ হয় প্রায় বছরের শেষে"
     },
     {
       "id": "ev_fed_irr_finding",
@@ -80,7 +84,8 @@
           "title": "Federal Reserve: Review of the Supervision and Regulation of SVB (April 2023)",
           "url": "https://www.federalreserve.gov/publications/files/svb-review-20230428.pdf"
         }
-      ]
+      ],
+      "title_bn": "সুদের হারের ঝুঁকি নিয়ে ফেডারেল রিজার্ভের তদারকি পর্যবেক্ষণ (তখন গোপন ছিল)"
     },
     {
       "id": "ev_10k_fy2022",
@@ -94,7 +99,8 @@
           "title": "SEC EDGAR filing index, SVB Financial Group",
           "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0000719739&type=10-K"
         }
-      ]
+      ],
+      "title_bn": "২০২২ অর্থবছরের Form 10-K বার্ষিক প্রতিবেদন"
     },
     {
       "id": "ev_pre14a_2023",
@@ -109,7 +115,8 @@
           "title": "SVB Financial Group PRE 14A (3 March 2023)",
           "url": "https://www.sec.gov/Archives/edgar/data/719739/000071973923000032/sivb-20230303.htm"
         }
-      ]
+      ],
+      "title_bn": "PRE 14A প্রাথমিক প্রক্সি স্টেটমেন্ট (২০২৩ সালের বার্ষিক সভা); চূড়ান্ত প্রক্সি আর কখনো জমা পড়েনি"
     },
     {
       "id": "ev_8k_afs_sale",
@@ -123,7 +130,8 @@
           "title": "SVB Financial Group Form 8-K, Exhibit 99.2 (8 March 2023)",
           "url": "https://www.sec.gov/Archives/edgar/data/719739/000119312523064680/d430920dex992.htm"
         }
-      ]
+      ],
+      "title_bn": "8-K: প্রায় $২১ বিলিয়নের available-for-sale সিকিউরিটিজ বিক্রি, প্রায় $১.৮ বিলিয়ন কর-পরবর্তী ক্ষতি, $২.২৫ বিলিয়ন মূলধন সংগ্রহের ঘোষণা"
     },
     {
       "id": "ev_run",
@@ -137,7 +145,8 @@
           "title": "CNBC: SVB customers tried to withdraw nearly all deposits over two days, Barr testifies",
           "url": "https://www.cnbc.com/2023/03/28/svb-customers-tried-to-pull-nearly-all-deposits-in-two-days-barr-says.html"
         }
-      ]
+      ],
+      "title_bn": "আমানত তুলে নেওয়ার হিড়িক: এক দিনে $৪২ বিলিয়নের বেশি তোলা হয়"
     },
     {
       "id": "ev_failure",
@@ -151,7 +160,8 @@
           "title": "FDIC press release (10 March 2023)",
           "url": "https://www.fdic.gov/news/press-releases/2023/pr23016.html"
         }
-      ]
+      ],
+      "title_bn": "ক্যালিফোর্নিয়া DFPI ব্যাংকটি বন্ধ করে; FDIC রিসিভার নিযুক্ত"
     },
     {
       "id": "ev_systemic",
@@ -165,7 +175,8 @@
           "title": "Federal Reserve: Joint statement (12 March 2023)",
           "url": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20230312b.htm"
         }
-      ]
+      ],
+      "title_bn": "ট্রেজারি, ফেডারেল রিজার্ভ ও FDIC-এর যৌথ বিবৃতি: সিস্টেমিক ঝুঁকির ব্যতিক্রম, সব আমানতকারী সুরক্ষিত"
     },
     {
       "id": "ev_barr_review",
@@ -183,7 +194,8 @@
           "title": "Federal Reserve: Review of the Supervision and Regulation of SVB",
           "url": "https://www.federalreserve.gov/publications/files/svb-review-20230428.pdf"
         }
-      ]
+      ],
+      "title_bn": "SVB-এর ব্যর্থতা নিয়ে ফেডারেল রিজার্ভের পর্যালোচনা প্রকাশ (Barr review)"
     }
   ],
   "warning_signs": [
@@ -209,7 +221,8 @@
       ],
       "rules": [
         "II_YOY_CHANGE:market risk"
-      ]
+      ],
+      "statement_bn": "বড় ও দীর্ঘমেয়াদি সিকিউরিটিজ পোর্টফোলিওর কারণে সুদের হার বাড়লে ব্যাংকটি ঝুঁকিতে পড়ে।"
     },
     {
       "id": "ws_deposit_concentration",
@@ -231,7 +244,8 @@
         "deposit outflow",
         "liquidity"
       ],
-      "rules": []
+      "rules": [],
+      "statement_bn": "আমানত একটি খাতের গ্রাহকদের মধ্যে কেন্দ্রীভূত ছিল এবং বেশিরভাগই বিমা-সীমার বেশি, ফলে দ্রুত আমানত তুলে নেওয়ার ঝুঁকি ছিল।"
     },
     {
       "id": "ws_cro_vacancy",
@@ -253,7 +267,8 @@
       "rules": [
         "BP_CRO",
         "II_RISK_LEADERSHIP_CHANGE"
-      ]
+      ],
+      "statement_bn": "২০২২ সালের বেশিরভাগ সময় চিফ রিস্ক অফিসারের পদে স্থায়ী কেউ ছিলেন না।"
     },
     {
       "id": "ws_board_oversight",
@@ -276,7 +291,8 @@
       "rules": [
         "R407_RISK_OVERSIGHT",
         "BP_RISK_COMMITTEE"
-      ]
+      ],
+      "statement_bn": "বোর্ড ও ব্যবস্থাপনা ব্যাংকের ঝুঁকি কার্যকরভাবে সামলায়নি। ফাইলিংয়ে শুধু তদারকির কাঠামো দেখা যায়, তা কাজ করেছে কি না নয়।"
     },
     {
       "id": "ws_compensation",
@@ -298,7 +314,8 @@
         "pay versus performance",
         "risk adjust"
       ],
-      "rules": []
+      "rules": [],
+      "statement_bn": "নির্বাহীদের প্রণোদনা ঝুঁকি ব্যবস্থাপনার ফলাফলের সাথে যুক্ত ছিল না।"
     },
     {
       "id": "ws_supervisory_findings",
@@ -314,7 +331,9 @@
         "supervisory finding",
         "examination findings"
       ],
-      "rules": []
+      "rules": [],
+      "statement_bn": "তদারকি সংস্থা অনেকগুলো অমীমাংসিত পর্যবেক্ষণ তুলেছিল, সমকক্ষ ব্যাংকের চেয়ে অনেক বেশি। এগুলো গোপন ছিল, প্রকাশ্য ফাইলিংয়ে দেখা যেত না।"
     }
-  ]
+  ],
+  "outcome_bn": "১০ মার্চ ২০২৩ ক্যালিফোর্নিয়া DFPI সিলিকন ভ্যালি ব্যাংক বন্ধ করে দেয় এবং FDIC-কে রিসিভার নিযুক্ত করে।"
 }

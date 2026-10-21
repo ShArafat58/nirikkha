@@ -4,10 +4,10 @@ import { API_URL, USE_MOCK } from "./api";
 export type ReplaySource = { title: string; url: string };
 export type ReplayEvent = {
   id: string; kind: string; precision: string; event_date: string; public_date: string;
-  title: string; note?: string; sources: ReplaySource[]; visible_at_freeze: boolean;
+  title: string; title_bn?: string; note?: string; sources: ReplaySource[]; visible_at_freeze: boolean;
 };
 export type ReplaySign = {
-  id: string; category: string; statement: string; pre_freeze_evidence: string[];
+  id: string; category: string; statement: string; statement_bn?: string; pre_freeze_evidence: string[];
   confirmed_by: string[]; keywords: string[]; rules?: string[];
 };
 export type ReplayStatus = "detected" | "questioned" | "partial" | "missed" | "not_knowable";
