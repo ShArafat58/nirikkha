@@ -138,6 +138,6 @@ Full routes: `ROUTES` in `client.py`. Prompts are versioned files in `backend/ap
 
 ## 11. Scaling path
 
-- More workers on the same queue; the API stays stateless.
+- More workers on the same queue (embedded in the API or separate machines); jobs are claimed so two workers never run the same job.
 - New jurisdictions as new ingestion sources (Companies House, GLEIF) and new rule packs; rules are data plus small checks.
 - Enterprise install: same containers on the customer's servers with Private mode and approved private documents.
