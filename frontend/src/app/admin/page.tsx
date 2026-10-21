@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 
 import { AdminDemosTab } from "../../components/admin/demos";
@@ -8,7 +7,7 @@ import { AdminOverviewTab } from "../../components/admin/overview";
 import { useApp } from "../../components/providers";
 import { useSession } from "../../components/session";
 import { Alert, Button, Field, Input } from "../../components/ui";
-import { ApiError, adminSession } from "../../lib/api";
+import { ApiError, adminSession, login } from "../../lib/api";
 import type { Key } from "../../lib/i18n";
 
 const TABS = ["overview", "demos"] as const;
@@ -50,18 +49,68 @@ function StepUp({ onUnlock }: { onUnlock: (token: string, ttl: number) => void }
   );
 }
 
+function AdminSignIn({ currentEmail, onUnlock }: {
+  currentEmail?: string | null;
+  onUnlock: (token: string, ttl: number) => void;
+}) {
+  const { t } = useApp();
+  const { signIn } = useSession();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  async function submit(e: FormEvent) {
+    e.preventDefault();
+    setError("");
+    setBusy(true);
+    try {
+      const session = await login(email.trim(), password);
+      if (session.user.role !== "admin") {
+        setError(t("adm.notAdmin"));
+        return;
+      }
+      await signIn(session);
+      const s = await adminSession(password);
+      setPassword("");
+      onUnlock(s.token, s.expires_in);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : t("auth.err.generic"));
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <div className="mx-auto mt-16 max-w-md rounded-2xl border border-conf-medium/40 bg-surface p-8 shadow-2xl shadow-black/30">
+      <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-conf-medium/15 text-2xl" aria-hidden>???</span>
+      <h1 className="mt-5 text-2xl font-bold">{t("adm.signinTitle")}</h1>
+      <p className="mt-2 text-sm text-muted">{t("adm.signinNote")}</p>
+      {currentEmail && (
+        <p className="mt-3 rounded-lg bg-surface-2 px-3 py-2 text-xs text-muted">{t("adm.signedInAs")} {currentEmail}</p>
+      )}
+      <form onSubmit={submit} className="mt-6 space-y-4" noValidate>
+        <Field label={t("auth.email")} htmlFor="admin-email">
+          <Input id="admin-email" type="email" autoComplete="username" autoFocus value={email}
+                 onChange={(e) => setEmail(e.target.value)} />
+        </Field>
+        <Field label={t("auth.password")} htmlFor="admin-signin-password">
+          <Input id="admin-signin-password" type="password" autoComplete="current-password" value={password}
+                 onChange={(e) => setPassword(e.target.value)} />
+        </Field>
+        {error && <Alert>{error}</Alert>}
+        <Button type="submit" className="w-full" loading={busy} disabled={!email || !password}>{t("adm.signinButton")}</Button>
+      </form>
+    </div>
+  );
+}
+
 export default function AdminPage() {
   const { t } = useApp();
-  const { user, signedIn, loading, signOut } = useSession();
-  const router = useRouter();
+  const { user, loading } = useSession();
   const [token, setToken] = useState<string | null>(null);
   const [expiresAt, setExpiresAt] = useState(0);
   const [now, setNow] = useState(0);
   const [tab, setTab] = useState<Tab>("overview");
 
-  useEffect(() => {
-    if (!loading && !signedIn) router.replace("/login?next=/admin");
-  }, [loading, signedIn, router]);
 
   useEffect(() => {
     if (!token) return;
@@ -81,14 +130,8 @@ export default function AdminPage() {
     </main>
   );
 
-  if (loading || !user) return shell(<p className="text-muted">{t("dash.loading")}</p>);
-  if (user.role !== "admin") return shell(
-    <div className="mx-auto mt-16 max-w-md space-y-4">
-      <Alert>{t("adm.only")}</Alert>
-      <p className="text-sm text-muted">{user.email}</p>
-      <Button onClick={() => { signOut(); router.push("/login?next=/admin"); }}>{t("adm.switch")}</Button>
-    </div>,
-  );
+  if (loading) return shell(<p className="text-muted">{t("dash.loading")}</p>);
+  if (!user || user.role !== "admin") return shell(<AdminSignIn currentEmail={user?.email} onUnlock={(tok, ttl) => { setToken(tok); setExpiresAt(Date.now() + ttl * 1000); }} />);
   if (!token) return shell(<StepUp onUnlock={(tok, ttl) => { setToken(tok); setExpiresAt(Date.now() + ttl * 1000); }} />);
 
   const minutes = Math.max(0, Math.ceil((expiresAt - (now || Date.now())) / 60_000));
