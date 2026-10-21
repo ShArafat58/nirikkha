@@ -33,7 +33,8 @@ router = APIRouter(prefix="/api/help")
 _BACKEND_DIR = Path(__file__).resolve().parents[2]
 _REPO_ROOT = _BACKEND_DIR.parent
 _KB_PATH = _REPO_ROOT / "docs" / "HELP_KB.md"
-_PROMPT_PATH = Path(__file__).resolve().parents[1] / "prompts" / "help_guide_v1.md"
+_PROMPT_PATH = Path(__file__).resolve().parents[1] / "prompts" / "help_guide_v2.md"
+
 
 # Safety regex patterns
 _INJECTION_RE = re.compile(
@@ -152,16 +153,17 @@ FAQ_ENTRIES = [
             "- Free: $0/mo (3 Crash-Tests/mo, summary report, SEC evidence links)\n"
             "- Analyst Pro: $49/user/mo (30 Crash-Tests/mo, full Rule Engine, PDF export, Radar for 10 companies)\n"
             "- Team: $399/mo (150 Crash-Tests/mo, shared workspace, Radar for 50 companies)\n"
-            "- Enterprise: Annual contract (unlimited use, on-premise deployment, custom rules, pilot available)."
+            "- Enterprise: Annual contract (pricing agreed per customer; start with \"Request a Pilot\"). For banks, institutional investors and large compliance teams: approved private documents, deployment on the customer's own servers so data does not leave their environment, custom rules, SSO, and unlimited use."
         ),
         "bn": (
             "নিরীক্ষার সাবস্ক্রিপশন প্ল্যানসমূহ:\n"
             "- Free: $০/মাস (৩টি ক্র্যাশ-টেস্ট, সারসংক্ষেপ ও ফাইলিং লিংক)\n"
             "- Analyst Pro: $৪৯/ব্যবহারকারী/মাস (৩০টি টেস্ট, সম্পূর্ণ রুল ইঞ্জিন, পিডিএফ ও ১০টি কোম্পানির রেডার)\n"
             "- Team: $৩৯৯/মাস (১৫০টি টেস্ট, শেয়ার্ড ওয়ার্কস্পেস, ৫০টি কোম্পানির রেডার)\n"
-            "- Enterprise: বার্ষিক চুক্তি (অসীম ব্যবহার, নিজস্ব সার্ভারে স্থাপন, কাস্টম নিয়ম ও পাইলট)।"
+            "- Enterprise: বার্ষিক চুক্তি (গ্রাহকভিত্তিক নির্ধারিত মূল্য; 'Request a Pilot' দিয়ে শুরু)। ব্যাংক ও প্রাতিষ্ঠানিক টিমের জন্য: অনুমোদিত নিজস্ব নথি, গ্রাহকের নিজস্ব সার্ভারে ডেটা সংরক্ষণ, কাস্টম রুলস, SSO ও আনলিমিটেড ব্যবহার।"
         ),
     },
+
     {
         "keywords": ["graph", "relationship", "interlock", "গ্রাফ"],
         "en": (
@@ -330,12 +332,13 @@ def help_chat(body: HelpChatRequest, request: Request) -> HelpChatResponse:
     # 7. LLM Call via the fast route with fallback to FAQ
     try:
         llm = get_llm()
-        result = llm.complete("fast", llm_messages, max_tokens=350, use_cache=True)
+        result = llm.complete("fast", llm_messages, max_tokens=350, temperature=0.0, use_cache=True)
         reply_text = result.text.strip()
         # PII redaction on model reply
         redacted_reply, _ = redact_pii(reply_text)
         final_reply = _trim_words(redacted_reply)
         return HelpChatResponse(reply=final_reply, lang=lang, source="llm")
     except (LLMError, Exception):
+
         fallback_reply = _get_faq_fallback(latest_msg, lang)
         return HelpChatResponse(reply=fallback_reply, lang=lang, source="faq")

@@ -225,3 +225,61 @@ def test_returns_faq_fallback_when_llm_fails():
         assert data["source"] == "faq"
         assert "First Warning Sign Replay" in data["reply"]
         assert "Freeze Date" in data["reply"]
+
+
+def test_system_prompt_contains_v2_rules_and_enterprise_verbatim():
+    """Verify that system prompt sent to LLM contains v2 strict grounding rules
+    and the Enterprise plan line from HELP_KB.md verbatim, with temperature=0.0."""
+    captured_messages = []
+    captured_kwargs = {}
+
+    def mock_complete(task, messages, **kwargs):
+        captured_messages.extend(messages)
+        captured_kwargs.update(kwargs)
+        # Mock LLM output that attempts to return hallucinated features
+        return LLMResult(
+            text="Enterprise includes dedicated support and role-based access control.",
+            data=None,
+            task="fast",
+            provider="mock",
+            model="mock-fast",
+            input_tokens=50,
+            output_tokens=15,
+            latency_ms=100,
+            cached=False,
+            cost_usd=0.0,
+        )
+
+    with patch("app.api.help.get_llm") as mock_get_llm:
+        mock_client = MagicMock()
+        mock_client.complete.side_effect = mock_complete
+        mock_get_llm.return_value = mock_client
+
+        res = client.post(
+            "/api/help/chat",
+            json={
+                "messages": [{"role": "user", "content": "What is included in the Enterprise plan?"}],
+                "lang": "en",
+                "page": "/pricing",
+            },
+        )
+        assert res.status_code == 200
+        assert captured_kwargs.get("temperature") == 0.0
+
+        system_msg = next(m["content"] for m in captured_messages if m["role"] == "system")
+
+        # 1. Stricter grounding rules in prompt v2
+        assert "Answer only with facts written in the HELP GUIDE below." in system_msg
+        assert "When listing plan features, list exactly the items written for that plan and nothing more." in system_msg
+        assert "Never add features, integrations, guarantees, support levels, cloud options, roles or prices that are not written." in system_msg
+        assert "The help guide does not mention that" in system_msg
+        assert "Translate the guide's words faithfully when answering in Bengali; do not expand them." in system_msg
+
+        # 2. Enterprise line from HELP_KB.md is present verbatim
+        enterprise_line = (
+            "- **Enterprise**: Annual contract (pricing agreed per customer; start with \"Request a Pilot\"). "
+            "For banks, institutional investors and large compliance teams: approved private documents, "
+            "deployment on the customer's own servers so data does not leave their environment, custom rules, SSO, and unlimited use."
+        )
+        assert enterprise_line in system_msg
+

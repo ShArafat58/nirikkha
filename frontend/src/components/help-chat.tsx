@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { useApp } from "./providers";
 import { chatHelp, type HelpChatMessage } from "../lib/api";
@@ -114,14 +114,168 @@ const SUGGESTIONS: Record<string, { en: string[]; bn: string[] }> = {
   },
 };
 
+// Safe markdown renderer for assistant responses (no raw HTML, no dangerouslySetInnerHTML)
+function inlineMarkdown(text: string, keyPrefix: string): ReactNode[] {
+  const parts: ReactNode[] = [];
+  const re = /(\*\*[^*]+\*\*|\*[^*\s][^*]*\*|`[^`]+`|\[[^\]]+\]\((?:https?:\/\/[^)\s]+|\/[^)\s]*)\))/g;
+  let last = 0;
+  let match: RegExpExecArray | null;
+  let idx = 0;
+
+  while ((match = re.exec(text)) !== null) {
+    if (match.index > last) {
+      parts.push(text.slice(last, match.index));
+    }
+    const tok = match[0];
+    const k = `${keyPrefix}-${idx++}`;
+
+    if (tok.startsWith("**")) {
+      parts.push(
+        <strong key={k} className="font-semibold text-text">
+          {tok.slice(2, -2)}
+        </strong>
+      );
+    } else if (tok.startsWith("`")) {
+      parts.push(
+        <code key={k} className="rounded bg-surface px-1 py-0.5 font-mono text-[0.88em] text-accent">
+          {tok.slice(1, -1)}
+        </code>
+      );
+    } else if (tok.startsWith("[")) {
+      const matchLink = tok.match(/^\[([^\]]+)\]\((.+)\)$/);
+      if (matchLink) {
+        const [, label, url] = matchLink;
+        parts.push(
+          <a
+            key={k}
+            href={url}
+            target={url.startsWith("http") ? "_blank" : undefined}
+            rel="noreferrer"
+            className="text-accent underline hover:opacity-80"
+          >
+            {label}
+          </a>
+        );
+      }
+    } else if (tok.startsWith("*")) {
+      parts.push(
+        <em key={k} className="italic text-text/90">
+          {tok.slice(1, -1)}
+        </em>
+      );
+    }
+    last = match.index + tok.length;
+  }
+
+  if (last < text.length) {
+    parts.push(text.slice(last));
+  }
+  return parts;
+}
+
+function SafeChatMarkdown({ text, isBn }: { text: string; isBn: boolean }) {
+  const elements: ReactNode[] = [];
+  const lines = text.split(/\r?\n/);
+  let listItems: string[] = [];
+  let isOrdered = false;
+
+  const flushList = () => {
+    if (!listItems.length) return;
+    const items = listItems.map((li, i) => (
+      <li key={i} className="leading-relaxed">
+        {inlineMarkdown(li, `li-${elements.length}-${i}`)}
+      </li>
+    ));
+    elements.push(
+      isOrdered ? (
+        <ol key={`ol-${elements.length}`} className="ml-5 list-decimal space-y-1">
+          {items}
+        </ol>
+      ) : (
+        <ul key={`ul-${elements.length}`} className="ml-5 list-disc space-y-1">
+          {items}
+        </ul>
+      )
+    );
+    listItems = [];
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    const raw = lines[i];
+    const line = raw.trim();
+
+    if (!line) {
+      flushList();
+      continue;
+    }
+
+    const bulletMatch = line.match(/^[-*•]\s+(.*)$/);
+    const orderedMatch = line.match(/^(\d+)[.)]\s+(.*)$/);
+
+    if (bulletMatch || orderedMatch) {
+      const isCurOrdered = Boolean(orderedMatch);
+      if (listItems.length && isOrdered !== isCurOrdered) {
+        flushList();
+      }
+      isOrdered = isCurOrdered;
+      listItems.push(bulletMatch ? bulletMatch[1] : orderedMatch![2]);
+      continue;
+    }
+
+    flushList();
+
+    if (line.startsWith("### ")) {
+      elements.push(
+        <h4 key={`h4-${i}`} className="font-semibold text-text mt-2 text-xs sm:text-sm">
+          {inlineMarkdown(line.slice(4), `h4-${i}`)}
+        </h4>
+      );
+    } else if (line.startsWith("## ")) {
+      elements.push(
+        <h3 key={`h3-${i}`} className="font-bold text-text mt-2 text-xs sm:text-sm border-b border-border/50 pb-1">
+          {inlineMarkdown(line.slice(3), `h3-${i}`)}
+        </h3>
+      );
+    } else {
+      elements.push(
+        <p key={`p-${i}`} className="leading-relaxed">
+          {inlineMarkdown(line, `p-${i}`)}
+        </p>
+      );
+    }
+  }
+
+  flushList();
+
+  return (
+    <div
+      className={`space-y-2 text-xs sm:text-sm ${
+        isBn ? "font-[family-name:var(--font-noto-bn)]" : "font-[family-name:var(--font-plex-sans)]"
+      }`}
+    >
+      {elements}
+    </div>
+  );
+}
+
 export function HelpChat() {
   const { lang } = useApp();
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  const [showBubble, setShowBubble] = useState(false);
+  const [dismissedBubble, setDismissedBubble] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const isBn = lang === "bn";
+
+  // Bubble fade/slide in after 1.5 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => setShowBubble(true), 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Suggested questions based on the route
   const pageRoute = Object.keys(SUGGESTIONS).find((route) => route !== "default" && pathname.startsWith(route)) ?? "default";
@@ -169,8 +323,6 @@ export function HelpChat() {
     setMessages([]);
   };
 
-  const isBn = lang === "bn";
-
   return (
     <>
       <style jsx global>{`
@@ -190,7 +342,7 @@ export function HelpChat() {
             opacity: 0.85;
           }
           50% {
-            filter: drop-shadow(0 0 6px var(--accent));
+            filter: drop-shadow(0 0 7px var(--accent));
             opacity: 1;
           }
         }
@@ -201,7 +353,30 @@ export function HelpChat() {
             transform: scaleY(1);
           }
           95% {
-            transform: scaleY(0.1);
+            transform: scaleY(0.12);
+          }
+        }
+        @keyframes bubble-enter {
+          0% {
+            opacity: 0;
+            transform: translateY(8px) scale(0.96);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+        @keyframes bubble-soft-bounce {
+          0%,
+          88%,
+          100% {
+            transform: translateY(0);
+          }
+          92% {
+            transform: translateY(-5px);
+          }
+          96% {
+            transform: translateY(-1px);
           }
         }
         .robot-animated {
@@ -214,105 +389,144 @@ export function HelpChat() {
           transform-origin: center;
           animation: eye-blink 4s infinite;
         }
+        .help-bubble-anim {
+          animation: bubble-enter 0.4s ease-out forwards, bubble-soft-bounce 8s ease-in-out infinite 1.5s;
+        }
         @media (prefers-reduced-motion: reduce) {
           .robot-animated,
           .robot-antenna,
-          .robot-eye {
+          .robot-eye,
+          .help-bubble-anim {
             animation: none !important;
           }
         }
       `}</style>
 
-      {/* Floating Trigger Button */}
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        aria-label={isBn ? "সাহায্য চ্যাট খুলুন" : "Open help chat"}
-        aria-expanded={isOpen}
-        className="fixed bottom-5 right-5 z-50 flex h-14 w-14 items-center justify-center rounded-full border border-border bg-surface text-text shadow-xl shadow-black/30 transition-transform duration-200 hover:scale-105 hover:border-accent focus:outline-none focus:ring-2 focus:ring-accent"
-      >
-        <svg
-          viewBox="0 0 40 40"
-          className="robot-animated h-9 w-9 text-text"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
+      {/* Floating Widget Container (Bottom-Right) */}
+      <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end">
+        {/* "Need help?" / "সাহায্য লাগবে?" Speech Bubble */}
+        {!isOpen && showBubble && !dismissedBubble && (
+          <div className="relative mb-2.5 max-[380px]:hidden flex items-center gap-1.5 rounded-xl border border-accent/80 bg-surface px-3 py-1.5 shadow-lg shadow-black/25 help-bubble-anim">
+            <button
+              type="button"
+              onClick={() => setIsOpen(true)}
+              aria-label={isBn ? "সাহায্য চ্যাট খুলুন" : "Open help chat"}
+              className={`flex items-center gap-1 text-xs sm:text-sm font-medium text-text hover:text-accent transition-colors ${
+                isBn ? "font-[family-name:var(--font-noto-bn)]" : "font-[family-name:var(--font-plex-sans)]"
+              }`}
+            >
+              <span>{isBn ? "সাহায্য লাগবে?" : "Need help?"}</span>
+            </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setDismissedBubble(true);
+              }}
+              title={isBn ? "বিজ্ঞপ্তি বন্ধ করুন" : "Dismiss notice"}
+              aria-label={isBn ? "বিজ্ঞপ্তি বন্ধ করুন" : "Dismiss notice"}
+              className="ml-0.5 rounded-full p-0.5 text-muted hover:bg-surface-2 hover:text-text transition-colors"
+            >
+              <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            {/* Bubble Tail Pointer pointing downward towards robot */}
+            <div className="absolute -bottom-1.5 right-6 h-3 w-3 rotate-45 border-b border-r border-accent/80 bg-surface pointer-events-none" />
+          </div>
+        )}
+
+        {/* Floating Robot Button: ~64px desktop (sm:h-16 sm:w-16), 56px mobile (h-14 w-14) */}
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          aria-label={isBn ? "সাহায্য চ্যাট খুলুন" : "Open help chat"}
+          aria-expanded={isOpen}
+          className="flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-full border border-border bg-surface text-text shadow-xl shadow-black/30 transition-transform duration-200 hover:scale-105 hover:border-accent focus:outline-none focus:ring-2 focus:ring-accent"
         >
-          {/* Antenna */}
-          <line
-            x1="20"
-            y1="4"
-            x2="20"
-            y2="10"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-          />
-          <circle
-            cx="20"
-            cy="4"
-            r="3"
-            fill="var(--accent)"
-            className="robot-antenna"
-          />
+          <svg
+            viewBox="0 0 40 40"
+            className="robot-animated h-9 w-9 sm:h-11 sm:w-11 text-text"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            {/* Antenna Stem & Glowing Tip */}
+            <line
+              x1="20"
+              y1="4"
+              x2="20"
+              y2="10"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+            />
+            <circle
+              cx="20"
+              cy="4"
+              r="3.2"
+              fill="var(--accent)"
+              className="robot-antenna"
+            />
 
-          {/* Head */}
-          <rect
-            x="7"
-            y="10"
-            width="26"
-            height="20"
-            rx="6"
-            fill="var(--surface-2)"
-            stroke="currentColor"
-            strokeWidth="2.2"
-          />
+            {/* Head */}
+            <rect
+              x="7"
+              y="10"
+              width="26"
+              height="20"
+              rx="6.5"
+              fill="var(--surface-2)"
+              stroke="currentColor"
+              strokeWidth="2.2"
+            />
 
-          {/* Visor / Eye display */}
-          <rect
-            x="11"
-            y="14"
-            width="18"
-            height="9"
-            rx="3.5"
-            fill="var(--bg)"
-          />
+            {/* Visor */}
+            <rect
+              x="11"
+              y="14"
+              width="18"
+              height="9"
+              rx="3.5"
+              fill="var(--bg)"
+            />
 
-          {/* Eyes */}
-          <circle
-            cx="15.5"
-            cy="18.5"
-            r="2.2"
-            fill="var(--accent)"
-            className="robot-eye"
-          />
-          <circle
-            cx="24.5"
-            cy="18.5"
-            r="2.2"
-            fill="var(--accent)"
-            className="robot-eye"
-          />
+            {/* Blinking Eyes */}
+            <circle
+              cx="15.5"
+              cy="18.5"
+              r="2.3"
+              fill="var(--accent)"
+              className="robot-eye"
+            />
+            <circle
+              cx="24.5"
+              cy="18.5"
+              r="2.3"
+              fill="var(--accent)"
+              className="robot-eye"
+            />
 
-          {/* Cheerful Mouth / Accent notch */}
-          <path
-            d="M16 26 Q20 28.5 24 26"
-            stroke="var(--muted)"
-            strokeWidth="2"
-            strokeLinecap="round"
-          />
+            {/* Cheerful Mouth Notch */}
+            <path
+              d="M16 26 Q20 28.5 24 26"
+              stroke="var(--muted)"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
 
-          {/* Ear dials */}
-          <rect x="4" y="16" width="3" height="8" rx="1.5" fill="var(--accent)" />
-          <rect x="33" y="16" width="3" height="8" rx="1.5" fill="var(--accent)" />
-        </svg>
-      </button>
+            {/* Ear Dials */}
+            <rect x="4" y="15.5" width="3" height="9" rx="1.5" fill="var(--accent)" />
+            <rect x="33" y="15.5" width="3" height="9" rx="1.5" fill="var(--accent)" />
+          </svg>
+        </button>
+      </div>
 
       {/* Chat Panel / Popover */}
       {isOpen && (
         <div
           role="dialog"
           aria-label={isBn ? "নিরীক্ষা গাইড হেল্প চ্যাট" : "Nirikkha Guide Help Chat"}
-          className="fixed inset-x-0 bottom-0 z-50 flex h-[82vh] flex-col rounded-t-2xl border border-border bg-surface text-text shadow-2xl backdrop-blur-md sm:bottom-22 sm:left-auto sm:right-5 sm:h-[32rem] sm:w-[24rem] sm:rounded-2xl"
+          className="fixed inset-x-0 bottom-0 z-50 flex h-[82vh] flex-col rounded-t-2xl border border-border bg-surface text-text shadow-2xl backdrop-blur-md sm:bottom-24 sm:left-auto sm:right-5 sm:h-[33rem] sm:w-[25rem] sm:rounded-2xl"
         >
           {/* Header */}
           <div className="flex items-center justify-between border-b border-border bg-surface-2/60 px-4 py-3">
@@ -342,7 +556,7 @@ export function HelpChat() {
                   onClick={clearChat}
                   title={isBn ? "চ্যাট মুছুন" : "Clear conversation"}
                   aria-label={isBn ? "চ্যাট মুছুন" : "Clear conversation"}
-                  className="rounded-lg p-1.5 text-muted hover:bg-surface hover:text-text"
+                  className="rounded-lg p-1.5 text-muted hover:bg-surface hover:text-text transition-colors"
                 >
                   <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
@@ -353,7 +567,7 @@ export function HelpChat() {
                 type="button"
                 onClick={() => setIsOpen(false)}
                 aria-label={isBn ? "চ্যাট বন্ধ করুন" : "Close chat"}
-                className="rounded-lg p-1.5 text-muted hover:bg-surface hover:text-text"
+                className="rounded-lg p-1.5 text-muted hover:bg-surface hover:text-text transition-colors"
               >
                 <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M6 18L18 6M6 6l12 12" />
@@ -390,7 +604,9 @@ export function HelpChat() {
                       key={idx}
                       type="button"
                       onClick={() => sendQuery(chip)}
-                      className="rounded-full border border-border bg-surface-2/70 px-3 py-1.5 text-left text-xs font-medium text-text hover:border-accent hover:bg-surface transition-colors"
+                      className={`rounded-full border border-border bg-surface-2/70 px-3 py-1.5 text-left text-xs font-medium text-text hover:border-accent hover:bg-surface transition-colors ${
+                        isBn ? "font-[family-name:var(--font-noto-bn)]" : ""
+                      }`}
                     >
                       {chip}
                     </button>
@@ -408,13 +624,17 @@ export function HelpChat() {
                 }`}
               >
                 <div
-                  className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 whitespace-pre-line text-xs sm:text-sm ${
+                  className={`max-w-[88%] rounded-2xl px-3.5 py-2.5 text-xs sm:text-sm ${
                     m.role === "user"
-                      ? "bg-accent text-accent-contrast font-medium rounded-tr-none"
+                      ? "bg-accent text-accent-contrast font-medium rounded-tr-none whitespace-pre-line"
                       : "bg-surface-2 border border-border text-text rounded-tl-none shadow-sm"
                   }`}
                 >
-                  {m.content}
+                  {m.role === "assistant" ? (
+                    <SafeChatMarkdown text={m.content} isBn={isBn} />
+                  ) : (
+                    m.content
+                  )}
                 </div>
                 {m.role === "assistant" && m.source && (
                   <span className="mt-1 text-[10px] text-muted uppercase tracking-wider px-1">
@@ -454,7 +674,9 @@ export function HelpChat() {
                     ? "প্রশ্ন লিখুন (যেমন: ক্র্যাশ-টেস্ট কীভাবে চালাব)..."
                     : "Ask about Nirikkha, features, results..."
                 }
-                className="flex-1 rounded-xl border border-border bg-surface-2 px-3 py-2 text-xs sm:text-sm text-text placeholder-muted focus:border-accent focus:outline-none"
+                className={`flex-1 rounded-xl border border-border bg-surface-2 px-3 py-2 text-xs sm:text-sm text-text placeholder-muted focus:border-accent focus:outline-none ${
+                  isBn ? "font-[family-name:var(--font-noto-bn)]" : ""
+                }`}
               />
               <button
                 type="submit"
