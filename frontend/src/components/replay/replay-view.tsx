@@ -223,8 +223,8 @@ function SignItem({ s, t, events, lang }: { s: ReplaySignResult; t: T; events: M
             <p className="mt-1 text-sm leading-relaxed">{r.rationale}</p>
             {r.citation?.quote && (
               <p className="mt-2 text-xs opacity-80">
-                <span className="font-mono">{[r.citation.form, r.citation.page ? `p.${r.citation.page}` : null].filter(Boolean).join(" ? ")}</span>
-                <span className="mt-0.5 block italic">?{r.citation.quote}?</span>
+                <span className="font-mono">{[r.citation.form, r.citation.page ? `p.${r.citation.page}` : null].filter(Boolean).join(" · ")}</span>
+                <span className="mt-0.5 block italic">“{r.citation.quote}”</span>
               </p>
             )}
           </div>
