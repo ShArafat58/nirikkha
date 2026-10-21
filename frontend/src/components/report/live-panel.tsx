@@ -1,14 +1,60 @@
 "use client";
 
 import type { CrashTestJob } from "../../lib/api";
-import type { Key } from "../../lib/i18n";
+import { formatElapsed, type Key } from "../../lib/i18n";
 import { useApp } from "../providers";
 
 function secs(ms: number): string {
   return ms >= 1000 ? `${(ms / 1000).toFixed(1)} s` : `${ms} ms`;
 }
 
-export function LivePanel({ job }: { job: CrashTestJob }) {
+export function NoticeCard({
+  job,
+  elapsed = 0,
+  className = "",
+}: {
+  job: CrashTestJob;
+  elapsed?: number;
+  className?: string;
+}) {
+  const { t, lang } = useApp();
+  return (
+    <div className={`rounded-2xl border border-border bg-surface p-5 sm:p-6 ${className}`}>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2 text-accent">
+          <svg
+            className="h-4 w-4 shrink-0 motion-safe:animate-pulse motion-reduce:animate-none"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M5 22h14" />
+            <path d="M5 2h14" />
+            <path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22" />
+            <path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2" />
+          </svg>
+          <span className="font-mono text-xs font-semibold">
+            {t("run.elapsedTime")} {formatElapsed(elapsed, lang)}
+          </span>
+        </div>
+        {job.private && (
+          <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-400">
+            🔒 {t("ct.privateBadge")}
+          </span>
+        )}
+      </div>
+      <p className="mt-3 text-xs leading-relaxed text-muted sm:text-sm">
+        {job.private ? t("run.notice.private") : t("run.notice.normal")}
+      </p>
+    </div>
+  );
+}
+
+export function LivePanel({ job, elapsed = 0 }: { job: CrashTestJob; elapsed?: number }) {
   const { t } = useApp();
   const total = job.pipeline.length;
   const done = job.done_nodes.length;
@@ -17,6 +63,8 @@ export function LivePanel({ job }: { job: CrashTestJob }) {
   const log = [...job.events].reverse();
   return (
     <div className="space-y-5">
+      <NoticeCard job={job} elapsed={elapsed} />
+
       <div className="rounded-2xl border border-border bg-surface p-6">
         <div className="flex items-center justify-between">
           <div className="flex flex-wrap items-center gap-2">

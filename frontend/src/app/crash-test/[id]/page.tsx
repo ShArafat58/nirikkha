@@ -4,11 +4,12 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 
+import { Loader } from "../../../components/loader";
 import { useApp } from "../../../components/providers";
 import { LivePanel } from "../../../components/report/live-panel";
 import { Alert } from "../../../components/ui";
 import { ApiError, getCrashTest, type CrashTestJob } from "../../../lib/api";
-import type { Key } from "../../../lib/i18n";
+import { formatElapsed, type Key } from "../../../lib/i18n";
 
 const POLL_MS = 2500;
 const OPEN_DELAY_MS = 1500;
@@ -50,16 +51,14 @@ function CompleteCard({ id }: { id: string }) {
     <div className="flex flex-col items-center rounded-2xl border border-conf-high/40 bg-conf-high/10 p-10 text-center">
       <span className="flex h-20 w-20 items-center justify-center rounded-full bg-conf-high text-4xl font-bold text-bg shadow-lg shadow-conf-high/30">✓</span>
       <h2 className="mt-6 text-2xl font-bold">{t("run.done")}</h2>
-      <p className="mt-2 flex items-center gap-2 text-muted">
-        <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" aria-hidden />{t("rep.opening")}
-      </p>
-      <Link href={`/report/${id}`} className="mt-6 text-sm font-semibold text-accent hover:underline">{t("rep.openNow")} →</Link>
+      <Loader label={t("rep.opening")} className="!py-4" />
+      <Link href={`/report/${id}`} className="mt-2 text-sm font-semibold text-accent hover:underline">{t("rep.openNow")} →</Link>
     </div>
   );
 }
 
 function RunView() {
-  const { t } = useApp();
+  const { t, lang } = useApp();
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
   const [job, setJob] = useState<CrashTestJob | null>(null);
@@ -117,7 +116,7 @@ function RunView() {
         <Link href="/crash-test" className="text-sm text-muted hover:text-text">← {t("run.retry")}</Link>
         <div className="mt-3 flex flex-wrap items-baseline gap-x-4">
           <h1 className="text-3xl font-bold">{heading}</h1>
-          {running && <span className="font-mono text-sm text-muted">{t("run.elapsed")}: {elapsed} s</span>}
+          {running && <span className="font-mono text-sm text-muted">{t("run.elapsedTime")}: {formatElapsed(elapsed, lang)}</span>}
         </div>
         {job && <p className="mt-2 max-w-3xl text-sm text-muted"><span className="font-mono">as of {job.as_of}</span> · {job.decision}</p>}
         {error && <div className="mt-4"><Alert>{error}</Alert></div>}
@@ -131,7 +130,7 @@ function RunView() {
               <Timeline job={job} />
             </section>
             <section>
-              {running && <LivePanel job={job} />}
+              {running && <LivePanel job={job} elapsed={elapsed} />}
               {job.status === "done" && <CompleteCard id={id} />}
               {(job.status === "failed" || job.status === "blocked") && <Alert>{job.error ?? t("auth.err.generic")}</Alert>}
             </section>

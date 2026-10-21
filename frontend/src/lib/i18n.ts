@@ -268,6 +268,9 @@ const en = {
   "ct.privateDisabledTooltip": "Ollama not detected locally. Run `ollama serve` to enable private mode.",
   "ct.privateBadge": "Private Mode — Local LLM (qwen2.5 / gemma3)",
   "ct.privateUnavailable": "Private mode needs the local model runtime (Ollama). It is not running on this server.",
+  "run.notice.normal": "This takes about 1 to 3 minutes. Nirikkha reads the filings, checks every rule and verifies each finding, so please keep this page open.",
+  "run.notice.private": "Private mode runs every AI step on this computer's small local models, so it takes about 5 to 10 minutes. Nothing leaves this machine.",
+  "run.elapsedTime": "Elapsed",
 };
 
 export type Key = keyof typeof en;
@@ -538,10 +541,24 @@ const bn: Partial<Record<Key, string>> = {
   "ct.privateDisabledTooltip": "স্থানীয়ভাবে ওলামা শনাক্ত করা যায়নি। প্রাইভেট মোড চালু করতে `ollama serve` চালান।",
   "ct.privateBadge": "প্রাইভেট মোড — স্থানীয় এলএলএম (qwen2.5 / gemma3)",
   "ct.privateUnavailable": "প্রাইভেট মোডের জন্য স্থানীয় মডেল রানটাইম (ওলামা) প্রয়োজন। এই সার্ভারে এটি চালু নেই।",
+  "run.notice.normal": "এতে প্রায় ১ থেকে ৩ মিনিট লাগে। নিরীক্ষা ফাইলিং পড়ে, প্রতিটি নিয়ম যাচাই করে এবং প্রতিটি ফলাফল পরীক্ষা করে, তাই পাতাটি খোলা রাখুন।",
+  "run.notice.private": "প্রাইভেট মোডে সব AI ধাপ এই কম্পিউটারের ছোট লোকাল মডেলে চলে, তাই প্রায় ৫ থেকে ১০ মিনিট লাগে। কিছুই এই মেশিনের বাইরে যায় না।",
+  "run.elapsedTime": "সময় পেরিয়েছে",
 };
 
 export const dict: Record<Lang, Partial<Record<Key, string>>> = { en, bn };
 
 export function translate(lang: Lang, key: Key): string {
   return dict[lang][key] ?? en[key];
+}
+
+export function formatElapsed(seconds: number, lang: Lang = "en"): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  const str = `${m}:${s < 10 ? "0" : ""}${s}`;
+  if (lang === "bn") {
+    const digits = ["০", "১", "২", "৩", "৪", "৫", "৬", "৭", "৮", "৯"];
+    return str.replace(/\d/g, (d) => digits[Number(d)]);
+  }
+  return str;
 }
