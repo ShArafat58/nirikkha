@@ -326,7 +326,7 @@ export default function DashboardPage() {
   ];
 
   return (
-    <main className="bg-app min-h-[calc(100vh-4rem)] text-text">
+    <main className="bg-app min-h-[calc(100vh-4rem)] overflow-x-hidden text-text">
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
         {/* Hero */}
         <section className="relative overflow-hidden rounded-2xl border border-border bg-surface p-6 sm:p-8">
@@ -441,7 +441,7 @@ export default function DashboardPage() {
 
         <div className="mt-6 grid gap-6 lg:grid-cols-5">
           {/* Recent */}
-          <section className="rounded-xl border border-border bg-surface p-5 lg:col-span-3">
+          <section className="min-w-0 rounded-xl border border-border bg-surface p-5 lg:col-span-3">
             <div className="flex items-center justify-between gap-3">
               <h2 className="text-lg font-semibold">{s.recent}</h2>
               <Link
@@ -509,7 +509,7 @@ export default function DashboardPage() {
           </section>
 
           {/* Featured */}
-          <section className="rounded-xl border border-border bg-surface p-5 lg:col-span-2">
+          <section className="min-w-0 rounded-xl border border-border bg-surface p-5 lg:col-span-2">
             <h2 className="text-lg font-semibold">{s.featured}</h2>
             <p className="text-sm text-muted">{s.featuredSub}</p>
             <ul className="mt-4 space-y-3">
