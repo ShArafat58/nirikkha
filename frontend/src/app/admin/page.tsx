@@ -52,7 +52,7 @@ function StepUp({ onUnlock }: { onUnlock: (token: string, ttl: number) => void }
 
 export default function AdminPage() {
   const { t } = useApp();
-  const { user, signedIn, loading } = useSession();
+  const { user, signedIn, loading, signOut } = useSession();
   const router = useRouter();
   const [token, setToken] = useState<string | null>(null);
   const [expiresAt, setExpiresAt] = useState(0);
@@ -82,7 +82,13 @@ export default function AdminPage() {
   );
 
   if (loading || !user) return shell(<p className="text-muted">{t("dash.loading")}</p>);
-  if (user.role !== "admin") return shell(<div className="mx-auto mt-16 max-w-md"><Alert>{t("adm.only")}</Alert></div>);
+  if (user.role !== "admin") return shell(
+    <div className="mx-auto mt-16 max-w-md space-y-4">
+      <Alert>{t("adm.only")}</Alert>
+      <p className="text-sm text-muted">{user.email}</p>
+      <Button onClick={() => { signOut(); router.push("/login?next=/admin"); }}>{t("adm.switch")}</Button>
+    </div>,
+  );
   if (!token) return shell(<StepUp onUnlock={(tok, ttl) => { setToken(tok); setExpiresAt(Date.now() + ttl * 1000); }} />);
 
   const minutes = Math.max(0, Math.ceil((expiresAt - (now || Date.now())) / 60_000));
