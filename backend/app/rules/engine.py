@@ -296,14 +296,22 @@ def check_risk_oversight(rule: Rule, facts: Facts):
 
 
 def check_risk_committee(rule: Rule, facts: Facts):
-    if (missing := _no_relations(rule, facts)) is not None:
-        return missing
+    from app.rules.sector import is_financial
+
     rows = [r for r in facts.rows("MEMBER_OF") if "risk" in r["org_name"].lower()]
     if rows:
         names = sorted({r["org_name"] for r in rows})
         from_table = any(r["props"].get("from_table") for r in rows)
         return _result(rule, "PASS", f"Risk committee(s) identified: {', '.join(names)}.",
                        "medium" if from_table else "high", from_table, [_cite_row(r) for r in rows[:2]])
+    if is_financial(facts.cik) is False:
+        fields = {"rule_id": rule.id, "title": rule.title, "category": rule.category, "source": rule.source,
+                  "reason": "A dedicated board risk committee is a financial-sector best practice (required for "
+                            "large bank holding companies); this company's SEC industry code (SIC) is outside "
+                            "finance (6000-6799) and no risk committee is disclosed."}
+        return NotApplicable(**{k: v for k, v in fields.items() if k in NotApplicable.model_fields})
+    if (missing := _no_relations(rule, facts)) is not None:
+        return missing
     return _result(rule, "INSUFFICIENT_EVIDENCE", "No risk committee membership extracted.", "low", True)
 
 

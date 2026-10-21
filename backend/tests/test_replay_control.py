@@ -30,3 +30,22 @@ def test_cro_rule_not_applicable_outside_finance(monkeypatch):
     report = evaluate(facts, [r for r in RULES if r.id == "BP_CRO"])
     assert report["results"] == []
     assert report["not_applicable"][0]["rule_id"] == "BP_CRO"
+
+def test_risk_committee_rule_not_applicable_outside_finance(monkeypatch):
+    import app.rules.sector as sector
+    monkeypatch.setattr(sector, "is_financial", lambda cik: False)
+    facts = Facts(company="Tech Co", cik="0000320193", as_of=date(2026, 10, 21),
+                  filings=[{"accession_no": "P", "form": "DEF 14A", "filing_date": date(2026, 1, 8)}])
+    report = evaluate(facts, [r for r in RULES if r.id == "BP_RISK_COMMITTEE"])
+    assert report["results"] == []
+    assert report["not_applicable"][0]["rule_id"] == "BP_RISK_COMMITTEE"
+
+
+def test_risk_committee_rule_still_applies_to_banks(monkeypatch):
+    import app.rules.sector as sector
+    monkeypatch.setattr(sector, "is_financial", lambda cik: True)
+    facts = Facts(company="Bank Co", cik="0000719739", as_of=date(2023, 3, 7),
+                  filings=[{"accession_no": "P", "form": "DEF 14A", "filing_date": date(2022, 3, 4)}])
+    report = evaluate(facts, [r for r in RULES if r.id == "BP_RISK_COMMITTEE"])
+    assert report["not_applicable"] == []
+    assert report["results"][0]["result"] == "INSUFFICIENT_EVIDENCE"
