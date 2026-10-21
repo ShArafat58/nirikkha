@@ -7,6 +7,7 @@ import { SiteHeader } from "../components/site-header";
 import "./globals.css";
 import { HelpChat } from "../components/help-chat";
 import { RouteGuard } from "../components/route-guard";
+import SiteFooterI18n from "../components/site-footer-i18n";
 
 const sans = IBM_Plex_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--font-plex-sans", display: "swap" });
 const mono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-plex-mono", display: "swap" });
@@ -32,6 +33,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <SessionProvider>
             <SiteHeader />
             <RouteGuard>{children}</RouteGuard>
+            <SiteFooterI18n />
             <HelpChat />
           </SessionProvider>
         </Providers>
