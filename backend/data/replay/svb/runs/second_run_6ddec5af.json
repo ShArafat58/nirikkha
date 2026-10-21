@@ -1,0 +1,277 @@
+{
+ "case_id": "svb",
+ "company": "SVB Financial Group",
+ "freeze_date": "2023-03-07",
+ "outcome_date": "2023-03-10",
+ "outcome": "Silicon Valley Bank was closed by the California DFPI on 10 March 2023 and the FDIC was appointed receiver.",
+ "run_as_of": "2023-03-07",
+ "verdict": "VALID",
+ "leaks": [],
+ "summary": {
+  "detected": 2,
+  "questioned": 2,
+  "partial": 1,
+  "missed": 0,
+  "not_knowable": 1,
+  "signs": 6,
+  "knowable": 5,
+  "detection_rate": 0.4,
+  "flagged_or_questioned_rate": 0.8,
+  "detection_rate_incl_partial": 1.0,
+  "findings_in_report": 21,
+  "other_signals": 16
+ },
+ "signs": [
+  {
+   "id": "ws_interest_rate",
+   "category": "interest_rate_risk",
+   "statement": "A large, long-duration securities portfolio left the bank exposed to rising interest rates.",
+   "knowable_before_freeze": true,
+   "status": "detected",
+   "evidence": [
+    {
+     "finding": "Item 7A. Quantitative and Qualitative Disclosures About Market Risk shrank 45.1% year over year",
+     "type": "finding",
+     "matched_keywords": [
+      "market risk"
+     ],
+     "citations": [
+      {
+       "form": "10-K",
+       "accession_no": "0000719739-22-000023",
+       "page": null,
+       "section": "Item 7A. Quantitative and Qualitative Disclosures About Market Risk",
+       "quote": "Item 7A. Quantitative and Qualitative Disclosures About Market Risk"
+      },
+      {
+       "form": "10-K",
+       "accession_no": "0000719739-23-000021",
+       "page": null,
+       "section": "Item 7A. Quantitative and Qualitative Disclosures About Market Risk",
+       "quote": "Item 7A. Quantitative and Qualitative Disclosures About Market Risk"
+      }
+     ]
+    }
+   ],
+   "rules": [
+    {
+     "rule_id": "II_YOY_CHANGE",
+     "result": "POTENTIAL_GAP",
+     "rationale": "Large year-over-year change in risk-related disclosure: Item 7A. Quantitative and Qualitative Disclosures About Market Risk 14,505 -> 7,957 chars (-45.1%). Read both versions; may be reorganisation.",
+     "citation": {
+      "form": "10-K",
+      "accession_no": "0000719739-23-000021",
+      "page": null,
+      "quote": "Item 7A. Quantitative and Qualitative Disclosures About Market Risk"
+     }
+    }
+   ],
+   "confirmed_by": [
+    "ev_8k_afs_sale",
+    "ev_barr_review"
+   ]
+  },
+  {
+   "id": "ws_deposit_concentration",
+   "category": "funding_concentration",
+   "statement": "Deposits were concentrated in one client sector and mostly above the insured limit, making a fast run possible.",
+   "knowable_before_freeze": true,
+   "status": "partial",
+   "evidence": [
+    {
+     "finding": "What governance policies are disclosed under Item 407 regarding risk oversight relevant to deposit partnerships?",
+     "type": "question",
+     "matched_keywords": [
+      "liquidity"
+     ],
+     "citations": []
+    }
+   ],
+   "rules": [],
+   "confirmed_by": [
+    "ev_run",
+    "ev_failure"
+   ]
+  },
+  {
+   "id": "ws_cro_vacancy",
+   "category": "risk_leadership_gap",
+   "statement": "The Chief Risk Officer role was without a permanent holder for most of 2022.",
+   "knowable_before_freeze": true,
+   "status": "detected",
+   "evidence": [],
+   "rules": [
+    {
+     "rule_id": "II_RISK_LEADERSHIP_CHANGE",
+     "result": "POTENTIAL_GAP",
+     "rationale": "A change, departure or vacancy in the Chief Risk Officer or Chief Financial Officer role is disclosed (PRE 14A p.11). Check how long the role was unfilled and who covered it.",
+     "citation": {
+      "form": "PRE 14A",
+      "accession_no": "0000719739-23-000032",
+      "page": 11,
+      "quote": "...Operations Officer; and Mr. Michael Zuckert, General Counsel. Our NEOs for 2022 also include Ms. Laura Izurieta, former Chief Risk Officer, who departed the Company in October 2022 and ceased serving in her role as Chief Risk Officer on April 29, 2022. For more information about executive compens"
+     }
+    }
+   ],
+   "confirmed_by": [
+    "ev_barr_review"
+   ]
+  },
+  {
+   "id": "ws_board_oversight",
+   "category": "board_risk_oversight",
+   "statement": "The board and management did not manage the bank's risks effectively. Filings show only the oversight structure, not whether it worked.",
+   "knowable_before_freeze": true,
+   "status": "questioned",
+   "evidence": [
+    {
+     "finding": "What governance policies are disclosed under Item 407 regarding risk oversight relevant to deposit partnerships?",
+     "type": "question",
+     "matched_keywords": [
+      "risk committee",
+      "risk oversight",
+      "risk appetite",
+      "risk management framework"
+     ],
+     "citations": []
+    },
+    {
+     "finding": "Decision question: What governance policies are disclosed under Item 407 regarding risk oversight relevant to deposit partnerships?",
+     "type": "question",
+     "matched_keywords": [
+      "risk committee",
+      "risk oversight",
+      "risk appetite",
+      "risk management framework"
+     ],
+     "citations": [
+      {
+       "form": "PRE 14A",
+       "accession_no": "0000719739-23-000032",
+       "page": 27,
+       "section": "Corporate Governance Highlights",
+       "quote": "| SVB 2023 PROXY STATEMENT | 21 | PROXY SUMMARY | BOD & CORPORATE GOVERNANCE | EXECUTIVE OFFICERS & COMPENSATION | SECURITY OWNERSHIP | INDEPENDENT AUDITOR MATTERS | OTHER PROPOSALS | MEETING & OTHER INFORMATION enterprise-wide risk managem"
+      },
+      {
+       "form": "DEF 14A",
+       "accession_no": "0001193125-21-069492",
+       "page": 18,
+       "section": "CORPORATE GOVERNANCE AND BOARD MATTERS",
+       "quote": "Risk Appetite Statement The Board oversees, and approves on at least an annual basis, the Company\u0092s Risk Appetite Statement, which sets forth the tolerance levels with respect to the amount and types of key risks underlying the Company\u0092s bu"
+      }
+     ]
+    },
+    {
+     "finding": "What specific information about SVB\u2019s deposit insurance coverage and risk management practices is not disclosed in public filings?",
+     "type": "question",
+     "matched_keywords": [
+      "risk committee",
+      "risk appetite",
+      "risk management framework"
+     ],
+     "citations": []
+    }
+   ],
+   "rules": [],
+   "confirmed_by": [
+    "ev_barr_review"
+   ]
+  },
+  {
+   "id": "ws_compensation",
+   "category": "compensation_incentives",
+   "statement": "Executive incentives were not tied to risk management outcomes.",
+   "knowable_before_freeze": true,
+   "status": "questioned",
+   "evidence": [
+    {
+     "finding": "Decision question: How have SVB\u2019s executive compensation metrics changed year-over-year, and are there discrepancies between 10-K and DEF 14A disclosures?",
+     "type": "question",
+     "matched_keywords": [
+      "incentive compensation",
+      "return on equity",
+      "earnings per share",
+      "pay versus performance"
+     ],
+     "citations": [
+      {
+       "form": "PRE 14A",
+       "accession_no": "0000719739-23-000032",
+       "page": 58,
+       "section": "Executive Compensation \u2013 Summary of Key Features",
+       "quote": "SVB 2023 PROXY STATEMENT | PROXY SUMMARY | BOD & CORPORATE GOVERNANCE | EXECUTIVE OFFICERS & COMPENSATION | SECURITY OWNERSHIP | INDEPENDENT AUDITOR MATTERS | OTHER PROPOSALS | MEETING & OTHER INFORMATION the Comp/HC Committee maintained co"
+      },
+      {
+       "form": "PRE 14A",
+       "accession_no": "0000719739-23-000032",
+       "page": 82,
+       "section": "Pay Versus Performance",
+       "quote": "As required by Section 953(a) of the Dodd-Frank Wall Street Reform and Consumer Protection Act, and Item 402(v) of Regulation S-K, we are providing the following information about the relationship between executive compensation actually pai"
+      }
+     ]
+    }
+   ],
+   "rules": [],
+   "confirmed_by": [
+    "ev_barr_review"
+   ]
+  },
+  {
+   "id": "ws_supervisory_findings",
+   "category": "supervisory_findings",
+   "statement": "Supervisors had raised many open findings, far more than peer banks. These were confidential and not visible in public filings.",
+   "knowable_before_freeze": false,
+   "status": "not_knowable",
+   "evidence": [],
+   "rules": [],
+   "confirmed_by": [
+    "ev_fed_irr_finding",
+    "ev_barr_review"
+   ]
+  }
+ ],
+ "other_signals": [
+  "What outside directorships or advisory roles do SVB Financial Group\u2019s directors and officers hold that could influence deposit partnership decisions?",
+  "Which related parties have material transactions with SVB, and what policies govern these transactions?",
+  "How have SVB\u2019s executive compensation metrics changed year-over-year, and are there discrepancies between 10-K and DEF 14A disclosures?",
+  "Are there any material changes in board composition or independence between the most recent 10-K and DEF 14A?",
+  "Does Item 404 disclose any related-party transactions that could affect SVB\u2019s liquidity or deposit handling?",
+  "Are there any recent regulatory enforcement actions or material litigation involving SVB that are not reflected in the latest filings?",
+  "Decision question: What specific information about SVB\u2019s deposit insurance coverage and risk management practices is not disclosed in public filings?",
+  "Decision question: Are there any recent regulatory enforcement actions or material litigation involving SVB that are not reflected in the latest filings?",
+  "Greg Becker (President and CEO) holds outside board seats",
+  "Cannot confirm: Related-person transactions above $120,000",
+  "Not answered by public filings: Are there any material changes in board composition or independence between the most recent 10-K and DEF 14A?",
+  "Decision question: Does Item 404 disclose any related-party transactions that could affect SVB\u2019s liquidity or deposit handling?",
+  "Reg S-K Item 402(c): Summary Compensation Table",
+  "Decision question: What outside directorships or advisory roles do SVB Financial Group\u2019s directors and officers hold that could influence deposit partnership d",
+  "Decision question: Which related parties have material transactions with SVB, and what policies govern these transactions?"
+ ],
+ "frozen_out": [
+  {
+   "public_date": "2023-04-28",
+   "title": "Federal Reserve supervisory finding on interest rate risk (confidential at the time)"
+  },
+  {
+   "public_date": "2023-03-08",
+   "title": "8-K: sale of about $21B of available-for-sale securities, about $1.8B after-tax loss, $2.25B capital raise"
+  },
+  {
+   "public_date": "2023-03-09",
+   "title": "Deposit run: more than $42B withdrawn in one day"
+  },
+  {
+   "public_date": "2023-03-10",
+   "title": "Bank closed by California DFPI; FDIC appointed receiver"
+  },
+  {
+   "public_date": "2023-03-12",
+   "title": "Joint Treasury, Federal Reserve and FDIC statement: systemic risk exception, all depositors protected"
+  },
+  {
+   "public_date": "2023-04-28",
+   "title": "Federal Reserve publishes its review of SVB's failure (Barr review)"
+  }
+ ],
+ "source": "6ddec5af-73f0-4a34-bd38-16b22299bc61"
+}
