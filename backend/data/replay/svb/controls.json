@@ -1,0 +1,111 @@
+{
+ "subject": {
+  "job": "07da9556-9a90-4c55-a028-33d92c2e79cb",
+  "company": "SVB FINANCIAL GROUP",
+  "cik": "0000719739",
+  "as_of": "2023-03-07",
+  "decision": "Before we proceed with a deposit partnership with this bank, identify the governance risks and evidence gaps we should investigate.",
+  "health_score": 68,
+  "band": "moderate_concern",
+  "coverage_pct": 81,
+  "findings": 21,
+  "rules": {
+   "law": {
+    "POTENTIAL_GAP": 1,
+    "INSUFFICIENT_EVIDENCE": 1,
+    "PASS": 7
+   },
+   "best_practice": {
+    "PASS": 2
+   },
+   "internal_indicator": {
+    "POTENTIAL_GAP": 3,
+    "PASS": 2
+   }
+  },
+  "gaps": [
+   {
+    "rule_id": "R402_SCT",
+    "title": "Summary Compensation Table",
+    "result": "POTENTIAL_GAP",
+    "category": "law"
+   },
+   {
+    "rule_id": "II_OFFICER_OUTSIDE_ROLES",
+    "title": "Executive outside board seats",
+    "result": "POTENTIAL_GAP",
+    "category": "internal_indicator"
+   },
+   {
+    "rule_id": "II_RISK_LEADERSHIP_CHANGE",
+    "title": "Risk leadership change or vacancy",
+    "result": "POTENTIAL_GAP",
+    "category": "internal_indicator"
+   },
+   {
+    "rule_id": "II_YOY_CHANGE",
+    "title": "Year-over-year disclosure change",
+    "result": "POTENTIAL_GAP",
+    "category": "internal_indicator"
+   }
+  ],
+  "pattern_matches": {
+   "detected": 2,
+   "questioned": 3,
+   "partial": 0,
+   "missed": 0
+  }
+ },
+ "controls": [
+  {
+   "job": "444ac881-a4b8-438a-870b-13188eaa7542",
+   "company": "Apple Inc.",
+   "cik": "0000320193",
+   "as_of": "2026-10-21",
+   "decision": "Before we invest in this company, check board independence, related-party transactions and outside roles of executives.",
+   "health_score": 87,
+   "band": "low_concern",
+   "coverage_pct": 83,
+   "findings": 21,
+   "rules": {
+    "law": {
+     "PASS": 9
+    },
+    "best_practice": {
+     "POTENTIAL_GAP": 1,
+     "INSUFFICIENT_EVIDENCE": 1
+    },
+    "internal_indicator": {
+     "POTENTIAL_GAP": 2,
+     "PASS": 3
+    }
+   },
+   "gaps": [
+    {
+     "rule_id": "BP_CRO",
+     "title": "Chief Risk Officer identified",
+     "result": "POTENTIAL_GAP",
+     "category": "best_practice"
+    },
+    {
+     "rule_id": "II_OFFICER_OUTSIDE_ROLES",
+     "title": "Executive outside board seats",
+     "result": "POTENTIAL_GAP",
+     "category": "internal_indicator"
+    },
+    {
+     "rule_id": "II_RISK_LEADERSHIP_CHANGE",
+     "title": "Risk leadership change or vacancy",
+     "result": "POTENTIAL_GAP",
+     "category": "internal_indicator"
+    }
+   ],
+   "pattern_matches": {
+    "detected": 1,
+    "questioned": 0,
+    "partial": 1,
+    "missed": 3
+   }
+  }
+ ]
+}

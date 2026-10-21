@@ -17,8 +17,8 @@ _CASE_ID = re.compile(r"^[a-z0-9-]{1,40}$")
 CASE_FIELDS = ("id", "company", "cik", "freeze_date", "outcome_date", "outcome", "freeze_rationale")
 
 
-def _result(case_id: str) -> dict | None:
-    path = CASES_DIR / case_id / "result.json"
+def _result(case_id: str, name: str = "result.json") -> dict | None:
+    path = CASES_DIR / case_id / name
     if not path.exists():
         return None
     try:
@@ -62,4 +62,5 @@ def get_case(case_id: str) -> dict:
             "warning_signs": case["warning_signs"],
         },
         "result": _result(case_id),
+        "controls": _result(case_id, "controls.json"),
     }

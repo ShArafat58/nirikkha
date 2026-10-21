@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReplayData, ReplayEvent, ReplaySignResult, ReplayStatus } from "../../lib/replay";
+import type { ReplayControls, ReplayData, ReplayEvent, ReplaySignResult, ReplayStatus } from "../../lib/replay";
 
 export type ReplayLang = "en" | "bn";
 
@@ -262,6 +262,78 @@ function SignItem({ s, t, events, lang, statementBn }: {
   );
 }
 
+const CTRL = {
+  en: {
+    title: "Control check: does it flag every company?",
+    sub: "The same pipeline and the same rules, run on a company with no known failure.",
+    subject: "Replay case", control: "Control", health: "Health score", coverage: "Evidence coverage",
+    law: "Disclosure rules (S-K) passed", gaps: "Items flagged for review", patterns: "SVB warning-sign patterns raised",
+    open: "Open report",
+    note: "A disclosed CFO transition or an outside board seat is flagged for review in any company. It is a question to check, not a finding of misconduct.",
+    band: { low_concern: "Low concern", moderate_concern: "Moderate concern", elevated_concern: "Elevated concern", high_concern: "High concern" } as Record<string, string>,
+  },
+  bn: {
+    title: "কন্ট্রোল যাচাই: সিস্টেম কি সব কোম্পানিকেই চিহ্নিত করে?",
+    sub: "একই পাইপলাইন, একই নিয়ম, এমন একটি কোম্পানিতে চালানো হয়েছে যার কোনো জানা ব্যর্থতা নেই।",
+    subject: "রিপ্লে কেস", control: "কন্ট্রোল", health: "হেলথ স্কোর", coverage: "প্রমাণের কভারেজ",
+    law: "পাস করা disclosure নিয়ম (S-K)", gaps: "পর্যালোচনার জন্য চিহ্নিত", patterns: "SVB-এর সতর্কসংকেতের ধরন উঠেছে",
+    open: "রিপোর্ট খুলুন",
+    note: "যেকোনো কোম্পানিতে প্রকাশিত CFO পরিবর্তন বা বাইরের বোর্ড পদ পর্যালোচনার জন্য চিহ্নিত হয়। এটা যাচাই করার প্রশ্ন, অসদাচরণের প্রমাণ নয়।",
+    band: { low_concern: "কম উদ্বেগ", moderate_concern: "মাঝারি উদ্বেগ", elevated_concern: "বেশি উদ্বেগ", high_concern: "উচ্চ উদ্বেগ" } as Record<string, string>,
+  },
+};
+
+function ControlPanel({ controls, lang }: { controls: ReplayControls; lang: ReplayLang }) {
+  const c = CTRL[lang];
+  const rows = [{ row: controls.subject, tag: c.subject }, ...controls.controls.map((row) => ({ row, tag: c.control }))];
+  const tone = (s: number | null) => (s == null ? "text-slate-400" : s >= 80 ? "text-emerald-500" : s >= 60 ? "text-amber-500" : "text-rose-500");
+  return (
+    <section className={panel}>
+      <h2 className="text-lg font-semibold">{c.title}</h2>
+      <p className="mt-1 text-sm opacity-70">{c.sub}</p>
+      <div className="mt-5 grid gap-4 md:grid-cols-2">
+        {rows.map(({ row, tag }) => {
+          const law = row.rules.law ?? {};
+          const lawTotal = Object.values(law).reduce((a, b) => a + b, 0);
+          const p = row.pattern_matches;
+          const raised = p.detected + p.questioned + p.partial;
+          const total = raised + p.missed;
+          return (
+            <div key={row.job} className="rounded-xl border border-slate-500/25 p-5">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider opacity-60">{tag}</p>
+                  <p className="mt-1 text-lg font-semibold">{row.company}</p>
+                  <p className="text-xs opacity-60">{row.as_of ? fmt(row.as_of, lang) : ""}</p>
+                </div>
+                <div className="text-right">
+                  <p className={`text-4xl font-bold leading-none ${tone(row.health_score)}`}>{row.health_score == null ? "—" : num(row.health_score, lang)}</p>
+                  <p className="mt-1 text-xs opacity-70">{row.band ? (c.band[row.band] ?? row.band) : ""}</p>
+                </div>
+              </div>
+              <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                <div><dt className="text-xs opacity-60">{c.coverage}</dt><dd className="font-semibold">{row.coverage_pct == null ? "—" : `${num(row.coverage_pct, lang)}%`}</dd></div>
+                <div><dt className="text-xs opacity-60">{c.law}</dt><dd className="font-semibold">{num(law.PASS ?? 0, lang)} / {num(lawTotal, lang)}</dd></div>
+                <div><dt className="text-xs opacity-60">{c.gaps}</dt><dd className="font-semibold">{num(row.gaps.length, lang)}</dd></div>
+                <div><dt className="text-xs opacity-60">{c.patterns}</dt><dd className="font-semibold">{num(raised, lang)} / {num(total, lang)}</dd></div>
+              </dl>
+              {row.gaps.length > 0 && (
+                <ul className="mt-3 flex flex-wrap gap-1.5">
+                  {row.gaps.map((g) => (
+                    <li key={g.rule_id} className="rounded bg-slate-500/15 px-1.5 py-0.5 font-mono text-[11px]" title={g.title ?? ""}>{g.rule_id}</li>
+                  ))}
+                </ul>
+              )}
+              <a href={`/report/${row.job}`} className="mt-4 inline-block text-xs text-sky-500 hover:underline">{c.open} ↗</a>
+            </div>
+          );
+        })}
+      </div>
+      <p className="mt-4 text-xs opacity-60">{c.note}</p>
+    </section>
+  );
+}
+
 export function ReplayView({ data, lang }: { data: ReplayData; lang: ReplayLang }) {
   const t = TXT[lang];
   const c = data.case;
@@ -389,6 +461,8 @@ export function ReplayView({ data, lang }: { data: ReplayData; lang: ReplayLang 
           </section>
         </div>
       </div>
+
+      {data.controls && <ControlPanel controls={data.controls} lang={lang} />}
 
       <section className={panel}>
         <h2 className="mb-4 text-lg font-semibold">{t.limitsTitle}</h2>

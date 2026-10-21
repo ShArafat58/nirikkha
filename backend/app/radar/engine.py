@@ -105,6 +105,8 @@ def regulatory_alerts(company: dict, filings: list[dict], updates: list[dict], s
             "cik": company["cik"],
             "company": company["company"],
             "title": u["title"],
+            "title_bn": u.get("title_bn"),
+            "what_changed_bn": u.get("what_changed_bn"),
             "priority": priority,
             "what_changed": u["what_changed"],
             "affected_items": u["items"],

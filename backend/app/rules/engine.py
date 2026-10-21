@@ -331,6 +331,13 @@ def check_risk_leadership_change(rule: Rule, facts: Facts):
 
 
 def check_cro(rule: Rule, facts: Facts):
+    from app.rules.sector import is_financial
+
+    if is_financial(facts.cik) is False:
+        fields = {"rule_id": rule.id, "title": rule.title, "category": rule.category, "source": rule.source,
+                  "reason": "A designated Chief Risk Officer is a financial-sector best practice; this company's "
+                            "SEC industry code (SIC) is outside finance (6000-6799)."}
+        return NotApplicable(**{k: v for k, v in fields.items() if k in NotApplicable.model_fields})
     if (missing := _no_relations(rule, facts)) is not None:
         return missing
     proxy = facts.latest_proxy()

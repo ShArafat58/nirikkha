@@ -215,8 +215,36 @@ function AlertCard({ a, t, signedIn, mock, onChange }: {
   );
 }
 
+const BN_FOLLOW: Record<string, string> = {
+  gap: "কোম্পানির কাছে জানতে চান বা অন্য ফাইলিংয়ে এই disclosure খুঁজুন; তবুও না পেলে লিগ্যাল বা কমপ্লায়েন্স পর্যালোচনায় পাঠান।",
+  addressed: "নতুন নিয়ম পূরণ হয়েছে কি না নিশ্চিত হতে অনুচ্ছেদটি পড়ুন; হলে আর কিছু করতে হবে না।",
+  not_yet_required: "নিয়ম প্রযোজ্য হলে পরের বার্ষিক প্রতিবেদন বা প্রক্সিতে এই disclosure আছে কি না দেখুন।",
+  no_filing: "অপর্যাপ্ত প্রমাণ: এই ধরনের সর্বশেষ ফাইলিং যোগ করে আবার রাডার চালান।",
+};
+
+function localise(a: RadarAlert, lang: RadarLang): RadarAlert {
+  if (lang !== "bn") return a;
+  const d = a.disclosure_to_review;
+  if (a.stream === "filing") {
+    const is8k = d?.form === "8-K";
+    return {
+      ...a,
+      title: d ? `নতুন ${d.form} জমা পড়েছে ${d.filing_date}` : a.title,
+      what_changed: is8k
+        ? "চলতি প্রতিবেদনে কোনো গভর্ন্যান্স ঘটনা (পরিচালক বা কর্মকর্তা পরিবর্তন, গুরুত্বপূর্ণ চুক্তি, কোনো ঘটনা) ঘোষিত হতে পারে।"
+        : "নতুন বার্ষিক প্রতিবেদন বা প্রক্সি স্টেটমেন্ট এসেছে, এখনো বিশ্লেষণ হয়নি।",
+      follow_up: is8k
+        ? "8-K-এর বিষয়গুলো পড়ুন; কোনো পরিচালক, কর্মকর্তা বা নিরীক্ষক বদলালে আবার ক্র্যাশ-টেস্ট চালান।"
+        : "এই ফাইলিং যোগ করে আবার ক্র্যাশ-টেস্ট ও রাডার চালান।",
+    };
+  }
+  return { ...a, title: a.title_bn || a.title, what_changed: a.what_changed_bn || a.what_changed,
+           follow_up: BN_FOLLOW[a.evidence.status] ?? a.follow_up };
+}
+
 export function RadarView({ data, lang, signedIn }: { data: RadarData; lang: RadarLang; signedIn: boolean }) {
   const t = TXT[lang];
+  const num = (v: number) => (lang === "bn" ? String(v).replace(/\d/g, (d) => "০১২৩৪৫৬৭৮৯"[Number(d)]) : String(v));
   const [alerts, setAlerts] = useState<RadarAlert[]>(data.alerts);
   const [tab, setTab] = useState<"all" | "pending" | "decided">("all");
 
@@ -248,7 +276,7 @@ export function RadarView({ data, lang, signedIn }: { data: RadarData; lang: Rad
             <p className="text-xs uppercase tracking-wider opacity-60">{t.streams}</p>
             <ul className="mt-2 space-y-1 text-sm">
               {data.streams.map((s) => (
-                <li key={s.id}>● {s.title} <span className="opacity-50">({data.summary.by_stream[s.id] ?? 0})</span></li>
+                <li key={s.id}>● {s.title} <span className="opacity-50">({num(data.summary.by_stream[s.id] ?? 0)})</span></li>
               ))}
             </ul>
           </div>
@@ -256,7 +284,7 @@ export function RadarView({ data, lang, signedIn }: { data: RadarData; lang: Rad
             <div className="flex gap-4">
               {(["high", "medium", "low"] as RadarPriority[]).map((p) => (
                 <div key={p}>
-                  <p className={`text-2xl font-bold ${PRIO_PILL[p].split(" ").pop()}`}>{counts[p]}</p>
+                  <p className={`text-2xl font-bold ${PRIO_PILL[p].split(" ").pop()}`}>{num(counts[p])}</p>
                   <p className="text-xs opacity-60">{t.priority[p]}</p>
                 </div>
               ))}
@@ -264,9 +292,9 @@ export function RadarView({ data, lang, signedIn }: { data: RadarData; lang: Rad
           </div>
           <div className="rounded-2xl border border-slate-500/30 bg-slate-500/[0.07] p-4">
             <div className="flex gap-4">
-              <div><p className="text-2xl font-bold">{counts.pending}</p><p className="text-xs opacity-60">{t.tabs.pending}</p></div>
-              <div><p className="text-2xl font-bold text-emerald-500">{counts.approved}</p><p className="text-xs opacity-60">{t.decision.approved}</p></div>
-              <div><p className="text-2xl font-bold text-rose-500">{counts.rejected}</p><p className="text-xs opacity-60">{t.decision.rejected}</p></div>
+              <div><p className="text-2xl font-bold">{num(counts.pending)}</p><p className="text-xs opacity-60">{t.tabs.pending}</p></div>
+              <div><p className="text-2xl font-bold text-emerald-500">{num(counts.approved)}</p><p className="text-xs opacity-60">{t.decision.approved}</p></div>
+              <div><p className="text-2xl font-bold text-rose-500">{num(counts.rejected)}</p><p className="text-xs opacity-60">{t.decision.rejected}</p></div>
             </div>
           </div>
         </div>
@@ -285,7 +313,7 @@ export function RadarView({ data, lang, signedIn }: { data: RadarData; lang: Rad
       <div className="space-y-4">
         {shown.length === 0 && <p className="py-10 text-center text-sm opacity-60">{t.empty}</p>}
         {shown.map((a) => (
-          <AlertCard key={a.id} a={a} t={t} signedIn={signedIn} mock={Boolean(data.mock)} onChange={update} />
+          <AlertCard key={a.id} a={localise(a, lang)} t={t} signedIn={signedIn} mock={Boolean(data.mock)} onChange={update} />
         ))}
       </div>
     </div>

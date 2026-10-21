@@ -6,6 +6,7 @@ export type RadarDecisionStatus = "pending" | "approved" | "rejected";
 export type RadarPassage = { form?: string | null; accession_no?: string | null; page?: number | null; quote: string };
 export type RadarAlert = {
   id: string; key: string; stream: "regulatory" | "filing"; cik: string; company: string; title: string;
+  title_bn?: string | null; what_changed_bn?: string | null;
   priority: RadarPriority; status: RadarDecisionStatus; what_changed: string; affected_items: string[];
   affected_rules: string[]; applies: string; applicability_note: string;
   disclosure_to_review: { form: string; accession_no: string; filing_date: string; url?: string | null } | null;

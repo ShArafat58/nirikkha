@@ -37,7 +37,15 @@ export type ReplayCaseInfo = {
   id: string; company: string; cik: string; freeze_date: string; outcome_date: string; outcome: string;
   freeze_rationale?: string; timeline: ReplayEvent[]; warning_signs: ReplaySign[];
 };
-export type ReplayData = { case: ReplayCaseInfo; result: ReplayResult | null; mock?: boolean };
+export type ReplayControl = {
+  job: string; company: string | null; cik: string | null; as_of: string | null; decision: string | null;
+  health_score: number | null; band: string | null; coverage_pct: number | null; findings: number;
+  rules: Record<string, Record<string, number>>;
+  gaps: { rule_id: string; title: string | null; result: string; category: string | null }[];
+  pattern_matches: { detected: number; questioned: number; partial: number; missed: number };
+};
+export type ReplayControls = { subject: ReplayControl; controls: ReplayControl[] };
+export type ReplayData = { case: ReplayCaseInfo; result: ReplayResult | null; controls?: ReplayControls | null; mock?: boolean };
 
 export async function getReplay(id = "svb"): Promise<ReplayData> {
   if (USE_MOCK) return { ...MOCK_REPLAY, mock: true };
