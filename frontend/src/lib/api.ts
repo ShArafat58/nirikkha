@@ -54,11 +54,11 @@ export function setToken(token: string | null): void {
 }
 
 // ---------- request helper ----------
-async function request<T>(path: string, options: { method?: string; body?: unknown; auth?: boolean } = {}): Promise<T> {
+async function request<T>(path: string, options: { method?: string; body?: unknown; auth?: boolean; token?: string } = {}): Promise<T> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   const headers: Record<string, string> = { "Content-Type": "application/json" };
-  const token = options.auth === false ? null : getToken();
+  const token = options.token ?? (options.auth === false ? null : getToken());
   if (token) headers.Authorization = `Bearer ${token}`;
   try {
     const res = await fetch(`${API_URL}${path}`, {
@@ -192,4 +192,53 @@ export async function startCrashTest(cik: string, as_of: string, decision: strin
 export async function getCrashTest(id: string): Promise<CrashTestJob> {
   if (USE_MOCK) mockUnavailable();
   return request<CrashTestJob>(`/api/crash-tests/${encodeURIComponent(id)}`, { auth: false });
+}
+
+// ---------- admin (step-up token kept in memory by the admin page) ----------
+export type AdminOverview = {
+  accounts: { role: string; plan: string; n: number }[];
+  signups: { users: number; last_30_days: number } | null;
+  crash_tests_by_status: { status: string; n: number }[];
+  crash_tests_this_month: number;
+  open_plan_requests: number;
+  simulated_payments?: { n: number; total_usd: number } | null;
+  model_usage: { model: string; node: string; calls: number; input_tokens: number; output_tokens: number; avg_latency_ms: number }[];
+  users_by_plan: Record<string, number>;
+  projected_revenue: { total_monthly_usd: number; label: string;
+    lines: { plan: string; accounts: number; monthly_usd: number | null; note?: string }[] };
+  unit_economics: {
+    measured: { crash_tests: number; avg_tokens: number | null; avg_llm_calls: number | null; avg_seconds: number | null;
+                infra_cost_usd_total: number };
+    revenue_per_crash_test: { plan: string; revenue_per_crash_test_usd: number }[];
+    note: string;
+  };
+};
+export type AdminDemo = { id: string; cik: string; company: string; as_of: string; decision: string; featured: boolean;
+  source: string; updated_at: string; score: number | null; band: string | null; email: string | null };
+
+export async function adminSession(password: string): Promise<{ token: string; expires_in: number }> {
+  return request("/api/admin/session", { method: "POST", body: { password } });
+}
+export async function adminOverview(token: string): Promise<AdminOverview> {
+  return request<AdminOverview>("/api/admin/overview", { token });
+}
+export async function adminDemos(token: string): Promise<AdminDemo[]> {
+  return request<AdminDemo[]>("/api/admin/demos", { token });
+}
+export async function adminSetDemo(token: string, id: string, featured: boolean): Promise<{ id: string; featured: boolean }> {
+  return request(`/api/admin/demos/${encodeURIComponent(id)}`, { method: "POST", body: { featured }, token });
+}
+
+// ---------- demo checkout (no money is charged; no card/account/PIN data is ever sent) ----------
+export type CheckoutMethod = "mobile_banking" | "card" | "bank_transfer";
+export type PaymentRecord = { id: string; plan: PlanId; method: CheckoutMethod | "none"; amount_usd: number; reference: string;
+  status: string; created_at: string; plan_name?: string; simulated?: boolean; note?: string };
+
+export async function checkout(plan: PlanId, method: CheckoutMethod): Promise<PaymentRecord> {
+  if (USE_MOCK) mockUnavailable();
+  return request<PaymentRecord>("/api/billing/checkout", { method: "POST", body: { plan, method } });
+}
+export async function cancelPlan(): Promise<PaymentRecord> {
+  if (USE_MOCK) mockUnavailable();
+  return request<PaymentRecord>("/api/billing/cancel", { method: "POST" });
 }

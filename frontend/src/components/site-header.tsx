@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { getStatus, type Status } from "../lib/api";
@@ -28,6 +28,11 @@ export function SiteHeader() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const { signedIn, signOut } = useSession();
+  const router = useRouter();
+  const logout = () => {
+    signOut();
+    router.push("/");
+  };
 
   useEffect(() => {
     let alive = true;
@@ -86,13 +91,16 @@ export function SiteHeader() {
           <button type="button" onClick={toggleLang} className={`hidden sm:inline-flex ${ghost}`}>
             {t("lang.toggle")}
           </button>
+          {(
+            <Link href="/admin" className={`hidden sm:inline-flex ${ghost} border-conf-medium/60 text-conf-medium`}>{t("nav.admin")}</Link>
+          )}
           {signedIn ? (
             <>
               <Link href="/dashboard"
                     className="whitespace-nowrap rounded-md bg-accent px-3 py-1.5 text-sm font-semibold text-accent-contrast hover:opacity-90">
                 {t("nav.dashboard")}
               </Link>
-              <button type="button" onClick={signOut} className={`hidden sm:inline-flex ${ghost}`}>{t("nav.logout")}</button>
+              <button type="button" onClick={logout} className={`hidden sm:inline-flex ${ghost}`}>{t("nav.logout")}</button>
             </>
           ) : (
             <Link href="/login"
@@ -120,7 +128,8 @@ export function SiteHeader() {
           <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border pt-3">
             <button type="button" onClick={toggleTheme} className={ghost}>{themeLabel}</button>
             <button type="button" onClick={toggleLang} className={ghost}>{t("lang.toggle")}</button>
-            {signedIn && <button type="button" onClick={signOut} className={ghost}>{t("nav.logout")}</button>}
+            {signedIn && <button type="button" onClick={logout} className={ghost}>{t("nav.logout")}</button>}
+            {<Link href="/admin" className={ghost}>{t("nav.admin")}</Link>}
             <span className="inline-flex items-center gap-2 text-xs text-muted">
               <span className={`h-2 w-2 rounded-full ${dot}`} aria-hidden />
               {label}
