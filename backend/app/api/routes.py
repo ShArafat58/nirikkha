@@ -234,7 +234,7 @@ def create_memo(job_id: str, store: Any = Depends(get_store), writer: MemoWriter
     if row["status"] != "done" or not row.get("report"):
         raise HTTPException(409, f"The Crash-Test is not finished (status: {row['status']}).")
     if row.get("memo"):
-        return {"cached": True, "memo": row["memo"], "markdown": to_markdown(row["memo"])}
+        return {"cached": True, "memo": row["memo"], "markdown": to_markdown(row["memo"]), "markdown_bn": row["memo"].get("markdown_bn")}
     memo = writer(row["report"])
     if memo.get("status") != "unavailable":   # an unavailable model is retried next time, not cached
         try:
@@ -249,7 +249,7 @@ def get_memo(job_id: str, store: Any = Depends(get_store)) -> dict:
     row = _row(store, job_id)
     if not row.get("memo"):
         raise HTTPException(404, "No memo yet. POST to this URL to create one.")
-    return {"cached": True, "memo": row["memo"], "markdown": to_markdown(row["memo"])}
+    return {"cached": True, "memo": row["memo"], "markdown": to_markdown(row["memo"]), "markdown_bn": row["memo"].get("markdown_bn")}
 
 
 @router.get("/companies", tags=["companies"], summary="Companies with loaded filings and their latest Crash-Tests")
@@ -283,3 +283,47 @@ def my_crash_tests(user: dict = Depends(get_current_user), store: Any = Depends(
         return store.list_for_user(user["id"])
     except DatabaseError as exc:
         raise HTTPException(503, f"Database unavailable: {exc}") from exc
+
+
+
+BN_MEMO_SYSTEM = (
+    "You translate a corporate-governance legal memo from English into formal, clear Bengali (Bangla script). "
+    "Keep EXACTLY unchanged: the Markdown structure (#, ##, ###, -, *, **), finding ids in square brackets such as [REL-3], "
+    "rule names such as 'Reg S-K Item 404(a)', form names (10-K, DEF 14A, PRE 14A, 8-K), company and person names, "
+    "URLs, page numbers, and every passage inside double quotes (quoted evidence stays in the original English). "
+    "In risk headings translate only the severity word: high -> উচ্চ, medium -> মাঝারি, low -> নিম্ন. "
+    "Return only the translated Markdown, nothing else."
+)
+
+
+def get_memo_translator() -> Callable[[str], str]:
+    from app.llm.client import get_llm
+
+    llm = get_llm()
+
+    def translate(markdown: str) -> str:
+        r = llm.complete("bangla", [{"role": "system", "content": BN_MEMO_SYSTEM},
+                                    {"role": "user", "content": markdown}], max_tokens=7000, max_wait=90)
+        return r.text
+    return translate
+
+
+@router.post("/crash-tests/{job_id}/memo/bn", tags=["legal memo"],
+             summary="Bengali translation of the legal memo (translated once, then cached)")
+def translate_memo(job_id: str, store: Any = Depends(get_store),
+                   translate: Callable[[str], str] = Depends(get_memo_translator)) -> dict:
+    row = _row(store, job_id)
+    memo = row.get("memo")
+    if not memo:
+        raise HTTPException(404, "No memo yet. Draft the English memo first.")
+    if memo.get("markdown_bn"):
+        return {"cached": True, "markdown": memo["markdown_bn"]}
+    try:
+        text = translate(to_markdown(memo)).strip()
+    except Exception:
+        raise HTTPException(503, "The translation model is unavailable right now. Please try again in a minute.")
+    text = re.sub(r"^```(?:markdown|md)?\s*|\s*```$", "", text)
+    if len(text) < 200:
+        raise HTTPException(503, "The translation came back incomplete. Please try again.")
+    store.update(job_id, memo={**memo, "markdown_bn": text})
+    return {"cached": False, "markdown": text}
