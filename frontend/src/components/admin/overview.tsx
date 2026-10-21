@@ -6,6 +6,7 @@ import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 
 import { adminOverview, getStatus, type AdminOverview } from "../../lib/api";
 import { useApp } from "../providers";
 import { Card } from "../report/health-panel";
+import { Loader } from "../loader";
 
 const PLAN_LABEL: Record<string, string> = { free: "Free", analyst_pro: "Analyst Pro", team: "Team", enterprise: "Enterprise" };
 const PLAN_COLOR: Record<string, string> = { free: "var(--muted)", analyst_pro: "var(--accent)", team: "var(--conf-medium)", enterprise: "var(--conf-high)" };
@@ -53,7 +54,7 @@ export function AdminOverviewTab({ token, onAuthError }: { token: string; onAuth
   }, []);
 
   if (error) return <p className="text-sev-critical">{error}</p>;
-  if (!o) return <p className="text-muted">{t("dash.loading")}</p>;
+  if (!o) return <Loader label={t("dash.loading")} />;
 
   const plans = ["free", "analyst_pro", "team", "enterprise"].map((p) => ({ plan: p, label: PLAN_LABEL[p], n: o.users_by_plan[p] ?? 0 }));
   const m = o.unit_economics.measured;

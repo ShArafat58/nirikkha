@@ -7,6 +7,7 @@ import { adminDemos, adminSetDemo, type AdminDemo } from "../../lib/api";
 import { useApp } from "../providers";
 import { BandBadge, ScoreNumber } from "../score";
 import { useAdminFetch } from "./overview";
+import { Loader } from "../loader";
 
 export function AdminDemosTab({ token, onAuthError }: { token: string; onAuthError: () => void }) {
   const { t } = useApp();
@@ -26,7 +27,7 @@ export function AdminDemosTab({ token, onAuthError }: { token: string; onAuthErr
   }
 
   if (error) return <p className="text-sev-critical">{error}</p>;
-  if (!data) return <p className="text-muted">{t("dash.loading")}</p>;
+  if (!data) return <Loader label={t("dash.loading")} />;
   return (
     <div>
       <p className="mb-4 text-sm text-muted">{t("adm.demosNote")}</p>

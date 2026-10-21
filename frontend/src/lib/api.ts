@@ -252,3 +252,17 @@ export type MyCrashTest = {
 export async function getMyCrashTests(): Promise<MyCrashTest[]> {
   return request<MyCrashTest[]>("/api/crash-tests");
 }
+
+
+// ---------- admin: users, requests, jobs, reviews ----------
+export type AdminRow = Record<string, unknown>;
+export const adminUsers = (token: string) => request<AdminRow[]>("/api/admin/users", { token });
+export const adminSetPlan = (token: string, id: string, plan: PlanId) =>
+  request<AdminRow>(`/api/admin/users/${encodeURIComponent(id)}/plan`, { method: "POST", body: { plan }, token });
+export const adminPlanRequests = (token: string) => request<AdminRow[]>("/api/admin/plan-requests", { token });
+export const adminSetRequestStatus = (token: string, id: string, status: string) =>
+  request<AdminRow>(`/api/admin/plan-requests/${encodeURIComponent(id)}`, { method: "POST", body: { status }, token });
+export const adminJobs = (token: string) => request<AdminRow[]>("/api/admin/jobs", { token });
+export const adminReviews = (token: string) => request<AdminRow[]>("/api/admin/reviews", { token });
+export const adminAddReview = (token: string, body: { crash_test_id: string; finding_id: string; decision: string; note?: string }) =>
+  request<AdminRow>("/api/admin/reviews", { method: "POST", body, token });

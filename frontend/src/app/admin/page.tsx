@@ -3,7 +3,10 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 
 import { AdminDemosTab } from "../../components/admin/demos";
+import { AdminJobsTab } from "../../components/admin/jobs";
 import { AdminOverviewTab } from "../../components/admin/overview";
+import { AdminReviewsTab } from "../../components/admin/reviews";
+import { AdminUsersTab } from "../../components/admin/users";
 import { useApp } from "../../components/providers";
 import { useSession } from "../../components/session";
 import { Alert, Button, Field, Input } from "../../components/ui";
@@ -11,7 +14,7 @@ import { ApiError, adminSession, login } from "../../lib/api";
 import type { Key } from "../../lib/i18n";
 import { Loader } from "../../components/loader";
 
-const TABS = ["overview", "demos"] as const;
+const TABS = ["overview", "reviews", "users", "jobs", "demos"] as const;
 type Tab = (typeof TABS)[number];
 
 function StepUp({ onUnlock }: { onUnlock: (token: string, ttl: number) => void }) {
@@ -164,6 +167,9 @@ export default function AdminPage() {
       <div className="mt-6">
         {tab === "overview" && <AdminOverviewTab token={token} onAuthError={lock} />}
         {tab === "demos" && <AdminDemosTab token={token} onAuthError={lock} />}
+        {tab === "users" && <AdminUsersTab token={token} onAuthError={lock} />}
+        {tab === "jobs" && <AdminJobsTab token={token} onAuthError={lock} />}
+        {tab === "reviews" && <AdminReviewsTab token={token} onAuthError={lock} />}
       </div>
     </>,
   );
