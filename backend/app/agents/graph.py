@@ -44,7 +44,7 @@ from app.agents.report import build_sections
 from app.agents.score import health_score
 from app.agents.sentinel import review_findings
 from app.guardrails.pii import redact_pii
-from app.llm.client import LLMError
+from app.llm.client import LLMError, PrivateModeUnavailable
 from app.rules.engine import evaluate
 
 PROMPTS = Path(__file__).resolve().parent.parent / "prompts"
@@ -89,12 +89,19 @@ class Services:
     retrieve: Callable[..., Any]
 
 
-def default_services() -> Services:
+def default_services(private: bool = False) -> Services:
     from app.llm.client import get_llm
     from app.rag.retrieve import retrieve
     from app.rules.run import collect_facts
 
-    return Services(complete=get_llm().complete, collect_facts=collect_facts, retrieve=retrieve)
+    llm = get_llm()
+
+    def _complete(*args: Any, **kwargs: Any) -> Any:
+        if private:
+            kwargs.setdefault("private", True)
+        return llm.complete(*args, **kwargs)
+
+    return Services(complete=_complete, collect_facts=collect_facts, retrieve=retrieve)
 
 
 def _prompt(name: str, **values: str) -> str:
@@ -113,7 +120,15 @@ def _usage(node: str, r: Any) -> dict:
             "output_tokens": r.output_tokens, "latency_ms": r.latency_ms, "cached": r.cached}
 
 
-def build_graph(services: Services):
+def build_graph(services: Services, private: bool = False):
+    if private:
+        orig_complete = services.complete
+
+        def _private_complete(*args: Any, **kwargs: Any) -> Any:
+            kwargs.setdefault("private", True)
+            return orig_complete(*args, **kwargs)
+
+        services = Services(complete=_private_complete, collect_facts=services.collect_facts, retrieve=services.retrieve)
     def redact(state: CrashTestState) -> dict:
         started = time.perf_counter()
         decision, pii = redact_pii((state.get("decision") or "").strip())
@@ -136,6 +151,8 @@ def build_graph(services: Services):
         try:
             r = services.complete("safety", [{"role": "system", "content": _prompt("guard_input.v1.md")},
                                              {"role": "user", "content": decision}], json_mode=True, max_tokens=300)
+        except PrivateModeUnavailable:
+            raise
         except LLMError:
             result = {"category": "ok", "reason": "Safety model unavailable; heuristic checks passed."}
             return {"allowed": True, "guard_result": result,
@@ -171,6 +188,8 @@ def build_graph(services: Services):
                          and isinstance(q.get("question"), str) and q["question"].strip()][:MAX_QUESTIONS]
             if not questions:
                 raise ValueError("planner returned no valid questions")
+        except PrivateModeUnavailable:
+            raise
         except (LLMError, ValueError):
             return {"questions": DEFAULT_QUESTIONS, "events": [_event("plan", "Planner unavailable; default questions", started)]}
         return {"questions": questions, "usage": [_usage("plan", r)],
@@ -198,6 +217,8 @@ def build_graph(services: Services):
                         {"role": "user", "content": f"Decision: {decision}\nAnalysis date: {facts.as_of}\n{pack}"}]
             try:
                 r = services.complete(task, messages, json_mode=True, max_tokens=1500 if compact else 2000, max_wait=75)
+            except PrivateModeUnavailable:
+                raise
             except LLMError:
                 continue
             analysis = parse_analysis(r.data, answers, index)
@@ -294,8 +315,9 @@ def build_graph(services: Services):
     return graph.compile()
 
 
-def run_crash_test(cik: str, decision: str = "", as_of: date | None = None, services: Services | None = None) -> dict:
-    app = build_graph(services or default_services())
+def run_crash_test(cik: str, decision: str = "", as_of: date | None = None, services: Services | None = None,
+                   private: bool = False) -> dict:
+    app = build_graph(services or default_services(private=private), private=private)
     initial: CrashTestState = {"cik": cik, "as_of": (as_of or date.today()).isoformat(), "decision": decision,
                                "findings": [], "events": [], "usage": []}
     return app.invoke(initial)

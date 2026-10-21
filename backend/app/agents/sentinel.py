@@ -27,7 +27,7 @@ from datetime import date
 from pathlib import Path
 from typing import Any, Callable
 
-from app.llm.client import LLMError
+from app.llm.client import LLMError, PrivateModeUnavailable
 
 PROMPT = Path(__file__).resolve().parent.parent / "prompts" / "sentinel_judge.v1.md"
 CONFIDENCE_RANK = {"insufficient": 0, "low": 1, "medium": 2, "high": 3}
@@ -176,6 +176,8 @@ def judge_support(findings: list[dict], complete: Callable[..., Any],
                     {"role": "user", "content": _judge_text(batch, filings_by_acc)}]
         try:
             r = complete("reason", messages, json_mode=True, max_tokens=JUDGE_MAX_TOKENS, max_wait=JUDGE_MAX_WAIT)
+        except PrivateModeUnavailable:
+            raise
         except LLMError as exc:
             errors.append(f"batch {start // JUDGE_BATCH + 1}: {exc}"[:300])
             continue

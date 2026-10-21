@@ -22,8 +22,11 @@ class Settings(BaseSettings):
 
     groq_api_key: str = ""
     gemini_api_key: str = ""
-    # Local LLM runtime (optional; used as last fallback when reachable)
+    # Local LLM runtime (Ollama) for Private Mode and fallback
     ollama_url: str = "http://localhost:11434"
+    ollama_model_fast: str = "qwen2.5:1.5b"
+    ollama_model_general: str = "gemma3:1b"
+    ollama_timeout_s: float = 180.0
 
     neo4j_uri: str = ""
     neo4j_username: str = ""

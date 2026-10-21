@@ -22,6 +22,7 @@ All responses are JSON. Errors use `{"detail": "<human-readable message>"}`; sho
 | GET | `/api/crash-tests/{id}/memo` | The cached legal memo (404 if none yet) |
 | GET | `/api/evaluation` | Latest evaluation results |
 | GET | `/api/status` | Live mode (`inline` or `worker`), whether an analysis worker is online, reranker on/off |
+| GET | `/api/private/status` | Whether Private Mode (local Ollama runtime) is available on this server |
 | POST | `/api/help/chat` | Nirikkha Guide help chatbot (public, guarded, rate-limited, answers from HELP_KB.md) |
 
 
@@ -33,13 +34,15 @@ All responses are JSON. Errors use `{"detail": "<human-readable message>"}`; sho
 {
   "cik": "719739",
   "as_of": "2023-03-10",
-  "decision": "Before we proceed with a deposit partnership with this bank, identify the governance risks and evidence gaps we should investigate."
+  "decision": "Before we proceed with a deposit partnership with this bank, identify the governance risks and evidence gaps we should investigate.",
+  "private": false
 }
 ```
 
 - `cik`: SEC Central Index Key, 1 to 10 digits (SVB `719739`, Apple `320193`).
 - `as_of`: evidence freeze date (optional, default today). Filings after it are invisible to every step.
 - `decision`: optional, max 1,500 characters. Personal data (email, phone, ID and card numbers) is redacted before it is stored or sent to any model.
+- `private`: optional boolean (default `false`). When `true`, runs every AI step strictly on local Ollama models (`qwen2.5:1.5b`, `gemma3:1b`). No prompt or document text leaves the machine.
 
 Responses:
 
@@ -47,6 +50,7 @@ Responses:
 |---|---|---|
 | 200 | `{"id": "...", "status": "done", "cached": true}` | Same company, date and decision already analysed: open it immediately |
 | 202 | `{"id": "...", "status": "queued", "cached": false}` | Started: poll `GET /api/crash-tests/{id}` |
+| 409 | `detail` | Private mode requested (`private: true`) but local Ollama runtime or required models are unavailable |
 | 422 | `detail` | Invalid cik, future `as_of`, or decision too long |
 | 429 | `detail` | Another live run is in progress (one at a time on the free tier): suggest a precomputed demo |
 | 503 | `detail` | Database unreachable |
@@ -94,6 +98,7 @@ async function waitForCrashTest(id) {
 | `questions`, `analysis` | Decision-specific questions and the analyst's answers |
 | `summary` | Counts by severity, confidence, investigation, source; `sentinel` verdict counts |
 | `usage` | LLM calls, input/output tokens, cost (USD), per call: node, provider, model, latency |
+| `private`, `private_models` | Present when run in Private Mode: `private: true`, list of local models used |
 | `pii_redacted`, `guard` | Counts of redacted personal data; input guard result |
 
 Each section item carries `citations[].source_url`, a link to the filing on SEC EDGAR.

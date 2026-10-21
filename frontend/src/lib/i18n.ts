@@ -263,6 +263,11 @@ const en = {
   "hero.point1": "Source-cited findings",
   "hero.point2": "Gaps shown, never hidden",
   "hero.point3": "Self-checking AI",
+  "ct.privateMode": "Private Mode (local AI)",
+  "ct.privateHint": "Runs on this machine using local Ollama models (qwen2.5, gemma3). No document text or prompts leave your infrastructure.",
+  "ct.privateDisabledTooltip": "Ollama not detected locally. Run `ollama serve` to enable private mode.",
+  "ct.privateBadge": "Private Mode — Local LLM (qwen2.5 / gemma3)",
+  "ct.privateUnavailable": "Private mode needs the local model runtime (Ollama). It is not running on this server.",
 };
 
 export type Key = keyof typeof en;
@@ -528,6 +533,11 @@ const bn: Partial<Record<Key, string>> = {
   "hero.point1": "প্রতিটি ফলাফলে উৎস",
   "hero.point2": "ঘাটতি লুকানো হয় না",
   "hero.point3": "নিজেকে যাচাই করে এমন এআই",
+  "ct.privateMode": "প্রাইভেট মোড (স্থানীয় এআই)",
+  "ct.privateHint": "এই ডিভাইসেই স্থানীয় ওলামা মডেল (qwen2.5, gemma3) ব্যবহার করে চলবে। কোনো নথি বা প্রম্পট আপনার অবকাঠামোর বাইরে যাবে না।",
+  "ct.privateDisabledTooltip": "স্থানীয়ভাবে ওলামা শনাক্ত করা যায়নি। প্রাইভেট মোড চালু করতে `ollama serve` চালান।",
+  "ct.privateBadge": "প্রাইভেট মোড — স্থানীয় এলএলএম (qwen2.5 / gemma3)",
+  "ct.privateUnavailable": "প্রাইভেট মোডের জন্য স্থানীয় মডেল রানটাইম (ওলামা) প্রয়োজন। এই সার্ভারে এটি চালু নেই।",
 };
 
 export const dict: Record<Lang, Partial<Record<Key, string>>> = { en, bn };

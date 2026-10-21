@@ -1,6 +1,6 @@
 """LLM client with task-based model routing, rate-limit budgets, fallback, response cache and usage log.
 
-Providers: Groq (OpenAI-compatible API), Gemini (generateContent), Ollama (local, optional).
+Providers: Groq (OpenAI-compatible API), Gemini (generateContent), Ollama (local, for Private Mode).
 Each task has an ordered route. Before calling a model, the client checks that model's
 per-minute and per-day budget (LIMITS): it waits if the minute window is full (up to
 max_wait seconds, configurable per call), or skips to the next model if the wait is too long
@@ -39,7 +39,6 @@ GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 
 # Ordered fallbacks per task. Change models only here.
-# The local Ollama model is a placeholder until the local runtime is set up (Day 7).
 ROUTES: dict[str, list[tuple[str, str]]] = {
     "reason": [("groq", "openai/gpt-oss-120b"), ("gemini", "gemini-2.5-flash"), ("ollama", "qwen2.5:3b")],
     "fast": [("groq", "openai/gpt-oss-20b"), ("gemini", "gemini-2.5-flash-lite"), ("ollama", "qwen2.5:3b")],
@@ -49,6 +48,19 @@ ROUTES: dict[str, list[tuple[str, str]]] = {
     "safety": [("groq", "openai/gpt-oss-safeguard-20b"), ("groq", "openai/gpt-oss-20b")],
     "bangla": [("gemini", "gemini-2.5-flash"), ("groq", "qwen/qwen3.8-27b")],
 }
+
+# Private Mode routes: each task maps to one of the two configured local models.
+# "fast" tasks (JSON, classification) -> OLLAMA_MODEL_FAST (qwen2.5:1.5b)
+# "general" tasks (summaries, prose) -> OLLAMA_MODEL_GENERAL (gemma3:1b)
+def private_routes(model_fast: str, model_general: str) -> dict[str, list[tuple[str, str]]]:
+    return {
+        "reason": [("ollama", model_general)],
+        "fast": [("ollama", model_fast)],
+        "analyze": [("ollama", model_general)],
+        "extract": [("ollama", model_fast)],
+        "safety": [("ollama", model_fast)],
+        "bangla": [("ollama", model_general)],
+    }
 
 # Free-tier limits. Groq values measured on 2026-10-20 at console.groq.com/settings/limits.
 # Gemini values are ASSUMED (not visible on ai.dev/rate-limit for this project) and kept conservative.
@@ -73,6 +85,10 @@ _RETRY_RE = re.compile(r"try again in (?:(\d+)m)?([\d.]+)(ms|s)", re.I)
 
 class LLMError(RuntimeError):
     """All providers in the route failed."""
+
+
+class PrivateModeUnavailable(LLMError):
+    """Private mode needs the local model runtime (Ollama). It is not running on this server."""
 
 
 class _ProviderError(Exception):
@@ -202,6 +218,9 @@ class LLMClient:
         groq_key: str = "",
         gemini_key: str = "",
         ollama_url: str = "http://localhost:11434",
+        ollama_model_fast: str = "qwen2.5:1.5b",
+        ollama_model_general: str = "gemma3:1b",
+        ollama_timeout_s: float = 180.0,
         cache_dir: Path | None = None,
         usage_log: Path | None = None,
         transport: httpx.BaseTransport | None = None,
@@ -215,6 +234,10 @@ class LLMClient:
         self.groq_key = groq_key
         self.gemini_key = gemini_key
         self.ollama_url = ollama_url.rstrip("/")
+        self.ollama_model_fast = ollama_model_fast
+        self.ollama_model_general = ollama_model_general
+        self.ollama_timeout_s = ollama_timeout_s
+        self._private_routes = private_routes(ollama_model_fast, ollama_model_general)
         self.cache_dir = cache_dir
         self.usage_log = usage_log
         self.routes = routes or ROUTES
@@ -305,7 +328,7 @@ class LLMClient:
         }
         if json_mode:
             body["format"] = "json"
-        data = self._post(f"{self.ollama_url}/api/chat", json=body)
+        data = self._post(f"{self.ollama_url}/api/chat", json=body, timeout=self.ollama_timeout_s)
         text = data.get("message", {}).get("content", "")
         return text, int(data.get("prompt_eval_count", 0)), int(data.get("eval_count", 0))
 
@@ -319,17 +342,27 @@ class LLMClient:
         temperature: float = 0.2,
         use_cache: bool = True,
         max_wait: float | None = None,
+        private: bool = False,
     ) -> LLMResult:
-        """Run a task through its route. max_wait overrides how long to wait for a busy model."""
-        if task not in self.routes:
-            raise LLMError(f"Unknown task {task!r}. Known: {sorted(self.routes)}")
+        """Run a task through its route.
+
+        private=True uses only local Ollama models. If Ollama is unreachable the call
+        raises PrivateModeUnavailable instead of falling back to remote providers.
+        """
+        route_table = self._private_routes if private else self.routes
+        if task not in route_table:
+            raise LLMError(f"Unknown task {task!r}. Known: {sorted(route_table)}")
         limit_wait = self.max_wait if max_wait is None else max_wait
         payload = {"messages": messages, "json": json_mode, "max_tokens": max_tokens, "temperature": temperature}
         attempts: list[str] = []
         callers = {"groq": self._call_groq, "gemini": self._call_gemini, "ollama": self._call_ollama}
         est_tokens = estimate_request_tokens(messages, max_tokens)
 
-        for provider, model in self.routes[task]:
+        for provider, model in route_table[task]:
+            # In private mode, only ollama is allowed. This is a safety net.
+            if private and provider != "ollama":
+                continue
+
             path = self._cache_path(provider, model, payload) if use_cache else None
             if path is not None and path.exists():
                 cached = json.loads(path.read_text(encoding="utf-8"))
@@ -338,6 +371,7 @@ class LLMClient:
                 return result
 
             retried = False
+            json_retried = False
             while True:
                 wait = self.budget.wait_seconds(model, est_tokens)
                 if wait is None:
@@ -353,6 +387,10 @@ class LLMClient:
                 try:
                     text, tokens_in, tokens_out = callers[provider](task, model, messages, json_mode, max_tokens, temperature)
                 except _ProviderError as exc:
+                    if private:
+                        raise PrivateModeUnavailable(
+                            "Private mode needs the local model runtime (Ollama). It is not running on this server."
+                        ) from exc
                     if exc.retry_after is not None and not retried and exc.retry_after <= limit_wait:
                         retried = True
                         self._sleep(exc.retry_after + 0.5)
@@ -369,6 +407,11 @@ class LLMClient:
                 if json_mode:
                     data = parse_json(text)
                     if data is None:
+                        # Ollama small models sometimes need a second try with a stricter prompt.
+                        if provider == "ollama" and not json_retried:
+                            json_retried = True
+                            messages = messages + [{"role": "user", "content": "Reply with valid JSON only."}]
+                            continue
                         attempts.append(f"{provider}:{model} -> invalid JSON")
                         break
 
@@ -383,6 +426,10 @@ class LLMClient:
                 self._log(result)
                 return result
 
+        if private:
+            raise PrivateModeUnavailable(
+                "Private mode needs the local model runtime (Ollama). It is not running on this server."
+            )
         raise LLMError(f"All providers failed for task {task!r}: " + " | ".join(attempts))
 
     def budget_report(self) -> list[dict]:
@@ -409,6 +456,9 @@ def get_llm() -> LLMClient:
             groq_key=s.groq_api_key,
             gemini_key=s.gemini_api_key,
             ollama_url=s.ollama_url,
+            ollama_model_fast=s.ollama_model_fast,
+            ollama_model_general=s.ollama_model_general,
+            ollama_timeout_s=s.ollama_timeout_s,
             cache_dir=s.cache_dir / "llm_cache",
             usage_log=s.cache_dir / "llm_usage.jsonl",
         )

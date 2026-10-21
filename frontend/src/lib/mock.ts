@@ -3,6 +3,8 @@ import type { MeResponse, Plan, Status } from "./api";
 
 export const MOCK_STATUS: Status = { live_mode: "worker", worker_online: false, worker: null, rerank_enabled: null };
 
+export const MOCK_PRIVATE_STATUS = { available: true, models: ["qwen2.5:1.5b", "gemma3:1b"], runtime: "ollama" };
+
 export const MOCK_QUESTIONS = [
   "What was the name of your first school?",
   "In which city were you born?",

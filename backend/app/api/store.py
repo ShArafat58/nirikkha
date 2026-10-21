@@ -16,7 +16,7 @@ from psycopg.types.json import Jsonb
 from app.db import connect
 
 COLUMNS = ("id::text as id, cik, as_of, decision, decision_hash, status, events, report, memo, error, source, "
-           "created_at, updated_at")
+           "private, created_at, updated_at")
 ACTIVE_WINDOW = timedelta(minutes=5)    # a queued/running job updated within this window blocks a new live run
 WORKER_ONLINE_SECONDS = 90              # a worker is online if its heartbeat is newer than this
 UPDATABLE = {"status", "events", "report", "memo", "error", "source"}
@@ -46,10 +46,10 @@ class PostgresStore:
         return bool(row and row["n"])
 
     def create(self, cik: str, as_of: date, decision: str, decision_hash: str, source: str = "live",
-               user_id: str | None = None) -> str:
-        row = self._one("insert into crash_tests (cik, as_of, decision, decision_hash, status, source, user_id) "
-                        "values (%s, %s, %s, %s, 'queued', %s, %s) returning id::text as id",
-                        (cik, as_of, decision, decision_hash, source, user_id))
+               user_id: str | None = None, private: bool = False) -> str:
+        row = self._one("insert into crash_tests (cik, as_of, decision, decision_hash, status, source, user_id, private) "
+                        "values (%s, %s, %s, %s, 'queued', %s, %s, %s) returning id::text as id",
+                        (cik, as_of, decision, decision_hash, source, user_id, private))
         return row["id"]
 
     def update(self, job_id: str, **fields: Any) -> None:
@@ -82,7 +82,7 @@ class PostgresStore:
             "update crash_tests set status = 'running', updated_at = now() where id = ("
             "  select id from crash_tests where status = 'queued' order by created_at "
             "  for update skip locked limit 1) "
-            "returning id::text as id, cik, as_of, decision")
+            "returning id::text as id, cik, as_of, decision, private")
 
     def heartbeat(self, worker_id: str, current_job: str | None, rerank_enabled: bool) -> None:
         self._one("insert into workers (worker_id, last_seen, current_job, rerank_enabled) values (%s, now(), %s, %s) "

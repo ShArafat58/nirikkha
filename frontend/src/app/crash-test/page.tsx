@@ -8,7 +8,7 @@ import { useApp } from "../../components/providers";
 import { BandBadge, ScoreNumber } from "../../components/score";
 import { useSession } from "../../components/session";
 import { Alert, Button, Field, Select } from "../../components/ui";
-import { ApiError, demoLogin, getCompanies, getStatus, startCrashTest, type Company } from "../../lib/api";
+import { ApiError, demoLogin, getCompanies, getPrivateStatus, getStatus, startCrashTest, type Company } from "../../lib/api";
 
 const SVB_CIK = "0000719739";
 const EXAMPLES = [
@@ -34,6 +34,8 @@ export default function CrashTestPage() {
   const [errorStatus, setErrorStatus] = useState(0);
   const [busy, setBusy] = useState(false);
   const [needLogin, setNeedLogin] = useState(false);
+  const [isPrivate, setIsPrivate] = useState(false);
+  const [privateAvailable, setPrivateAvailable] = useState<boolean | null>(null);
 
   useEffect(() => {
     getCompanies()
@@ -47,6 +49,7 @@ export default function CrashTestPage() {
       })
       .catch((err) => setError(err instanceof ApiError ? err.message : t("auth.err.generic")));
     getStatus().then((s) => setWorkerOnline(s.worker_online)).catch(() => setWorkerOnline(null));
+    getPrivateStatus().then((s) => setPrivateAvailable(s.available)).catch(() => setPrivateAvailable(false));
   }, [t]);
 
   const demos = useMemo(
@@ -64,7 +67,7 @@ export default function CrashTestPage() {
     setErrorStatus(0);
     setBusy(true);
     try {
-      const started = await startCrashTest(cik, asOf, decision);
+      const started = await startCrashTest(cik, asOf, decision, isPrivate);
       router.push(started.cached ? `/report/${started.id}` : `/crash-test/${started.id}`);
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
@@ -181,10 +184,34 @@ export default function CrashTestPage() {
                 {errorStatus === 403 && <Link href="/pricing" className="font-semibold text-accent underline">{t("ct.limit")}</Link>}
               </Alert>
             )}
-            <Button type="submit" className="w-full sm:w-auto" loading={busy && !needLogin}
-                    disabled={!cik || !asOf || decision.trim().length < 10}>
-              {t("ct.start")}
-            </Button>
+            <div className="flex flex-col gap-4 pt-2 sm:flex-row sm:items-center sm:justify-between">
+              <Button type="submit" className="w-full sm:w-auto" loading={busy && !needLogin}
+                      disabled={!cik || !asOf || decision.trim().length < 10}>
+                {t("ct.start")}
+              </Button>
+
+              <div className="flex flex-col gap-1 sm:max-w-md">
+                <label className={`flex items-center gap-2.5 text-sm font-medium ${privateAvailable === false ? "cursor-not-allowed opacity-60 text-muted" : "cursor-pointer text-text"}`}
+                       title={privateAvailable === false ? t("ct.privateDisabledTooltip") : undefined}>
+                  <input
+                    type="checkbox"
+                    checked={isPrivate && privateAvailable !== false}
+                    onChange={(e) => setIsPrivate(e.target.checked)}
+                    disabled={privateAvailable === false}
+                    className="h-4 w-4 rounded border-border bg-surface-2 text-accent focus:ring-accent"
+                  />
+                  <span className="flex items-center gap-1.5 flex-wrap">
+                    <span>🔒 {t("ct.privateMode")}</span>
+                    {privateAvailable === false && (
+                      <span className="rounded bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 text-[11px] font-normal text-amber-500">
+                        {t("ct.privateDisabledTooltip")}
+                      </span>
+                    )}
+                  </span>
+                </label>
+                <p className="text-xs text-muted pl-6 leading-relaxed">{t("ct.privateHint")}</p>
+              </div>
+            </div>
           </form>
         </section>
       </div>

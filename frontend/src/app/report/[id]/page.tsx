@@ -63,6 +63,11 @@ function ReportView() {
                 <span className="rounded-full border border-border bg-surface px-3 py-1 font-mono">{t("rep.frozen")} {r.as_of}</span>
                 <span className="rounded-full border border-border bg-surface px-3 py-1 font-mono">CIK {r.cik}</span>
                 {r.retrieval_mode && <span className="rounded-full border border-border bg-surface px-3 py-1">{r.retrieval_mode}</span>}
+                {r.private && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-3 py-1 font-medium text-emerald-400">
+                    🔒 {t("ct.privateBadge")}
+                  </span>
+                )}
               </div>
               {r.decision && (
                 <blockquote className="mt-6 max-w-3xl border-l-4 border-accent pl-4 text-lg leading-relaxed text-text/90">“{r.decision}”</blockquote>

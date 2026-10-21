@@ -19,7 +19,14 @@ export function LivePanel({ job }: { job: CrashTestJob }) {
     <div className="space-y-5">
       <div className="rounded-2xl border border-border bg-surface p-6">
         <div className="flex items-center justify-between">
-          <p className="text-xs font-medium uppercase tracking-wider text-muted">{t("live.progress")}</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-xs font-medium uppercase tracking-wider text-muted">{t("live.progress")}</p>
+            {job.private && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-400">
+                🔒 {t("ct.privateBadge")}
+              </span>
+            )}
+          </div>
           <span className="font-mono text-sm tabular-nums">{pct}%</span>
         </div>
         <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-surface-2">

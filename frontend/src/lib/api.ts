@@ -1,7 +1,7 @@
 // Single place where the frontend talks to the backend.
 // The frontend never imports backend code; it only calls the REST API (see docs/API.md).
 
-import { MOCK_ME, MOCK_PLANS, MOCK_QUESTIONS, MOCK_STATUS } from "./mock";
+import { MOCK_ME, MOCK_PLANS, MOCK_PRIVATE_STATUS, MOCK_QUESTIONS, MOCK_STATUS } from "./mock";
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 export const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === "true";
@@ -172,11 +172,12 @@ export type Health = { score: number; band: string; deducted: number; formula: s
 export type Report = { company: string; cik: string; as_of: string; decision: string; health?: Health;
   summary?: { findings: number; sentinel?: { verified: number; needs_review: number; downgraded: number; unsupported: number;
     human_review: number; judge_model: string | null } }; retrieval_mode?: string;
+  private?: boolean; private_models?: string[];
   usage?: { llm_calls: number; input_tokens: number; output_tokens: number; cost_usd: number };
   [key: string]: unknown };
 export type CrashTestJob = { id: string; cik: string; as_of: string; decision: string; status: JobStatus;
   pipeline: string[]; done_nodes: string[]; events: PipelineEvent[]; report: Report | null; error: string | null;
-  source: string; created_at: string; updated_at: string; worker_online?: boolean };
+  source: string; created_at: string; updated_at: string; worker_online?: boolean; private?: boolean };
 export type CrashTestStarted = { id: string; status: JobStatus; cached: boolean; worker_online: boolean | null };
 
 export async function getCompanies(): Promise<Company[]> {
@@ -184,9 +185,20 @@ export async function getCompanies(): Promise<Company[]> {
   return request<Company[]>("/api/companies", { auth: false });
 }
 
-export async function startCrashTest(cik: string, as_of: string, decision: string): Promise<CrashTestStarted> {
+export async function startCrashTest(cik: string, as_of: string, decision: string, isPrivate: boolean = false): Promise<CrashTestStarted> {
   if (USE_MOCK) mockUnavailable();
-  return request<CrashTestStarted>("/api/crash-tests", { method: "POST", body: { cik, as_of, decision } });
+  return request<CrashTestStarted>("/api/crash-tests", { method: "POST", body: { cik, as_of, decision, private: isPrivate } });
+}
+
+export type PrivateStatus = { available: boolean; models: string[]; runtime: string };
+
+export async function getPrivateStatus(): Promise<PrivateStatus> {
+  if (USE_MOCK) return MOCK_PRIVATE_STATUS;
+  try {
+    return await request<PrivateStatus>("/api/private/status", { auth: false });
+  } catch {
+    return { available: false, models: [], runtime: "ollama" };
+  }
 }
 
 export async function getCrashTest(id: string): Promise<CrashTestJob> {

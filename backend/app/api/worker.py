@@ -80,7 +80,8 @@ def run(store: Any = None, runner: Callable | None = None, once: bool = False, w
                 pass
             log(f"running {job['id']} cik={job['cik']} as_of={job['as_of']}")
             started = time.perf_counter()
-            execute(job["id"], job["cik"], job["as_of"], job["decision"], store, runner)
+            execute(job["id"], job["cik"], job["as_of"], job["decision"], store, runner,
+                    private=bool(job.get("private", False)))
             row = store.get(job["id"]) or {}
             log(f"  -> {row.get('status')} in {time.perf_counter() - started:.0f} s {row.get('error') or ''}".rstrip())
             state["job"] = None

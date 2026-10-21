@@ -27,6 +27,8 @@ from typing import Any, Callable
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Response
 from pydantic import BaseModel, Field
 
+import httpx
+
 from app.agents.memo import to_markdown
 from app.auth.deps import get_current_user, get_optional_user, get_user_store
 from app.business.plans import monthly_limit, plan
@@ -44,8 +46,9 @@ MAX_DECISION_CHARS = 1500
 EVALUATION_FILE = BACKEND_DIR / "evaluation" / "results.json"
 NO_WORKER = ("No analysis worker picked up this Crash-Test within 5 minutes. Open a precomputed demo, "
              "or try again when the analysis worker is online.")
+PRIVATE_UNAVAILABLE = "Private mode needs the local model runtime (Ollama). It is not running on this server."
 
-Runner = Callable[[str, date, str, Callable[[list[dict]], None]], dict]
+Runner = Callable[[str, date, str, Callable[[list[dict]], None], bool], dict]
 MemoWriter = Callable[[dict], dict]
 
 
@@ -55,6 +58,7 @@ class CrashTestRequest(BaseModel):
     decision: str = Field("", max_length=MAX_DECISION_CHARS,
                           examples=["Before we proceed with a deposit partnership with this bank, identify the "
                                     "governance risks and evidence gaps we should investigate."])
+    private: bool = Field(False, description="Run every AI step on local models only (Ollama). No text leaves the machine.")
 
 
 class CrashTestStarted(BaseModel):
@@ -86,11 +90,12 @@ def get_inline() -> bool:
     return get_settings().run_jobs_inline
 
 
-def graph_runner(cik: str, as_of: date, decision: str, on_event: Callable[[list[dict]], None]) -> dict:
+def graph_runner(cik: str, as_of: date, decision: str, on_event: Callable[[list[dict]], None],
+                 private: bool = False) -> dict:
     """Runs the LangGraph Crash-Test node by node and reports each node's events as it finishes."""
     from app.agents.graph import build_graph, default_services
 
-    app = build_graph(default_services())
+    app = build_graph(default_services(), private=private)
     initial = {"cik": cik, "as_of": as_of.isoformat(), "decision": decision, "findings": [], "events": [], "usage": []}
     final: dict[str, Any] = {}
     for chunk in app.stream(initial, stream_mode="updates"):
@@ -117,7 +122,8 @@ def get_memo_writer() -> MemoWriter:
     return write
 
 
-def execute(job_id: str, cik: str, as_of: date, decision: str, store: Any, runner: Runner) -> None:
+def execute(job_id: str, cik: str, as_of: date, decision: str, store: Any, runner: Runner,
+            private: bool = False) -> None:
     events: list[dict] = []
 
     def on_event(new: list[dict]) -> None:
@@ -126,13 +132,21 @@ def execute(job_id: str, cik: str, as_of: date, decision: str, store: Any, runne
 
     try:
         store.update(job_id, status="running")
-        state = runner(cik, as_of, decision, on_event)
+        try:
+            state = runner(cik, as_of, decision, on_event, private)
+        except TypeError:
+            state = runner(cik, as_of, decision, on_event)
         if state.get("allowed") is False:
             reason = (state.get("guard_result") or {}).get("reason") or "input guard"
             store.update(job_id, status="blocked", events=events, error=f"Blocked by the input guard: {reason}")
         elif state.get("report"):
             mode = "hybrid + cross-encoder rerank" if get_settings().rerank_enabled else "hybrid (reranker disabled on this server)"
-            store.update(job_id, status="done", events=events, report={**state["report"], "retrieval_mode": mode})
+            report = {**state["report"], "retrieval_mode": mode}
+            if private:
+                s = get_settings()
+                report["private"] = True
+                report["private_models"] = [s.ollama_model_fast, s.ollama_model_general]
+            store.update(job_id, status="done", events=events, report=report)
         else:
             store.update(job_id, status="failed", events=events, error="The Crash-Test produced no report.")
     except Exception as exc:  # last resort: a job must never stay "running" forever
@@ -143,14 +157,15 @@ def execute(job_id: str, cik: str, as_of: date, decision: str, store: Any, runne
             pass
 
 
-def execute_claimed(job_id: str, cik: str, as_of: date, decision: str, store: Any, runner: Runner) -> None:
+def execute_claimed(job_id: str, cik: str, as_of: date, decision: str, store: Any, runner: Runner,
+                    private: bool = False) -> None:
     """Inline mode: run only if this process wins the atomic claim (a worker may have taken the job first)."""
     try:
         if not store.claim(job_id):
             return
     except DatabaseError:
         return
-    execute(job_id, cik, as_of, decision, store, runner)
+    execute(job_id, cik, as_of, decision, store, runner, private=private)
 
 
 def _worker(store: Any) -> dict | None:
@@ -184,6 +199,8 @@ def start_crash_test(req: CrashTestRequest, background: BackgroundTasks, respons
     as_of = req.as_of or date.today()
     if as_of > date.today():
         raise HTTPException(422, "as_of cannot be in the future.")
+    if req.private and not check_private_available():
+        raise HTTPException(409, PRIVATE_UNAVAILABLE)
     decision, key = decision_key(req.decision)
     try:
         cached = store.find_done(cik, as_of, key)
@@ -199,11 +216,14 @@ def start_crash_test(req: CrashTestRequest, background: BackgroundTasks, respons
                                      f"and they are used. Upgrade or request a pilot on the Pricing page.")
         if store.busy():
             raise HTTPException(429, "Another live Crash-Test is running. Try again in a minute, or open a precomputed demo.")
-        job_id = store.create(cik, as_of, decision, key, user_id=user["id"])
+        try:
+            job_id = store.create(cik, as_of, decision, key, user_id=user["id"], private=req.private)
+        except TypeError:
+            job_id = store.create(cik, as_of, decision, key, user_id=user["id"])
     except DatabaseError as exc:
         raise HTTPException(503, f"Database unavailable: {exc}") from exc
     if inline:
-        background.add_task(execute_claimed, job_id, cik, as_of, decision, store, runner)
+        background.add_task(execute_claimed, job_id, cik, as_of, decision, store, runner, req.private)
         return CrashTestStarted(id=job_id, status="queued", cached=False)
     return CrashTestStarted(id=job_id, status="queued", cached=False, worker_online=_worker(store) is not None)
 
@@ -276,6 +296,41 @@ def status(store: Any = Depends(get_store), inline: bool = Depends(get_inline)) 
     return {"live_mode": "worker", "worker_online": worker is not None,
             "worker": {"last_seen": worker["last_seen"], "busy": bool(worker["current_job"])} if worker else None,
             "rerank_enabled": worker["rerank_enabled"] if worker else None}
+
+
+# ---------- Private Mode status ----------
+
+def check_private_available() -> bool:
+    """Probe Ollama /api/tags with a short timeout. Returns True when the runtime has the configured models."""
+    s = get_settings()
+    try:
+        resp = httpx.get(f"{s.ollama_url}/api/tags", timeout=2.0)
+        if resp.status_code != 200:
+            return False
+        models = resp.json().get("models", [])
+        names = {m.get("name", "") for m in models} | {m.get("model", "") for m in models}
+        fast_ok = any(s.ollama_model_fast in n for n in names)
+        gen_ok = any(s.ollama_model_general in n for n in names)
+        return fast_ok and gen_ok
+    except Exception:
+        return False
+
+
+@router.get("/private/status", tags=["private mode"], summary="Whether Private Mode (local Ollama) is available")
+def private_status() -> dict:
+    s = get_settings()
+    try:
+        resp = httpx.get(f"{s.ollama_url}/api/tags", timeout=2.0)
+        if resp.status_code != 200:
+            return {"available": False, "models": [], "runtime": "ollama"}
+        models = resp.json().get("models", [])
+        names = {m.get("name", "") for m in models} | {m.get("model", "") for m in models}
+        found = [n for n in names if any(req in n for req in (s.ollama_model_fast, s.ollama_model_general)) if n]
+        fast_ok = any(s.ollama_model_fast in n for n in names)
+        gen_ok = any(s.ollama_model_general in n for n in names)
+        return {"available": fast_ok and gen_ok, "models": sorted(found), "runtime": "ollama"}
+    except Exception:
+        return {"available": False, "models": [], "runtime": "ollama"}
 
 @router.get("/crash-tests", tags=["crash-tests"], summary="My Crash-Tests (private to the account)")
 def my_crash_tests(user: dict = Depends(get_current_user), store: Any = Depends(get_store)) -> list[dict]:
