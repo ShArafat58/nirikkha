@@ -271,7 +271,10 @@ def _trim_words(text: str, max_words: int = MAX_REPLY_WORDS) -> str:
 @router.post("/chat", response_model=HelpChatResponse)
 def help_chat(body: HelpChatRequest, request: Request) -> HelpChatResponse:
     # 1. Rate limiting by IP
-    client_ip = request.client.host if request.client else "127.0.0.1"
+    # Behind Render's proxy every request shares one socket IP, so use the forwarded client IP.
+    # These headers can be spoofed; this limit only slows abuse, it is not an access control.
+    forwarded = request.headers.get("cf-connecting-ip") or request.headers.get("x-forwarded-for", "")
+    client_ip = forwarded.split(",")[0].strip() or (request.client.host if request.client else "127.0.0.1")
     _check_rate_limit(client_ip)
 
     # 2. Extract and validate latest user message
