@@ -1,0 +1,74 @@
+{
+  "mcpServers": {
+    "nirikkha-filings": {
+      "command": "D:\\AI_Buildfest\\Nirikkha\\mcp-servers\\.venv\\Scripts\\python.exe",
+      "args": ["D:\\AI_Buildfest\\Nirikkha\\mcp-servers\\filings_server.py"],
+      "env": {
+        "NIRIKKHA_API_URL": "https://nirikkha-api.onrender.com",
+        "SEC_USER_AGENT": "YOUR NAME your.email@example.com"
+      }
+    },
+    "nirikkha-rules": {
+      "command": "D:\\AI_Buildfest\\Nirikkha\\mcp-servers\\.venv\\Scripts\\python.exe",
+      "args": ["D:\\AI_Buildfest\\Nirikkha\\mcp-servers\\rules_server.py"],
+      "env": { "NIRIKKHA_API_URL": "https://nirikkha-api.onrender.com" }
+    },
+    "nirikkha-graph": {
+      "command": "D:\\AI_Buildfest\\Nirikkha\\mcp-servers\\.venv\\Scripts\\python.exe",
+      "args": ["D:\\AI_Buildfest\\Nirikkha\\mcp-servers\\graph_server.py"],
+      "env": { "NIRIKKHA_API_URL": "https://nirikkha-api.onrender.com" }
+    },
+    "nirikkha-crashtest": {
+      "command": "D:\\AI_Buildfest\\Nirikkha\\mcp-servers\\.venv\\Scripts\\python.exe",
+      "args": ["D:\\AI_Buildfest\\Nirikkha\\mcp-servers\\crashtest_server.py"],
+      "env": { "NIRIKKHA_API_URL": "https://nirikkha-api.onrender.com" }
+    },
+    "nirikkha-regulation": {
+      "command": "D:\\AI_Buildfest\\Nirikkha\\mcp-servers\\.venv\\Scripts\\python.exe",
+      "args": ["D:\\AI_Buildfest\\Nirikkha\\mcp-servers\\regulation_server.py"],
+      "env": { "NIRIKKHA_API_URL": "https://nirikkha-api.onrender.com" }
+    },
+    "filesystem": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "D:\\AI_Buildfest\\Nirikkha\\docs",
+        "D:\\AI_Buildfest\\Nirikkha\\data"
+      ]
+    },
+    "git": {
+      "command": "D:\\AI_Buildfest\\Nirikkha\\mcp-servers\\.venv-ext\\Scripts\\python.exe",
+      "args": [
+        "-m",
+        "mcp_server_git",
+        "--repository",
+        "D:\\AI_Buildfest\\Nirikkha"
+      ]
+    },
+    "fetch": {
+      "command": "D:\\AI_Buildfest\\Nirikkha\\mcp-servers\\.venv-ext\\Scripts\\python.exe",
+      "args": ["-m", "mcp_server_fetch"]
+    },
+    "neo4j": {
+      "command": "D:\\AI_Buildfest\\Nirikkha\\mcp-servers\\.venv-ext\\Scripts\\mcp-neo4j-cypher.exe",
+      "env": {
+        "NEO4J_URI": "COPY_FROM_backend_.env",
+        "NEO4J_USERNAME": "COPY_FROM_backend_.env",
+        "NEO4J_PASSWORD": "COPY_FROM_backend_.env",
+        "NEO4J_DATABASE": "COPY_FROM_backend_.env"
+      }
+    },
+    "sequential-thinking": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ]
+    }
+  }
+}
