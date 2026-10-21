@@ -77,6 +77,14 @@ Formats: HTML (filings), JSON (EDGAR API, reports, cases, workflows), Markdown (
 | MCP                | 13 tools for AI agents and IDE hosts                                                                                                |
 | Dashboards         | Admin overview, human-review queue, jobs; public `/docs` status page                                                                |
 
+### Visualization
+
+| Tool | Where |
+|---|---|
+| Recharts | Report overview (what lowered the score, deductions by investigation) and the Health Score panel (`frontend/src/components/report/overview.tsx`, `health-panel.tsx`) |
+| Custom SVG (React) | Interactive relationship graph with radial layout, Replay timeline and freeze strip, animated pipeline diagram on `/docs`, animated help robot |
+| Tailwind CSS | Severity and confidence chips, evidence panel, dark and paper themes |
+
 ## 8. Data quality
 
 - Extraction: a relation enters the graph only if its quote is found in the source chunk (SVB 2022 proxy: 137 of 162 verified, 85%).
