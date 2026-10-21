@@ -58,21 +58,20 @@
  },
  "controls": [
   {
-   "job": "444ac881-a4b8-438a-870b-13188eaa7542",
+   "job": "cc5cdb6c-2465-4e96-beeb-1b924fbe92ad",
    "company": "Apple Inc.",
    "cik": "0000320193",
    "as_of": "2026-10-21",
-   "decision": "Before we invest in this company, check board independence, related-party transactions and outside roles of executives.",
-   "health_score": 87,
+   "decision": "Before we proceed with a partnership with this company, identify the governance risks and evidence gaps we should investigate.",
+   "health_score": 85,
    "band": "low_concern",
-   "coverage_pct": 83,
-   "findings": 21,
+   "coverage_pct": 80,
+   "findings": 20,
    "rules": {
     "law": {
      "PASS": 9
     },
     "best_practice": {
-     "POTENTIAL_GAP": 1,
      "INSUFFICIENT_EVIDENCE": 1
     },
     "internal_indicator": {
@@ -81,12 +80,6 @@
     }
    },
    "gaps": [
-    {
-     "rule_id": "BP_CRO",
-     "title": "Chief Risk Officer identified",
-     "result": "POTENTIAL_GAP",
-     "category": "best_practice"
-    },
     {
      "rule_id": "II_OFFICER_OUTSIDE_ROLES",
      "title": "Executive outside board seats",
@@ -102,9 +95,9 @@
    ],
    "pattern_matches": {
     "detected": 1,
-    "questioned": 0,
+    "questioned": 1,
     "partial": 1,
-    "missed": 3
+    "missed": 2
    }
   }
  ]
