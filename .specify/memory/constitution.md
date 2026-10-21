@@ -1,50 +1,67 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+Sync Impact Report:
+- Version change: Initial adoption -> 1.0.0
+- Principles defined:
+  1. Evidence-First
+  2. Responsible Uncertainty
+  3. Separation of Risk Severity and Evidence Confidence
+  4. Non-Accusatory Governance Language
+  5. Strict Domain Separation (Law vs Best Practice vs Internal Indicators)
+- Added sections:
+  - Architecture and Technical Boundaries
+  - Quality Gates and Development Workflow
+  - Governance
+- Follow-up TODOs: None
+-->
+
+# Nirikkha Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Evidence-First
+Every material finding, flag, or governance score MUST link directly to verifiable source evidence (SEC filing Form 10-K, DEF 14A, 8-K, or official regulation). Analysis without a verifiable citation, page/section number, and verbatim supporting passage is strictly prohibited. Unsubstantiated inferences or speculative leaps MUST NOT enter crash-test reports.
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+### II. Responsible Uncertainty
+When evidence is incomplete, contradictory, ambiguous, or missing, the system MUST report "Insufficient Evidence" rather than extrapolate or hypothesize. Hallucinating missing disclosures or guessing compliance status violates Nirikkha's core mandate: "Trust less, Verify more."
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### III. Separation of Risk Severity and Evidence Confidence
+Risk Severity (the operational or legal impact of an issue) and Evidence Confidence (the clarity and reliability of supporting disclosures) MUST always remain separate, distinct attributes. A severe risk with weak documentation MUST NOT be conflated with a well-documented minor discrepancy.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### IV. Non-Accusatory Governance Language
+Nirikkha produces objective risk analyses, not accusations. Findings MUST describe factual patterns and potential conflicts requiring review or remediation. The system MUST NEVER accuse a company, officer, or board member of illegal conduct, fraud, or intentional wrongdoing. Relationships are cataloged as "potential conflicts requiring review," never as proof of misconduct.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### V. Strict Domain Separation
+Applicable statutory law (e.g., SEC Item 401, Item 404, Item 407, Sarbanes-Oxley), industry best practices (e.g., independent board leadership, tenure recommendations), and internal corporate risk indicators MUST be categorized separately in all analyses and interfaces. Best-practice suggestions MUST NEVER be labeled as legal violations.
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+## Architecture and Technical Boundaries
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+### Frontend and Backend Isolation
+- Frontend and backend MUST share no code. Communication occurs exclusively through the documented REST API contracts in `docs/API.md`.
+- The frontend reads the backend URL solely from `NEXT_PUBLIC_API_URL` and MUST maintain a functional mock mode for disconnected evaluation.
+- Any change to an API response contract MUST be reflected simultaneously in `docs/API.md`.
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+### Security, Zero Secrets, and Free Stack
+- No API keys, credentials, or secrets are ever checked into git. All environment secrets reside in `.env` (git-ignored) with an up-to-date `.env.example`.
+- Nirikkha adheres to a 100% free stack. Integrations requiring paid plans or closed proprietary APIs are prohibited.
+- LLM calls MUST route through a resilient router with graceful fallbacks (Groq -> Gemini -> local Ollama). The system must never crash on provider downtime.
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+### Data Privacy and Public Sources
+- Demo and replay data MUST strictly utilize public SEC filings or synthetic data. Under no circumstances should non-public personal information be processed or exposed.
+- SEC EDGAR access MUST adhere strictly to SEC fair-access policies: always include a identifying User-Agent header with email, and honor rate limits.
+
+## Quality Gates and Development Workflow
+
+### Dual-Language Accessibility (EN/BN)
+Every user-facing string, button label, notification, modal, error message, and report element MUST be localized in both English (EN) and Bengali (BN) through the central i18n dictionary. No hardcoded user-facing English strings are permitted in UI components.
+
+### Tests Before Merge
+- Code changes MUST be accompanied by verification tests (`pytest` for backend, build and test checks for frontend).
+- Every external integration MUST include robust error handling with user-friendly messages for rate limits, network failures, or unreadable inputs.
+- Analyses MUST be cached in the database; demo companies and First Warning Sign Replays are precomputed.
+- Never claim any feature in documentation or submission materials that is not fully implemented and visible in this repository.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+This Constitution supersedes all informal team practices, local conventions, and transient directives. All code reviews, specs, and feature pull requests MUST verify compliance with these principles before merge. Any amendment to this Constitution requires explicit documentation, version bump, and architectural alignment.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Version**: 1.0.0 | **Ratified**: 2026-10-22 | **Last Amended**: 2026-10-22

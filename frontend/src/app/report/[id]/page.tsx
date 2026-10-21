@@ -10,6 +10,7 @@ import { ScoreRing } from "../../../components/report/score-ring";
 import { BandBadge } from "../../../components/score";
 import { Alert } from "../../../components/ui";
 import { MemoLink } from "../../../components/report/memo-link";
+import { ReportActions } from "../../../components/report/report-actions";
 import { ApiError, getCrashTest, type CrashTestJob } from "../../../lib/api";
 import type { Key } from "../../../lib/i18n";
 
@@ -54,7 +55,7 @@ function ReportView() {
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-accent/10 via-transparent to-conf-medium/10" aria-hidden />
         <div className="relative mx-auto max-w-7xl px-4 py-10 sm:px-6">
           <Link href="/crash-test" className="text-sm text-muted hover:text-text">← {t("rep.back")}</Link>
-          <div className="mt-3"><MemoLink /></div>
+          <div className="mt-3 flex flex-wrap items-center gap-2 print:hidden"><MemoLink /><ReportActions /></div>
           <div className="mt-6 grid items-center gap-10 lg:grid-cols-[1fr_auto]">
             <div className="min-w-0">
               <p className="font-mono text-xs uppercase tracking-[0.2em] text-accent">{t("rep.eyebrow")}</p>
