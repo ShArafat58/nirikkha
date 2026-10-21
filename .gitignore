@@ -44,3 +44,5 @@ desktop.ini
 .cache/
 # original background images (converted copies live in frontend/public/images/bg)
 frontend/bg_img/
+
+mcp-servers/.venv-ext/
