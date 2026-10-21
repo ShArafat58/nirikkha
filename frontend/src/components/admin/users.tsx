@@ -37,6 +37,9 @@ export function AdminUsersTab({ token, onAuthError }: { token: string; onAuthErr
     } catch (e) { setMsg(e instanceof Error ? e.message : "Error"); }
   }
 
+  const waiting = (!users.data && !users.error) || (!reqs.data && !reqs.error);
+  if (waiting) return <Loader className="py-24" />;
+
   const th = "px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-muted";
   const td = "px-3 py-2.5 align-top";
   return (
@@ -45,7 +48,6 @@ export function AdminUsersTab({ token, onAuthError }: { token: string; onAuthErr
       <section>
         <h2 className="text-lg font-semibold">{bn ? "অ্যাকাউন্ট" : "Accounts"} {users.data && <span className="text-muted">({users.data.length})</span>}</h2>
         {users.error && <Alert>{users.error}</Alert>}
-        {!users.data && !users.error && <Loader className="py-10" />}
         {users.data && (<div className="mt-3 overflow-x-auto rounded-xl border border-border">
           <table className="w-full min-w-[820px] text-sm">
             <thead className="bg-surface-2"><tr>
@@ -79,7 +81,6 @@ export function AdminUsersTab({ token, onAuthError }: { token: string; onAuthErr
       <section>
         <h2 className="text-lg font-semibold">{bn ? "আপগ্রেড ও পাইলট অনুরোধ" : "Upgrade and pilot requests"}</h2>
         {reqs.error && <Alert>{reqs.error}</Alert>}
-        {!reqs.data && !reqs.error && <Loader className="py-6" />}
         <ul className="mt-3 space-y-2">
           {reqs.data && reqs.data.length === 0 && <li className="text-sm text-muted">{bn ? "কোনো অনুরোধ নেই।" : "No requests yet."}</li>}
           {(reqs.data ?? []).map((r) => (
