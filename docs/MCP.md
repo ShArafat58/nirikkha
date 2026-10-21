@@ -22,20 +22,21 @@ Folder: `mcp-servers/` · SDK: official MCP Python SDK (`mcp` 1.x, `FastMCP`) ·
 | nirikkha-crashtest  | `crashtest_server.py`  | `get_report_summary`, `start_crash_test`, `get_replay_result`     | Crash-Test reports, starting a new Crash-Test, the SVB First Warning Sign Replay result                            |
 | nirikkha-regulation | `regulation_server.py` | `explain_sk_item`, `list_rule_changes`, `get_radar_alerts`        | Regulation S-K explanations, curated rule changes, Regulatory Change Radar alerts                                  |
 
-The servers do not touch the database directly. They call the documented Nirikkha REST API (`NIRIKKHA_API_URL`), so they reuse the same auth, caching and guardrails as the web app.
+The servers do not touch the database directly. They call the documented Nirikkha REST API (`NIRIKKHA_API_URL`: the deployed API or a local one), so they reuse the same auth, caching and guardrails as the web app.
 
-### Transports
+### Transports (both verified)
 
-- **stdio** (default): `python graph_server.py` — used by Antigravity and by `smoke_test.py`. Verified.
-- **Streamable HTTP**: `python graph_server.py --http` (ports 8101–8105). Implemented in `common.py`.
+- **stdio** (default): `python graph_server.py` — used by Antigravity and by `smoke_test.py`.
+- **Streamable HTTP**: `python graph_server.py --http` serves `http://127.0.0.1:8103/mcp` (ports 8101–8105, one per server). Checked with `http_check.py`.
 
 ### Clients / hosts
 
-| Client / host                               | How                                                        | Verified                  |
-| ------------------------------------------- | ---------------------------------------------------------- | ------------------------- |
-| Google Antigravity (agent)                  | `antigravity.mcp_config.example.json`                      | Yes — tests 1 and 3 below |
-| `smoke_test.py` (our own Python MCP client) | starts each server over stdio, lists tools, calls one tool | Yes — all 5 servers pass  |
-| Claude Desktop                              | config example in `mcp-servers/README.md`                  | Config provided           |
+| Client / host                               | How                                                                 | Verified                  |
+| ------------------------------------------- | ------------------------------------------------------------------- | ------------------------- |
+| Google Antigravity (agent)                  | `antigravity.mcp_config.example.json` (stdio)                       | Yes — tests 1 and 3 below |
+| `smoke_test.py` (our own Python MCP client) | starts each server over stdio, lists tools, calls one tool          | Yes — all 5 servers pass  |
+| `http_check.py` (our own Python MCP client) | connects over Streamable HTTP, lists tools, calls `find_interlocks` | Yes — test 9 below        |
+| Claude Desktop                              | config example in `mcp-servers/README.md`                           | Config provided           |
 
 ---
 
@@ -64,23 +65,25 @@ Two virtual environments are needed because `mcp-server-git` and `mcp-server-fet
 | Neo4j Cypher        | Graph database         | `write_neo4j_cypher` switched off in the host; only read queries                                                                                                 |
 | Sequential Thinking | None                   | No file, network or database access                                                                                                                              |
 
+The HTTP transport listens on `127.0.0.1` only, so it is not reachable from other machines.
 Secrets (Neo4j password, SEC contact) live only in the host's own config file outside the repository. The committed example uses placeholders. `.venv`, `.venv-ext`, `.venv-neo4j` and `.env` are git-ignored.
 
 ---
 
-## 4. Evidence (run on 21 Oct 2026, host: Antigravity)
+## 4. Evidence (run on 21 Oct 2026, host: Antigravity unless noted)
 
-| #   | Server · tool                                   | Request                    | Result                                                                                                                                                        |
-| --- | ----------------------------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 0   | all 5 Nirikkha servers · `smoke_test.py`        | list tools + call one each | 5 / 5 pass                                                                                                                                                    |
-| 1   | nirikkha-graph · `find_interlocks`              | SVB, DEF 14A 2022          | Bank of America (Kate Mitchell p.15, Laura Izurieta p.30); Charles Schwab & Co. (Michelle Draper p.29, Christopher Edmonds-Waters p.29)                       |
-| 2   | neo4j · `read_neo4j_cypher`                     | count nodes by label       | Organization 115, Person 39, Committee 21, Party 4, Filing 3, Company 2                                                                                       |
-| 3   | nirikkha-crashtest · `get_replay_result`        | SVB Replay                 | VALID; detected 2, questioned 3, missed 0, not knowable 1                                                                                                     |
-| 4   | git · `git_log`                                 | last 5 commits             | Latest commits listed correctly                                                                                                                               |
-| 5   | filesystem · `list_directory`, `read_text_file` | SVB Replay case            | 12 timeline events, 6 warning signs, freeze date 2023-03-07                                                                                                   |
-| 6   | fetch · `fetch`                                 | SEC press release          | Blocked by SEC `robots.txt` (403); server refused, as designed                                                                                                |
-| 7   | fetch · `fetch`                                 | Federal Reserve SVB review | Published 28 Apr 2023; found board and management failed to manage risks and supervisors did not act quickly enough. Matches Replay sign `ws_board_oversight` |
-| 8   | sequential-thinking · `sequentialthinking`      | 181-second video plan      | Five parts, total 181 s                                                                                                                                       |
+| #   | Server · tool                                      | Request                                   | Result                                                                                                                                                        |
+| --- | -------------------------------------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0   | all 5 Nirikkha servers · `smoke_test.py` (stdio)   | list tools + call one each                | 5 / 5 pass                                                                                                                                                    |
+| 1   | nirikkha-graph · `find_interlocks`                 | SVB, DEF 14A 2022                         | Bank of America (Kate Mitchell p.15, Laura Izurieta p.30); Charles Schwab & Co. (Michelle Draper p.29, Christopher Edmonds-Waters p.29)                       |
+| 2   | neo4j · `read_neo4j_cypher`                        | count nodes by label                      | Organization 115, Person 39, Committee 21, Party 4, Filing 3, Company 2                                                                                       |
+| 3   | nirikkha-crashtest · `get_replay_result`           | SVB Replay                                | VALID; detected 2, questioned 3, missed 0, not knowable 1                                                                                                     |
+| 4   | git · `git_log`                                    | last 5 commits                            | Latest commits listed correctly                                                                                                                               |
+| 5   | filesystem · `list_directory`, `read_text_file`    | SVB Replay case                           | 12 timeline events, 6 warning signs, freeze date 2023-03-07                                                                                                   |
+| 6   | fetch · `fetch`                                    | SEC press release                         | Blocked by SEC `robots.txt` (403); server refused, as designed                                                                                                |
+| 7   | fetch · `fetch`                                    | Federal Reserve SVB review                | Published 28 Apr 2023; found board and management failed to manage risks and supervisors did not act quickly enough. Matches Replay sign `ws_board_oversight` |
+| 8   | sequential-thinking · `sequentialthinking`         | 181-second video plan                     | Five parts, total 181 s                                                                                                                                       |
+| 9   | nirikkha-graph · `http_check.py` (Streamable HTTP) | initialize, list tools, `find_interlocks` | 3 tools listed; first interlock Bank of America; session opened and closed cleanly                                                                            |
 
 ---
 
@@ -92,7 +95,11 @@ python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt -r ..\backend\requirements.txt
 Copy-Item .env.example .env   # set NIRIKKHA_API_URL and SEC_USER_AGENT
-python smoke_test.py
+python smoke_test.py          # stdio check, all 5 servers
+
+# Streamable HTTP check (two terminals)
+python graph_server.py --http
+python http_check.py
 ```
 
 To use the servers in Antigravity, copy `antigravity.mcp_config.example.json` into the host's MCP config, replace the placeholders, and refresh.
