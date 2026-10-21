@@ -31,6 +31,63 @@ RETURN e.key AS ek, e.name AS en, x.amount AS amount, x.page AS page, x.quote AS
 ROLE = {"DIRECTOR_OF": "director", "OFFICER_OF": "officer", "CHAIRS_BOARD": "board_chair"}
 
 
+NICK = {"tom": "thomas", "tommy": "thomas", "bob": "robert", "rob": "robert", "bill": "william", "will": "william",
+        "jim": "james", "mike": "michael", "dan": "daniel", "liz": "elizabeth", "beth": "elizabeth", "kate": "katherine",
+        "joe": "joseph", "ron": "ronald", "art": "arthur", "sue": "susan", "chris": "christopher", "steve": "stephen",
+        "tim": "timothy", "andy": "andrew", "alex": "alexander", "greg": "gregory", "jeff": "jeffrey", "rick": "richard"}
+TITLES = {"mr", "ms", "mrs", "dr", "jr", "sr", "ii", "iii"}
+ABBR = [(r"\bcomp\s*/\s*hc\b", "compensation and human capital"), (r"&", " and "), (r"\bhc\b", "human capital")]
+
+
+def _name_tokens(label: str) -> list[str]:
+    base = label.split(",")[0]
+    base = re.sub(r'\\?"[^"]*\\?"', " ", base)  # drop quoted nicknames such as "Busy"
+    return [t for t in re.findall(r"[a-z]+", base.lower()) if t not in TITLES]
+
+
+def committee_key(label: str) -> str:
+    s = label.lower()
+    for pattern, repl in ABBR:
+        s = re.sub(pattern, repl, s)
+    return " ".join(re.sub(r"[^a-z ]", " ", s).split())
+
+
+def _merge_people(nodes: dict, edges: dict) -> tuple[dict, dict]:
+    people = [n for n in nodes.values() if n["kind"] == "person"]
+    weight = {n["id"]: sum(1 for k in edges if n["id"] in k[:2]) for n in people}
+    groups: dict[tuple[str, str], list[dict]] = {}
+    singles = []
+    for n in people:
+        toks = _name_tokens(n["label"])
+        if len(toks) >= 2:
+            groups.setdefault((NICK.get(toks[0], toks[0]), toks[-1]), []).append(n)
+        elif toks:
+            singles.append((toks[0], n))
+    alias: dict[str, str] = {}
+    for members in groups.values():
+        canon = max(members, key=lambda n: ("," not in n["label"], weight[n["id"]], len(n["label"])))
+        for n in members:
+            if n["id"] != canon["id"]:
+                alias[n["id"]] = canon["id"]
+    for last, n in singles:
+        cands = {alias.get(m["id"], m["id"]) for key, ms in groups.items() if key[1] == last for m in ms}
+        if len(cands) == 1:
+            alias[n["id"]] = cands.pop()
+    for old, new in alias.items():
+        a, b = nodes[old], nodes[new]
+        b["roles"] = sorted(set(b["roles"]) | set(a["roles"]), key=["board_chair", "director", "officer"].index
+                            if all(r in ("board_chair", "director", "officer") for r in set(b["roles"]) | set(a["roles"])) else str)
+        if a.get("title") and not b.get("title"):
+            b["title"] = a["title"]
+        del nodes[old]
+    merged: dict[tuple[str, str, str], dict] = {}
+    for (src, dst, kind), e in edges.items():
+        src, dst = alias.get(src, src), alias.get(dst, dst)
+        if src != dst:
+            merged.setdefault((src, dst, kind), {**e, "source": src, "target": dst})
+    return nodes, merged
+
+
 def _acc_key(acc: str) -> tuple[int, int]:
     parts = acc.split("-")
     try:
@@ -64,7 +121,14 @@ def build(cik: str, acc: str, accessions: list[str], roles: list[dict], committe
         edge(p["id"], cid, role, r)
     for r in committees:
         p = node(f"p:{r['pk']}", r["pn"], "person")
-        k = node(f"k:{r['kk']}", r["kn"], "committee")
+        label = str(r["kn"]).strip()
+        if label.lower().startswith("the "):  # e.g. "The Bretton Woods Committee": an outside body
+            o = node(f"o:{committee_key(label)}", label, "organization")
+            edge(p["id"], o["id"], "outside_member", r)
+            continue
+        k = node(f"k:{cik}:{committee_key(label)}", label, "committee")
+        if len(label) > len(k["label"]):
+            k["label"] = label
         edge(k["id"], cid, "committee_of", {})
         edge(p["id"], k["id"], "chair" if r.get("chair") else "member", r)
     people = {n["id"] for n in nodes.values() if n["kind"] == "person"}
@@ -77,6 +141,8 @@ def build(cik: str, acc: str, accessions: list[str], roles: list[dict], committe
     for r in related:
         e = node(f"x:{r['ek']}", r["en"], "party")
         edge(e["id"], cid, "related_transaction", r, amount=r.get("amount"))
+
+    nodes, edges = _merge_people(nodes, edges)
 
     linked: dict[str, set[str]] = {}
     for (src, dst, _), _e in edges.items():

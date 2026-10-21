@@ -46,3 +46,21 @@ def test_api_503_when_graph_db_is_down():
         assert client.get("/api/graph/1").status_code == 503
     finally:
         app.dependency_overrides.clear()
+
+def test_duplicate_people_and_committees_are_merged():
+    roles = [
+        {"company": "Co", "pk": "tk", "pn": "Thomas King", "rel": "DIRECTOR_OF", "title": None, "page": 1, "quote": "q"},
+        {"company": "Co", "pk": "k", "pn": "King", "rel": "DIRECTOR_OF", "title": None, "page": 2, "quote": "q"},
+        {"company": "Co", "pk": "bm", "pn": "Beverly Kay Matthews", "rel": "DIRECTOR_OF", "title": None, "page": 3, "quote": "q"},
+        {"company": "Co", "pk": "bmc", "pn": "Beverly Kay Matthews, Board Chair", "rel": "DIRECTOR_OF", "title": None, "page": 4, "quote": "q"},
+    ]
+    committees = [
+        {"pk": "tom", "pn": "Tom King", "kk": "a", "kn": "Compensation & Human Capital Committee", "chair": False, "page": 5, "quote": "q"},
+        {"pk": "tk", "pn": "Thomas King", "kk": "b", "kn": "Comp/HC Committee", "chair": False, "page": 6, "quote": "q"},
+        {"pk": "bm", "pn": "Beverly Kay Matthews", "kk": "c", "kn": "The Bretton Woods Committee", "chair": False, "page": 7, "quote": "q"},
+    ]
+    g = build("0000000001", "A-23-1", ["A-23-1"], roles, committees, [], [])
+    people = sorted(n["label"] for n in g["nodes"] if n["kind"] == "person")
+    assert people == ["Beverly Kay Matthews", "Thomas King"]
+    assert [n["label"] for n in g["nodes"] if n["kind"] == "committee"] == ["Compensation & Human Capital Committee"]
+    assert any(n["label"] == "The Bretton Woods Committee" and n["kind"] == "organization" for n in g["nodes"])
