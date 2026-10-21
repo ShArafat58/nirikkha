@@ -5,6 +5,7 @@ import { Providers } from "../components/providers";
 import { SessionProvider } from "../components/session";
 import { SiteHeader } from "../components/site-header";
 import "./globals.css";
+import { HelpChat } from "../components/help-chat";
 import { RouteGuard } from "../components/route-guard";
 
 const sans = IBM_Plex_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--font-plex-sans", display: "swap" });
@@ -31,6 +32,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <SessionProvider>
             <SiteHeader />
             <RouteGuard>{children}</RouteGuard>
+            <HelpChat />
           </SessionProvider>
         </Providers>
       </body>

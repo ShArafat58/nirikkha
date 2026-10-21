@@ -266,3 +266,43 @@ export const adminJobs = (token: string) => request<AdminRow[]>("/api/admin/jobs
 export const adminReviews = (token: string) => request<AdminRow[]>("/api/admin/reviews", { token });
 export const adminAddReview = (token: string, body: { crash_test_id: string; finding_id: string; decision: string; note?: string }) =>
   request<AdminRow>("/api/admin/reviews", { method: "POST", body, token });
+
+// ---------- Nirikkha Guide Help Chatbot ----------
+export type HelpChatMessage = { role: "user" | "assistant"; content: string };
+export type HelpChatResponse = { reply: string; lang: "en" | "bn"; source: "llm" | "faq" };
+
+export async function chatHelp(messages: HelpChatMessage[], lang: "en" | "bn", page: string): Promise<HelpChatResponse> {
+  if (USE_MOCK) {
+    const last = messages[messages.length - 1]?.content.toLowerCase() || "";
+    if (last.includes("crash") || last.includes("ক্র্যাশ")) {
+      return {
+        reply: lang === "bn"
+          ? "/crash-test পেজে কোম্পানির CIK বা নাম বাছাই করে 'Run Crash-Test' বাটনে ক্লিক করুন। তাৎক্ষণিক ফলাফলের জন্য যেকোনো ডেমো সিলেক্ট করতে পারেন।"
+          : "On the /crash-test page, select a company CIK or name, set an optional freeze date, and click 'Run Crash-Test'. You can also choose a precomputed demo for instant results.",
+        lang,
+        source: "faq",
+      };
+    }
+    if (last.includes("price") || last.includes("প্ল্যান") || last.includes("খরচ")) {
+      return {
+        reply: lang === "bn"
+          ? "নিরীক্ষার প্ল্যানসমূহ: Free ($০/মাস, ৩টি টেস্ট), Analyst Pro ($৪৯/মাস, ৩০টি টেস্ট), Team ($৩৯৯/মাস, ১৫০টি টেস্ট), এবং Enterprise (বার্ষিক পাইলট)।"
+          : "Nirikkha plans: Free ($0/mo, 3 tests), Analyst Pro ($49/user/mo, 30 tests), Team ($399/mo, 150 tests), and Enterprise (annual custom contract).",
+        lang,
+        source: "faq",
+      };
+    }
+    return {
+      reply: lang === "bn"
+        ? "নমস্কার! আমি নিরীক্ষা গাইড। আমি আপনাকে ক্র্যাশ-টেস্ট চালানো, হেলথ স্কোর বোঝা, এসভিবি রিপ্লে বিশ্লেষণ এবং রেডার নোটিফিকেশন পরিচালনায় সাহায্য করতে পারি।"
+        : "Hello! I am Nirikkha Guide. I can help you understand our governance Crash-Tests, Health Score calculations, SVB Replay findings, and the Regulatory Radar.",
+      lang,
+      source: "faq",
+    };
+  }
+  return request<HelpChatResponse>("/api/help/chat", {
+    method: "POST",
+    body: { messages, lang, page },
+    auth: false,
+  });
+}

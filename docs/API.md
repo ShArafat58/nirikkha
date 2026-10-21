@@ -22,6 +22,8 @@ All responses are JSON. Errors use `{"detail": "<human-readable message>"}`; sho
 | GET | `/api/crash-tests/{id}/memo` | The cached legal memo (404 if none yet) |
 | GET | `/api/evaluation` | Latest evaluation results |
 | GET | `/api/status` | Live mode (`inline` or `worker`), whether an analysis worker is online, reranker on/off |
+| POST | `/api/help/chat` | Nirikkha Guide help chatbot (public, guarded, rate-limited, answers from HELP_KB.md) |
+
 
 ## Start a Crash-Test
 
@@ -142,6 +144,39 @@ In worker mode `POST /api/crash-tests` and `GET /api/crash-tests/{id}` (while `q
 If no worker picks a job up within 5 minutes it becomes `failed` with a clear message. Before offering a new live
 analysis, call `GET /api/status`; when `worker_online` is false, offer the precomputed demos instead.
 Each finished report states its `retrieval_mode`.
+
+## Nirikkha Guide Help Chat
+
+`POST /api/help/chat` (public, no authentication needed)
+
+Enables users to ask questions about Nirikkha's purpose, pages, methodology, pricing, and troubleshooting. Answers strictly from `docs/HELP_KB.md` with prompt-injection defense, admin-shielding, PII redaction, and fallback to FAQ when all LLMs are unavailable.
+
+Request:
+```json
+{
+  "messages": [
+    { "role": "user", "content": "How do I run a Crash-Test?" }
+  ],
+  "lang": "en",
+  "page": "/crash-test"
+}
+```
+
+Response:
+```json
+{
+  "reply": "To run a Crash-Test on the /crash-test page:\n1. Select a company by name or SEC CIK...",
+  "lang": "en",
+  "source": "llm"
+}
+```
+
+- `messages`: list of chat turns (at most the last 6 turns are evaluated).
+- `lang`: `"en"` or `"bn"`. If the user writes in Bengali script, the assistant responds in Bengali.
+- `page`: the user's active page path (e.g., `/crash-test`, `/reports`, `/pricing`, `/radar`).
+- `source`: `"llm"` if generated via the fast LLM route, or `"faq"` if served from the built-in FAQ fallback or defensive refusal.
+- Rate limit: 20 requests per 10 minutes per IP (returns 429 when exceeded).
+- Limits: maximum 1,000 characters per user message.
 
 ## Changing the API
 

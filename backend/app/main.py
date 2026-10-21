@@ -14,6 +14,7 @@ from app.config import get_settings
 from app.api.replay_routes import router as replay_router
 from app.api.radar_routes import router as radar_router
 from app.api.graph_routes import router as graph_router
+from app.api.help import router as help_router
 
 APP_VERSION = "0.1.0"
 
@@ -37,11 +38,11 @@ app.include_router(api_router)
 app.include_router(auth_router)
 app.include_router(admin_router)
 app.include_router(billing_router)
-
-
 app.include_router(replay_router)
 app.include_router(radar_router)
 app.include_router(graph_router)
+app.include_router(help_router)
+
 def _memory_mb() -> float | None:
     """Resident memory of this process on Linux (Render); None elsewhere."""
     try:
