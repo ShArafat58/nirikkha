@@ -13,6 +13,7 @@ const DEFAULT_CIK = "0000719739";
 export default function GraphPage() {
   const app = useApp();
   const lang = (app as unknown as { lang?: string }).lang === "bn" ? "bn" : "en";
+  const theme = (app as unknown as { theme?: string }).theme === "paper" ? "paper" : "dark";
   const [companies, setCompanies] = useState<Company[]>([]);
   const [cik, setCik] = useState(DEFAULT_CIK);
   const [accession, setAccession] = useState<string | undefined>();
@@ -62,7 +63,7 @@ export default function GraphPage() {
       <div className="mt-6">
         {error ? <Alert>{error}</Alert>
           : loading || !data ? <p className="py-20 text-center opacity-70">{bn ? "লোড হচ্ছে…" : "Loading the graph…"}</p>
-          : <GraphView data={data} lang={lang} />}
+          : <GraphView data={data} lang={lang} theme={theme} />}
       </div>
     </main>
   );
