@@ -9,6 +9,7 @@ import { useSession } from "../../components/session";
 import { Alert, Button, Field, Input } from "../../components/ui";
 import { ApiError, adminSession, login } from "../../lib/api";
 import type { Key } from "../../lib/i18n";
+import { Loader } from "../../components/loader";
 
 const TABS = ["overview", "demos"] as const;
 type Tab = (typeof TABS)[number];
@@ -130,7 +131,7 @@ export default function AdminPage() {
     </main>
   );
 
-  if (loading) return shell(<p className="text-muted">{t("dash.loading")}</p>);
+  if (loading) return shell(<Loader label={t("dash.loading")} />);
   if (!user || user.role !== "admin") return shell(<AdminSignIn currentEmail={user?.email} onUnlock={(tok, ttl) => { setToken(tok); setExpiresAt(Date.now() + ttl * 1000); }} />);
   if (!token) return shell(<StepUp onUnlock={(tok, ttl) => { setToken(tok); setExpiresAt(Date.now() + ttl * 1000); }} />);
 

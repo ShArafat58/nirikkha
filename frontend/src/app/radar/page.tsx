@@ -7,6 +7,7 @@ import { RadarView } from "../../components/radar/radar-view";
 import { useSession } from "../../components/session";
 import { Alert } from "../../components/ui";
 import { getRadar, type RadarData } from "../../lib/radar";
+import { Loader } from "../../components/loader";
 
 export default function RadarPage() {
   const app = useApp();
@@ -27,7 +28,7 @@ export default function RadarPage() {
     <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:py-10">
       {error ? <Alert>{error}</Alert>
         : data ? <RadarView data={data} lang={lang} signedIn={Boolean(signedIn)} />
-        : <p className="py-20 text-center opacity-70">{lang === "bn" ? "লোড হচ্ছে…" : "Loading the Radar…"}</p>}
+        : <Loader label={lang === "bn" ? "লোড হচ্ছে…" : "Loading the Radar…"} />}
     </main>
   );
 }

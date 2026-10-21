@@ -11,7 +11,7 @@ import { useSession } from "./session";
 type ServerState = "checking" | "live" | "demo" | "offline";
 
 const NAV = [
-  { href: "/crash-test", key: "nav.crashTest" },
+  { href: "/crash-test", key: "nav.crashTest" }, { href: "/reports", key: "nav.reports" },
   { href: "/replay", key: "nav.replay" }, { href: "/graph", key: "nav.graph" },
   { href: "/radar", key: "nav.radar" },
   { href: "/pricing", key: "nav.pricing" },

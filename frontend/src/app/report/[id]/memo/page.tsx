@@ -8,6 +8,7 @@ import { useApp } from "../../../../components/providers";
 import { Markdown } from "../../../../components/report/markdown";
 import { Alert, Button } from "../../../../components/ui";
 import { draftMemo, getMemo, translateMemo, type MemoResponse } from "../../../../lib/memo";
+import { Loader } from "../../../../components/loader";
 
 const TXT = {
   en: {
@@ -116,7 +117,7 @@ export default function MemoPage() {
       {error && <div className="mt-5"><Alert>{error}</Alert></div>}
 
       {loading ? (
-        <p className="py-16 text-center opacity-70">…</p>
+        <Loader />
       ) : !memo ? (
         <div className="mt-8 rounded-2xl border border-slate-500/20 bg-slate-500/[0.04] p-8 text-center">
           <p className="opacity-80">{t.none}</p>

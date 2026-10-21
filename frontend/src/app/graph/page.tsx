@@ -7,6 +7,7 @@ import { useApp } from "../../components/providers";
 import { Alert } from "../../components/ui";
 import { getCompanies, type Company } from "../../lib/api";
 import { getGraph, type GraphData } from "../../lib/graph";
+import { Loader } from "../../components/loader";
 
 const DEFAULT_CIK = "0000719739";
 
@@ -62,7 +63,7 @@ export default function GraphPage() {
 
       <div className="mt-6">
         {error ? <Alert>{error}</Alert>
-          : loading || !data ? <p className="py-20 text-center opacity-70">{bn ? "লোড হচ্ছে…" : "Loading the graph…"}</p>
+          : loading || !data ? <Loader label={bn ? "লোড হচ্ছে…" : "Loading the graph…"} />
           : <GraphView data={data} lang={lang} theme={theme} />}
       </div>
     </main>

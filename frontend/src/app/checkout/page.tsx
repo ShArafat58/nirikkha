@@ -9,6 +9,7 @@ import { useSession } from "../../components/session";
 import { Alert, Button } from "../../components/ui";
 import { ApiError, checkout, getPlans, type CheckoutMethod, type PaymentRecord, type Plan } from "../../lib/api";
 import type { Key } from "../../lib/i18n";
+import { Loader } from "../../components/loader";
 
 const METHODS: { id: CheckoutMethod; icon: string; title: Key; sub: Key }[] = [
   { id: "mobile_banking", icon: "📱", title: "pay.mobile", sub: "pay.mobileSub" },
@@ -61,7 +62,7 @@ function CheckoutView() {
     <main className="bg-app min-h-[calc(100vh-4rem)] text-text"><div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">{children}</div></main>
   );
 
-  if (plan === undefined || loading) return shell(<p className="text-muted">{t("dash.loading")}</p>);
+  if (plan === undefined || loading) return shell(<Loader label={t("dash.loading")} />);
   if (plan === null) return shell(<><Alert>{t("co.invalid")}</Alert><Link href="/pricing" className="mt-4 inline-block text-accent hover:underline">← {t("nav.pricing")}</Link></>);
 
   if (done) {

@@ -5,6 +5,7 @@ import { Providers } from "../components/providers";
 import { SessionProvider } from "../components/session";
 import { SiteHeader } from "../components/site-header";
 import "./globals.css";
+import { RouteGuard } from "../components/route-guard";
 
 const sans = IBM_Plex_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--font-plex-sans", display: "swap" });
 const mono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-plex-mono", display: "swap" });
@@ -29,7 +30,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <Providers>
           <SessionProvider>
             <SiteHeader />
-            {children}
+            <RouteGuard>{children}</RouteGuard>
           </SessionProvider>
         </Providers>
       </body>

@@ -242,3 +242,13 @@ export async function cancelPlan(): Promise<PaymentRecord> {
   if (USE_MOCK) mockUnavailable();
   return request<PaymentRecord>("/api/billing/cancel", { method: "POST" });
 }
+
+
+export type MyCrashTest = {
+  id: string; cik: string; company?: string | null; as_of: string; decision: string; status?: string;
+  created_at?: string | null; score?: number | null; band?: string | null; health?: { score?: number; band?: string } | null;
+};
+
+export async function getMyCrashTests(): Promise<MyCrashTest[]> {
+  return request<MyCrashTest[]>("/api/crash-tests");
+}

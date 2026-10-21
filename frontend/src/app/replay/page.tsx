@@ -6,6 +6,7 @@ import { useApp } from "../../components/providers";
 import { ReplayView } from "../../components/replay/replay-view";
 import { Alert } from "../../components/ui";
 import { getReplay, type ReplayData } from "../../lib/replay";
+import { Loader } from "../../components/loader";
 
 export default function ReplayPage() {
   const app = useApp();
@@ -28,7 +29,7 @@ export default function ReplayPage() {
       ) : data ? (
         <ReplayView data={data} lang={lang} />
       ) : (
-        <p className="py-20 text-center opacity-70">{lang === "bn" ? "লোড হচ্ছে…" : "Loading the replay…"}</p>
+        <Loader label={lang === "bn" ? "লোড হচ্ছে…" : "Loading the replay…"} />
       )}
     </main>
   );
