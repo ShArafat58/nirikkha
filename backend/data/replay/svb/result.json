@@ -57,7 +57,13 @@
     {
      "rule_id": "II_YOY_CHANGE",
      "result": "POTENTIAL_GAP",
-     "rationale": "Large year-over-year change in risk-related disclosure: Item 7A. Quantitative and Qualitative Disclosures About Market Risk 14,505 -> 7,957 chars (-45.1%). Read both versions; may be reorganisation."
+     "rationale": "Large year-over-year change in risk-related disclosure: Item 7A. Quantitative and Qualitative Disclosures About Market Risk 14,505 -> 7,957 chars (-45.1%). Read both versions; may be reorganisation.",
+     "citation": {
+      "form": "10-K",
+      "accession_no": "0000719739-23-000021",
+      "page": null,
+      "quote": "Item 7A. Quantitative and Qualitative Disclosures About Market Risk"
+     }
     }
    ],
    "confirmed_by": [
@@ -124,7 +130,13 @@
     {
      "rule_id": "II_RISK_LEADERSHIP_CHANGE",
      "result": "POTENTIAL_GAP",
-     "rationale": "A change, departure or vacancy in the Chief Risk Officer or Chief Financial Officer role is disclosed (PRE 14A p.11). Check how long the role was unfilled and who covered it."
+     "rationale": "A change, departure or vacancy in the Chief Risk Officer or Chief Financial Officer role is disclosed (PRE 14A p.11). Check how long the role was unfilled and who covered it.",
+     "citation": {
+      "form": "PRE 14A",
+      "accession_no": "0000719739-23-000032",
+      "page": 11,
+      "quote": "...Operations Officer; and Mr. Michael Zuckert, General Counsel. Our NEOs for 2022 also include Ms. Laura Izurieta, former Chief Risk Officer, who departed the Company in October 2022 and ceased serving in her role as Chief Risk Officer on April 29, 2022. For more information about executive compens"
+     }
     }
    ],
    "confirmed_by": [

@@ -221,6 +221,12 @@ function SignItem({ s, t, events, lang }: { s: ReplaySignResult; t: T; events: M
           <div key={r.rule_id} className="rounded-lg border-l-2 border-amber-500/60 bg-slate-500/[0.06] p-3">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-500">{t.rule} · {r.rule_id}</p>
             <p className="mt-1 text-sm leading-relaxed">{r.rationale}</p>
+            {r.citation?.quote && (
+              <p className="mt-2 text-xs opacity-80">
+                <span className="font-mono">{[r.citation.form, r.citation.page ? `p.${r.citation.page}` : null].filter(Boolean).join(" ? ")}</span>
+                <span className="mt-0.5 block italic">?{r.citation.quote}?</span>
+              </p>
+            )}
           </div>
         ))}
         {s.confirmed_by.length > 0 && (

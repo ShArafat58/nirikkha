@@ -19,7 +19,9 @@ export type ReplayEvidence = {
 };
 export type ReplaySignResult = {
   id: string; category: string; statement: string; knowable_before_freeze: boolean; status: ReplayStatus;
-  evidence: ReplayEvidence[]; rules: { rule_id: string; result: string; rationale: string }[]; confirmed_by: string[];
+  evidence: ReplayEvidence[];
+  rules: { rule_id: string; result: string; rationale: string; citation?: ReplayCitation | null }[];
+  confirmed_by: string[];
 };
 export type ReplaySummary = {
   detected: number; questioned: number; partial: number; missed: number; not_knowable: number;

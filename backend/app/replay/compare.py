@@ -171,7 +171,11 @@ def compare(case: dict, report: dict, allowed_accessions: set[str] | None = None
                 ],
             } for _, hit, f in shown],
             "rules": [{"rule_id": r["rule_id"], "result": r["result"],
-                       "rationale": str(r.get("rationale") or "")[:240]} for r in rule_hits],
+                       "rationale": str(r.get("rationale") or "")[:240],
+                       "citation": next(({"form": e.get("form"), "accession_no": e.get("accession_no"),
+                                          "page": e.get("page"), "quote": str(e.get("quote") or "")[:300]}
+                                         for e in (r.get("evidence") or []) if isinstance(e, dict)), None)}
+                      for r in rule_hits],
             "confirmed_by": sign["confirmed_by"],
         })
 
