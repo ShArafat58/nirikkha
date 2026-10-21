@@ -9,6 +9,7 @@ import { useSession } from "../../components/session";
 import { Alert, Button } from "../../components/ui";
 import { ApiError, cancelPlan, getPlans, requestPlan, type PlansResponse, type Plan } from "../../lib/api";
 
+import PricingFaqI18n from "../../components/pricing-faq-i18n";
 export default function PricingPage() {
   const { t } = useApp();
   const { user, signedIn, refresh } = useSession();
@@ -141,6 +142,7 @@ export default function PricingPage() {
           <p className="mt-4 text-sm leading-relaxed text-muted">{t("price.howBody")}</p>
         </section>
       </div>
-    </main>
+    <PricingFaqI18n />
+      </main>
   );
 }
