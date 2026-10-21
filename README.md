@@ -1,159 +1,220 @@
-<p align="center"><img src="frontend/public/brand/logo.svg" alt="Nirikkha logo" width="320"></p>
+<p align="center">
+  <img src="frontend/public/brand/logo.svg" alt="Nirikkha logo" width="300">
+</p>
 
-# Nirikkha (নিরীক্ষা)
+<h1 align="center">Nirikkha · নিরীক্ষা</h1>
 
-**Trust less, Verify more.**
+<p align="center">
+  <b>Trust less, Verify more.</b><br>
+  Governance Crash-Test AI — test the governance evidence behind a decision <i>before</i> you make it.
+</p>
 
-Governance Crash-Test AI: before a company makes a critical decision, test the governance evidence behind it.
+<p align="center">
+  <a href="https://nirikkha.vercel.app"><img alt="Live demo" src="https://img.shields.io/badge/Live%20demo-nirikkha.vercel.app-f5b942?style=for-the-badge"></a>
+  <a href="https://nirikkha-api.onrender.com/docs"><img alt="API docs" src="https://img.shields.io/badge/API-OpenAPI%20docs-1f6feb?style=for-the-badge"></a>
+  <a href="https://nirikkha.vercel.app/docs"><img alt="Project docs" src="https://img.shields.io/badge/Docs-live%20status-2ea043?style=for-the-badge"></a>
+</p>
 
-Built for the **GovernanceIQ** challenge · International AI Builders Congress 2026 · JusticeSphere AI.
-Also covers the **Risk Sentinel** and **Legal Copilot** challenges.
+<p align="center">
+  <img alt="Tests" src="https://img.shields.io/badge/backend%20tests-234%20passing-2ea043">
+  <img alt="Next.js" src="https://img.shields.io/badge/Next.js-frontend-black">
+  <img alt="FastAPI" src="https://img.shields.io/badge/FastAPI-backend-009688">
+  <img alt="LangGraph" src="https://img.shields.io/badge/LangGraph-agents-6e40c9">
+  <img alt="Neo4j" src="https://img.shields.io/badge/Neo4j-graph-018bff">
+  <img alt="pgvector" src="https://img.shields.io/badge/pgvector-RAG-336791">
+  <img alt="MCP" src="https://img.shields.io/badge/MCP-5%20servers-f5b942">
+  <img alt="Bilingual" src="https://img.shields.io/badge/UI-English%20%7C%20বাংলা-e34c26">
+  <img alt="Cost" src="https://img.shields.io/badge/cost%20per%20analysis-%240.00%20on%20free%20tiers-2ea043">
+</p>
 
-|                         |                                        |
-| ----------------------- | -------------------------------------- |
-| Live app                | https://nirikkha.vercel.app            |
-| Live API (OpenAPI docs) | https://nirikkha-api.onrender.com/docs |
-| Project docs page       | https://nirikkha.vercel.app/docs       |
+<p align="center">
+  <b>GovernanceIQ</b> challenge · International AI Builders Congress 2026 · JusticeSphere AI<br>
+  Also covers <b>Risk Sentinel</b> and <b>Legal Copilot</b>
+</p>
 
-> The free backend sleeps when idle. The first request after a pause can take about a minute.
+---
 
-## What it does
+## The problem in one line
 
-A user picks a SEC-listed company, types the decision they are about to make
-("Before we proceed with this partnership…"), and Nirikkha:
+Governance failures are usually visible **in hindsight** — the warning signs sat in public filings all along,
+spread across documents nobody had time to connect, and general AI tools summarise them without proof.
 
-1. Reads the company's **Form 10-K** and **DEF 14A / PRE 14A** proxy statements from SEC EDGAR, keeping page and section numbers.
-2. Runs **four investigations** focused on that decision: Relationship, Cross-Document Consistency (including year over year), Regulatory Rule Check, and Missing Evidence.
-3. Checks structured, testable rules from **Regulation S-K Items 401, 402, 404 and 407** with four results: Pass, Potential Gap, Fail, Insufficient Evidence. Applicable law, best practice and internal risk indicators are kept separate.
-4. Lets the **AI Reliability Sentinel** check every AI finding: does the citation support the claim, is there contradictory evidence, is the reporting period right, is human review needed.
-5. Produces a **Governance Crash-Test Report** with an explainable **Health Score**. Evidence Confidence and Risk Severity are separate, and "Insufficient Evidence" is shown, never counted as low risk. Every finding links to the filing, page and supporting passage.
-6. Turns the report into a **Legal memo** (English and Bengali) with verified citations.
+## What Nirikkha does
 
-Also in the product:
+You pick a SEC-listed company and type the decision you are about to make —
+*"Before we proceed with this partnership, identify the governance risks and evidence gaps we should investigate."*
 
-- **First Warning Sign Replay:** Silicon Valley Bank, using only filings public before 7 March 2023, compared with the documented outcome, plus a healthy-company control (Apple). See `docs/REPLAY.md`.
-- **Regulatory Change Radar:** two data streams (curated SEC rule changes + new EDGAR filings), prioritised alerts, and human **Approve / Reject** with an audit trail. Scheduled by n8n with Telegram alerts.
-- **Relationship graph:** directors, executives, committees and outside organisations in Neo4j, with board interlocks.
-- **Private mode:** every AI step on local Ollama models; fails closed, never falls back to the cloud. See `docs/LOCAL_MODELS.md`.
-- **Nirikkha Guide:** a help chatbot (EN/BN) answering only from a curated public help guide.
-- **Bengali / English** interface and Bengali report summaries.
-- **Pricing** page with the plans from the business plan (no live payment).
+```mermaid
+flowchart LR
+  A["🏢 Company + 📝 decision<br/>+ 🧊 freeze date"] --> B["📄 10-K · DEF 14A · PRE 14A<br/>from SEC EDGAR"]
+  B --> C{"4 investigations<br/>in parallel"}
+  C --> C1["🔗 Relationships"]
+  C --> C2["🔁 Consistency"]
+  C --> C3["⚖️ Rule check"]
+  C --> C4["❓ Missing evidence"]
+  C1 & C2 & C3 & C4 --> D["🛡️ Reliability Sentinel<br/>checks every AI finding"]
+  D --> E["📊 Crash-Test Report<br/>+ Health Score + Legal memo"]
+```
 
-## Repository layout
+| | |
+|---|---|
+| 🔍 **Evidence first** | Every finding links to the filing, page, section and the exact passage |
+| ⚖️ **Governance Rule Engine** | 16 testable rules from Reg S-K Items 401, 402, 404, 407 → **Pass · Potential Gap · Fail · Insufficient Evidence** (law, best practice and risk indicators kept separate) |
+| 🛡️ **AI Reliability Sentinel** | A second model checks each claim against its citation; doubtful findings go to human review |
+| 📊 **Explainable Health Score** | Every deduction is listed; **Risk Severity ≠ Evidence Confidence**; insufficient evidence is shown, never counted as low risk |
+| 🎯 **Decision-specific** | The investigation is built around the decision you typed |
+| ⚖️ **Legal memo** | 3–5 non-obvious risks combining findings, every citation re-checked, English and বাংলা |
 
-| Folder         | What lives here                                                                                 | Who edits      |
-| -------------- | ----------------------------------------------------------------------------------------------- | -------------- |
-| `frontend/`    | Next.js app (UI). Talks to the backend only through the REST API                                | Teammates      |
-| `backend/`     | FastAPI app: ingestion, retrieval, LangGraph agents, rule engine, Sentinel, Replay, Radar       | Core developer |
-| `mcp-servers/` | Five MCP servers of our own (filings, rules, graph, crash-test, regulation)                     | Core developer |
-| `workflows/`   | n8n workflow exports (daily Radar scan, backend warm-up)                                        | Core developer |
-| `notebooks/`   | Fine-tuning and evaluation notebooks                                                            | Core developer |
-| `docs/`        | Architecture, API contract, data lifecycle, prompts, ethics, Replay, local models, score ledger | Everyone       |
+## Proof it works: the SVB First Warning Sign Replay
 
-## Quick start
+Nirikkha was run on **Silicon Valley Bank** using only filings public before **7 March 2023** — three days before the bank failed.
 
-### Option A: frontend only (no Python, no keys) — for design work
+| Result | |
+|---|---|
+| Verdict | ✅ **VALID** — no citation dated after the freeze |
+| Knowable warning signs raised | **5 of 5** (2 detected, 3 questioned) · **0 missed** |
+| Not knowable from public data | 1 (confidential supervisory findings), reported honestly |
+| Second independent run | VALID, 0 missed — the result is reproducible |
+| Healthy-company control (Apple) | Health **85** vs SVB **68**; Apple misses 2 of the 5 SVB-type signs — it does not flag everyone |
 
-Windows (PowerShell):
+Method and safeguards against hindsight: [`docs/REPLAY.md`](docs/REPLAY.md)
+
+## More inside
+
+| Feature | What it gives you |
+|---|---|
+| 📡 **Regulatory Change Radar** | Two data streams (SEC rule changes + new EDGAR filings), prioritised alerts, human **Approve / Reject** with audit trail, daily n8n schedule with Telegram alerts |
+| 🕸️ **Relationship graph** | Directors, executives, committees and outside organisations in Neo4j, board interlocks, every edge backed by a quote |
+| 🔒 **Private mode** | Every AI step on local Ollama models; it stops rather than falling back to the cloud |
+| 🤖 **Nirikkha Guide** | Help chatbot in English and বাংলা, answers only from a curated help guide, no access to user or admin data |
+| 🧩 **5 MCP servers** | Filings, rules, graph, crash-test, regulation — usable from any MCP client (stdio + Streamable HTTP) |
+| 🌐 **Bilingual** | Full English / বাংলা interface and Bengali report and memo text |
+| 💼 **Business model** | Pricing page with Free, Analyst Pro, Team and Enterprise plans |
+
+## Numbers we measured
+
+| Area | Result | Source |
+|---|---|---|
+| Retrieval | hit@1 **90%**, hit@3 **100%**, MRR **0.933** on gold questions | [`docs/EVALUATION.md`](docs/EVALUATION.md) |
+| Graph extraction | **85%** of proposed relations verified against the source quote | [`docs/EVALUATION.md`](docs/EVALUATION.md) |
+| Memo citations | pass rate **1.0** | [`docs/EVALUATION.md`](docs/EVALUATION.md) |
+| PII redaction | **8/8** caught, **0/6** false changes | [`docs/EVALUATION.md`](docs/EVALUATION.md) |
+| Private mode | full Crash-Test on an 8 GB CPU-only laptop in ~7 min | [`docs/LOCAL_MODELS.md`](docs/LOCAL_MODELS.md) |
+| Cost | **$0.00** per analysis on free tiers (tokens logged per call) | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
+
+## Tech stack
+
+| Layer | Tools |
+|---|---|
+| Frontend | Next.js, React, Tailwind CSS, Recharts, custom SVG — on **Vercel** |
+| Backend | FastAPI, LangGraph, Pydantic — on **Render** (queue worker runs inside the API) |
+| Data | Supabase Postgres + **pgvector**, Postgres full-text, **Neo4j Aura**, **DuckDB** |
+| Retrieval | Semantic + contextual chunking, hybrid search with RRF, cross-encoder rerank, Graph RAG |
+| Models | Groq (`gpt-oss-120b`, `gpt-oss-20b`, `gpt-oss-safeguard-20b`, `qwen3.8-27b`), Gemini 2.5 Flash, local Ollama (`qwen2.5:1.5b`, `gemma3:1b`), local ONNX (`bge-small-en-v1.5`, `ms-marco-MiniLM`) |
+| Automation | n8n, 5 custom MCP servers, Cloudflare Tunnel |
+| AI-assisted development | `AGENTS.md`, GitHub Spec Kit, Agent Skills, 5 frontend AI builders |
+
+## Try it in 30 seconds
+
+1. Open **https://nirikkha.vercel.app** → **Try the demo**
+2. **Reports → Featured demos** → open the SVB report (frozen 7 Mar 2023)
+3. Click any finding to see the exact passage, then **⚖️ Legal memo**
+4. Visit **Replay**, **Graph** and **Radar**; switch to **বাংলা** at the top
+
+> The free backend sleeps when idle — the first request can take about a minute. A new Crash-Test takes about 2–5 minutes.
+
+## Run it locally
+
+<details>
+<summary><b>Frontend only</b> (no Python, no keys) — Windows / macOS</summary>
 
 ```powershell
 git clone https://github.com/ShArafat58/nirikkha.git
-cd nirikkha\frontend
-Copy-Item .env.example .env.local
-npm install
-npm run dev
-```
-
-macOS (Terminal):
-
-```bash
-git clone https://github.com/ShArafat58/nirikkha.git
 cd nirikkha/frontend
-cp .env.example .env.local
+cp .env.example .env.local      # PowerShell: Copy-Item .env.example .env.local
 npm install
 npm run dev
 ```
 
-Open http://localhost:3000. In `.env.local`:
+In `.env.local`: `NEXT_PUBLIC_USE_MOCK=true` for sample data, or `NEXT_PUBLIC_API_URL=https://nirikkha-api.onrender.com` for the live backend.
+</details>
 
-- `NEXT_PUBLIC_USE_MOCK=true` uses built-in sample data, no backend needed.
-- or `NEXT_PUBLIC_API_URL=https://nirikkha-api.onrender.com` with `NEXT_PUBLIC_USE_MOCK=false` uses the live backend.
-
-### Option B: full stack on your machine
-
-Needs Python 3.12, Node.js (tested with 24), and free accounts for Groq, Google AI Studio, Supabase (Postgres + pgvector) and Neo4j Aura.
+<details>
+<summary><b>Full stack</b> — Python 3.12, Node.js, free Groq / Gemini / Supabase / Neo4j accounts</summary>
 
 Windows:
-
 ```powershell
 cd nirikkha\backend
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-Copy-Item .env.example .env        # fill in your own keys; never commit .env
+Copy-Item .env.example .env        # your own keys; never commit .env
 uvicorn app.main:app --port 8000   # terminal 1
-python -m app.api.worker           # terminal 2: runs queued Crash-Tests
+python -m app.api.worker           # terminal 2 (or set EMBEDDED_WORKER=true)
 ```
 
 macOS:
-
 ```bash
 cd nirikkha/backend
-python3 -m venv .venv
-source .venv/bin/activate
+python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env
 uvicorn app.main:app --port 8000
 python -m app.api.worker
 ```
 
-Database tables: run the files in `backend/sql/` in number order (Supabase SQL editor or `psql`).
-Then start the frontend as in Option A with `NEXT_PUBLIC_API_URL=http://localhost:8000`.
+Run the SQL files in `backend/sql/` in number order, then start the frontend with `NEXT_PUBLIC_API_URL=http://localhost:8000`.
+</details>
 
-More detail: `backend/README.md`, `frontend/README.md`.
+<details>
+<summary><b>Optional parts</b> — Private mode, MCP, n8n, tunnel</summary>
 
-### Optional parts
+| Part | How | Doc |
+|---|---|---|
+| Private mode | Install Ollama, `ollama pull qwen2.5:1.5b`, `ollama pull gemma3:1b` | [`docs/LOCAL_MODELS.md`](docs/LOCAL_MODELS.md) |
+| MCP servers | `cd mcp-servers`, create a venv, `python smoke_test.py` | [`docs/MCP.md`](docs/MCP.md) |
+| n8n workflows | Docker, import the JSON files | [`workflows/README.md`](workflows/README.md) |
+| Public tunnel | `cloudflared tunnel --url http://localhost:5678` | [`docs/TUNNEL.md`](docs/TUNNEL.md) |
+</details>
 
-| Part                        | How                                                                 | Doc                    |
-| --------------------------- | ------------------------------------------------------------------- | ---------------------- |
-| Private mode (local models) | Install Ollama, `ollama pull qwen2.5:1.5b`, `ollama pull gemma3:1b` | `docs/LOCAL_MODELS.md` |
-| MCP servers                 | `cd mcp-servers`, create venv, `python smoke_test.py`               | `docs/MCP.md`          |
-| n8n workflows               | Docker, import the JSON files                                       | `workflows/README.md`  |
-| Public tunnel               | `cloudflared tunnel --url http://localhost:5678`                    | `docs/TUNNEL.md`       |
-
-## Tests
+<details>
+<summary><b>Tests</b></summary>
 
 ```powershell
 cd backend
-.\.venv\Scripts\python.exe -m pytest -q     # 234 tests
-cd ..\frontend
+python -m pytest -q     # 234 tests, fake models, no network
+cd ../frontend
 npm run build
 ```
+</details>
+
+## Repository map
+
+| Folder | What lives here |
+|---|---|
+| `frontend/` | Next.js app; talks to the backend only through the REST API |
+| `backend/` | Ingestion, retrieval, LangGraph agents, rule engine, Sentinel, Replay, Radar |
+| `mcp-servers/` | Five MCP servers |
+| `workflows/` | n8n workflows (daily Radar scan, backend warm-up) |
+| `specs/`, `.specify/` | GitHub Spec Kit constitution and feature specs |
+| `skills/` | Agent skills |
+| `docs/` | Everything below |
 
 ## Documentation
 
-| File                     | Topic                                                |
-| ------------------------ | ---------------------------------------------------- |
-| `docs/SPEC.md`           | Product specification                                |
-| `docs/API.md`            | REST API contract for the frontend                   |
-| `docs/ARCHITECTURE.md`   | System design, models and why                        |
-| `docs/DATA_LIFECYCLE.md` | Sources, parsing, storage, lineage, quality, privacy |
-| `docs/PROMPT_LIBRARY.md` | Versioned prompts and how they are used              |
-| `docs/ETHICS.md`         | Responsible AI, safeguards, bias and limitations     |
-| `docs/REPLAY.md`         | First Warning Sign Replay method and results         |
-| `docs/LOCAL_MODELS.md`   | Private mode, local models, measured speed           |
-| `docs/MCP.md`            | MCP servers built and used                           |
-| `docs/TUNNEL.md`         | Publishing local services                            |
-| `docs/HELP_KB.md`        | Public help guide used by the chatbot                |
-| `AGENTS.md`              | Rules for AI coding agents working on this repo      |
+| | |
+|---|---|
+| [`ARCHITECTURE`](docs/ARCHITECTURE.md) — system design, model routes, deployment | [`DATA_LIFECYCLE`](docs/DATA_LIFECYCLE.md) — sources, storage, lineage, quality, privacy |
+| [`REPLAY`](docs/REPLAY.md) — SVB method and results | [`ETHICS`](docs/ETHICS.md) — safeguards, biases, KPIs |
+| [`EVALUATION`](docs/EVALUATION.md) — measured results | [`PROMPT_LIBRARY`](docs/PROMPT_LIBRARY.md) — versioned prompts |
+| [`LOCAL_MODELS`](docs/LOCAL_MODELS.md) — Private mode | [`MCP`](docs/MCP.md) — servers built and used |
+| [`API`](docs/API.md) — REST contract | [`AI_BUILDERS`](docs/AI_BUILDERS.md) · [`AI_DLC`](docs/AI_DLC.md) — how AI helped build it |
+| [`SUBMISSION`](docs/SUBMISSION.md) — pitch and business model | [`TUNNEL`](docs/TUNNEL.md) — publishing local services |
 
 ## Responsible use
 
-Nirikkha does not accuse any company of misconduct. A relationship or gap is a question to investigate,
-not proof. When public evidence is not enough, the report says "Insufficient Evidence".
-It is decision support for analysts, not legal or investment advice. The Apple partnership story in the
-pitch is hypothetical; the live demo uses real public SEC filings.
+Nirikkha **does not accuse any company** of misconduct. A relationship or gap is a question to verify, not proof.
+When public evidence is not enough, the report says **"Insufficient Evidence"**. It is decision support for analysts,
+not legal or investment advice. The Apple partnership story in the pitch is hypothetical; the live demo uses real public SEC filings.
 
-## Secrets
-
-All keys live in `.env` files that are git-ignored. `.env.example` files list the names only.
+<p align="center"><sub>All keys live in git-ignored <code>.env</code> files · built on free tiers · <b>Trust less, Verify more.</b></sub></p>
