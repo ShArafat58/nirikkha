@@ -75,3 +75,16 @@ def test_summary_counts(svb):
     assert s["knowable"] == 5
     assert sum(s[k] for k in ("detected", "questioned", "partial", "missed", "not_knowable")) == 6
     assert s["other_signals"] >= 1
+
+def test_run_after_freeze_date_is_invalid(svb):
+    report = _report()
+    report["as_of"] = "2023-07-23"
+    result = compare(svb, report, {"A10K"})
+    assert result["verdict"].startswith("INVALID")
+    assert result["run_as_of"] == "2023-07-23"
+
+
+def test_run_on_freeze_date_is_valid(svb):
+    report = _report()
+    report["as_of"] = "2023-03-07"
+    assert compare(svb, report, {"A10K"})["verdict"] == "VALID"

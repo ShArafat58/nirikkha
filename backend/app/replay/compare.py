@@ -111,6 +111,14 @@ def find_leaks(case: dict, findings: list[dict], allowed: set[str] | None) -> li
     return leaks
 
 
+def run_as_of(report: dict) -> str | None:
+    """The analysis date the run used, if the report records one."""
+    for key in ("as_of", "freeze_date"):
+        if isinstance(report.get(key), str) and report[key]:
+            return report[key][:10]
+    return None
+
+
 def compare(case: dict, report: dict, allowed_accessions: set[str] | None = None) -> dict:
     findings, rules = collect(report)
     by_rule = {r["rule_id"]: r for r in rules}
@@ -171,6 +179,10 @@ def compare(case: dict, report: dict, allowed_accessions: set[str] | None = None
     count = {st: sum(1 for s in signs if s["status"] == st)
              for st in ("detected", "questioned", "partial", "missed", "not_knowable")}
     leaks = find_leaks(case, findings, allowed_accessions)
+    as_of = run_as_of(report)
+    if as_of and as_of > str(case["freeze_date"]):
+        leaks.insert(0, {"finding": f"run analysed as of {as_of}, after the freeze date",
+                         "accession_no": None, "filing_date": as_of})
     other = [_title(f)[:160] for f in findings if _key(f) not in matched]
     return {
         "case_id": case["id"],
@@ -178,7 +190,8 @@ def compare(case: dict, report: dict, allowed_accessions: set[str] | None = None
         "freeze_date": case["freeze_date"],
         "outcome_date": case["outcome_date"],
         "outcome": case["outcome"],
-        "verdict": "INVALID: cites evidence outside the frozen window" if leaks else "VALID",
+        "run_as_of": as_of,
+        "verdict": "INVALID: uses evidence or an analysis date outside the frozen window" if leaks else "VALID",
         "leaks": leaks,
         "summary": {
             **count,
