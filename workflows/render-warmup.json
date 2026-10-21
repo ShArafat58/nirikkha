@@ -1,0 +1,70 @@
+{
+  "name": "Keep Render backend warm",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "*/10 * * * *"
+            }
+          ]
+        }
+      },
+      "name": "Every 10 minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -128,
+        16
+      ],
+      "id": "b8cee453-e61e-4453-ba4e-834631489c29"
+    },
+    {
+      "parameters": {
+        "url": "https://nirikkha-api.onrender.com/health",
+        "options": {
+          "timeout": 90000
+        }
+      },
+      "name": "Ping /health",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        144,
+        16
+      ],
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "id": "760689bd-e9c2-4541-ac6f-92196fa4f613"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Every 10 minutes": {
+      "main": [
+        [
+          {
+            "node": "Ping /health",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "f2e6667b-3b33-41dc-b7ac-cfbc480a18d6",
+  "meta": {
+    "instanceId": "a42526a671048d2ceb8c90ea0926f5b4dd8fa38416ea019f4fc5a428c28c3508"
+  },
+  "nodeGroups": [],
+  "id": "aav4mk4yAtJY99xK",
+  "tags": []
+}
