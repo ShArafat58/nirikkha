@@ -8,6 +8,7 @@ import { useSession } from "../../components/session";
 import { Alert } from "../../components/ui";
 import { getCompanies, getMyCrashTests, type MyCrashTest } from "../../lib/api";
 import { Loader } from "../../components/loader";
+import ReportsEmptyState, { EMPTY_LABELS_BN } from "../../components/reports-empty-state";
 
 type Row = {
   id: string; company: string; cik: string; as_of: string; decision: string;
@@ -95,7 +96,7 @@ export default function ReportsPage() {
       <p className="mt-2 text-sm opacity-70">{t.sub}</p>
       {error && <div className="mt-5"><Alert>{error}</Alert></div>}
 
-      <section className="mt-8">
+      <section id="featured" className="mt-8 scroll-mt-24">
         <h2 className="text-lg font-semibold">{t.featured}</h2>
         <p className="text-xs opacity-60">{t.featuredNote}</p>
         <ul className="mt-4 space-y-3">
@@ -113,7 +114,7 @@ export default function ReportsPage() {
             <li className="text-sm"><Link href="/login?next=/reports" className="text-sky-500 underline">{t.signIn}</Link></li>
           ) : mine === null ? <li><Loader className="py-6" /></li>
             : mine.length === 0 ? (
-              <li className="text-sm opacity-70">{t.noneMine} <Link href="/crash-test" className="text-sky-500 underline">{t.run}</Link></li>
+              <li><ReportsEmptyState labels={t === TXT.bn ? EMPTY_LABELS_BN : undefined} /></li>
             ) : mine.map(card)}
         </ul>
       </section>
