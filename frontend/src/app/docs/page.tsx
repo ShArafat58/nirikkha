@@ -7,6 +7,7 @@ import { PipelineDiagram } from "../../components/pipeline-diagram";
 import { useApp } from "../../components/providers";
 import { API_URL, getHealth, getStatus, type ServerHealth, type Status } from "../../lib/api";
 
+import ResultGlossaryI18n from "../../components/result-glossary-i18n";
 const REPO = "https://github.com/ShArafat58/nirikkha";
 
 const MODELS = [
@@ -232,6 +233,7 @@ export default function DocsPage() {
           </div>
         </section>
       </div>
-    </main>
+    <ResultGlossaryI18n />
+      </main>
   );
 }
