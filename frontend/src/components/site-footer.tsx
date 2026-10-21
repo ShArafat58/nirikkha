@@ -57,9 +57,7 @@ const DEFAULT_LABELS: SiteFooterLabels = {
   },
 };
 
-const GITHUB_URL = "https://github.com/ShArafat58/nirikkha";
-
-const productLinks = (l: SiteFooterLabels) => [
+const productLinks = (l: SiteFooterLabels): { label: string; href: string; external?: boolean }[] => [
   { label: l.links.crashTest, href: "/crash-test" },
   { label: l.links.reports, href: "/reports" },
   { label: l.links.replay, href: "/replay" },
@@ -67,10 +65,9 @@ const productLinks = (l: SiteFooterLabels) => [
   { label: l.links.radar, href: "/radar" },
 ];
 
-const learnLinks = (l: SiteFooterLabels) => [
+const learnLinks = (l: SiteFooterLabels): { label: string; href: string; external?: boolean }[] => [
   { label: l.links.pricing, href: "/pricing" },
   { label: l.links.docs, href: "/docs" },
-  { label: l.links.github, href: GITHUB_URL, external: true },
 ];
 
 const footerLinkClass =
