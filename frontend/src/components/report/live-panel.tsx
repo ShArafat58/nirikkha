@@ -37,7 +37,7 @@ export function NoticeCard({
             <path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22" />
             <path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2" />
           </svg>
-          <span className="font-mono text-xs font-semibold">
+          <span className="font-mono text-sm font-semibold sm:text-base">
             {t("run.elapsedTime")} {formatElapsed(elapsed, lang)}
           </span>
         </div>
@@ -47,7 +47,7 @@ export function NoticeCard({
           </span>
         )}
       </div>
-      <p className="mt-3 text-xs leading-relaxed text-muted sm:text-sm">
+      <p className="mt-3 text-sm leading-relaxed text-muted sm:text-base">
         {job.private ? t("run.notice.private") : t("run.notice.normal")}
       </p>
     </div>
