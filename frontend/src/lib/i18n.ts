@@ -4,8 +4,10 @@ export type Lang = "en" | "bn";
 
 const en = {
   "price.title": "Plans for evidence-first decisions",
-  "price.subtitle": "Start free. Upgrade when governance checks become part of how your team decides.",
-  "price.note": "Proposed list prices in USD, to be finalised with pilot customers.",
+  "price.subtitle":
+    "Start free. Upgrade when governance checks become part of how your team decides.",
+  "price.note":
+    "Proposed list prices in USD, to be finalised with pilot customers.",
   "price.perMonth": "Crash-Tests per month",
   "price.unlimited": "Unlimited Crash-Tests",
   "price.forAnalysts": "For analysts",
@@ -16,9 +18,11 @@ const en = {
   "price.pilot": "Request a pilot",
   "price.pilotSent": "Pilot request recorded. We will contact you.",
   "price.addons": "Pay per report",
-  "price.demoUser": "Demo account: every feature is already unlocked. You can still try the checkout flow.",
+  "price.demoUser":
+    "Demo account: every feature is already unlocked. You can still try the checkout flow.",
   "price.howTitle": "How payment works in this prototype",
-  "price.howBody": "Checkout is a demonstration: you choose a method and the plan is activated, but no money is charged and no card, account or PIN details are collected. Live payments come next: an international card gateway, and a bKash / Nagad merchant account or SSLCommerz for Bangladesh.",
+  "price.howBody":
+    "Checkout is a demonstration: you choose a method and the plan is activated, but no money is charged and no card, account or PIN details are collected. Live payments come next: an international card gateway, and a bKash / Nagad merchant account or SSLCommerz for Bangladesh.",
   "pay.mobile": "Mobile banking",
   "pay.mobileSub": "bKash, Nagad, Rocket (Bangladesh)",
   "pay.card": "Card",
@@ -26,7 +30,8 @@ const en = {
   "pay.bank": "Bank transfer",
   "pay.bankSub": "Local or international transfer",
   "co.title": "Checkout",
-  "co.banner": "Demo checkout: no money is charged and no card, account or PIN details are collected.",
+  "co.banner":
+    "Demo checkout: no money is charged and no card, account or PIN details are collected.",
   "co.step1": "1. Choose a payment method",
   "co.step2": "2. Confirm",
   "co.confirm": "Confirm subscription (demo)",
@@ -43,18 +48,21 @@ const en = {
   "co.plan": "Plan",
   "co.toDashboard": "Go to dashboard",
   "co.runTest": "Run a Crash-Test",
-  "adm.simSubs": "Simulated subscriptions",  "nav.admin": "Admin",
+  "adm.simSubs": "Simulated subscriptions",
+  "nav.admin": "Admin",
   "adm.title": "Admin panel",
   "adm.only": "Admin access only.",
   "adm.signinTitle": "Admin sign in",
-  "adm.signinNote": "Use an admin account. The same password also unlocks a 30-minute admin session.",
+  "adm.signinNote":
+    "Use an admin account. The same password also unlocks a 30-minute admin session.",
   "adm.notAdmin": "This account is not an admin.",
   "adm.signedInAs": "You are currently signed in as",
   "adm.signinButton": "Sign in to admin",
   "adm.email": "Email",
   "adm.switch": "Sign in with an admin account",
   "adm.confirm": "Confirm it is you",
-  "adm.confirmNote": "Admin area: enter your password again. The admin session lasts 30 minutes and ends when you refresh or close this page.",
+  "adm.confirmNote":
+    "Admin area: enter your password again. The admin session lasts 30 minutes and ends when you refresh or close this page.",
   "adm.unlock": "Unlock admin panel",
   "adm.session": "Admin session",
   "adm.minLeft": "min left",
@@ -81,9 +89,11 @@ const en = {
   "adm.worker": "Analysis worker",
   "adm.workerOn": "online",
   "adm.workerOff": "offline",
-  "adm.demosNote": "Only featured runs appear as ready-made demos on the public Crash-Test page. New runs stay private.",
+  "adm.demosNote":
+    "Only featured runs appear as ready-made demos on the public Crash-Test page. New runs stay private.",
   "adm.featured": "Shown publicly",
-  "adm.hidden": "Private",  "rep.eyebrow": "Governance Crash-Test Report",
+  "adm.hidden": "Private",
+  "rep.eyebrow": "Governance Crash-Test Report",
   "rep.severity": "Severity",
   "rep.confidence": "Confidence",
   "rep.frozen": "Evidence frozen at",
@@ -92,14 +102,16 @@ const en = {
   "rep.openNow": "Open the report now",
   "rep.notFound": "This report could not be loaded.",
   "rep.sentinel": "Reliability Sentinel",
-  "rep.sentinelNote": "A second model checked every AI finding before it reached this report.",
+  "rep.sentinelNote":
+    "A second model checked every AI finding before it reached this report.",
   "rep.verified": "Verified",
   "rep.needsReview": "Needs review",
   "rep.downgraded": "Downgraded",
   "rep.unsupported": "Unsupported",
   "rep.judge": "Judge model",
   "rep.costTitle": "Cost and method",
-  "live.log": "Activity log",  "rep.tab.overview": "Overview",
+  "live.log": "Activity log",
+  "rep.tab.overview": "Overview",
   "health.title": "Why this score",
   "health.factors": "What lowered the score",
   "health.points": "points",
@@ -124,33 +136,51 @@ const en = {
   "live.now": "What is happening now",
   "live.progress": "Progress",
   "live.waiting": "Waiting for the analysis worker to pick up this Crash-Test.",
-  "nodeinfo.redact": "Emails, phone, ID and card numbers in your decision text are masked before any AI model sees them. Only counts are kept.",
-  "nodeinfo.guard": "A rule check and a dedicated safety model screen the request for prompt injection and misuse.",
-  "nodeinfo.collect": "Filings published on or before the freeze date, the verified relationship graph and the disclosure rules are loaded. Nothing later is visible.",
-  "nodeinfo.plan": "Your decision becomes up to 8 specific questions across the four investigations.",
-  "nodeinfo.gather": "Hybrid search (meaning + keywords) finds passages; a cross-encoder then re-ranks them so the best evidence comes first.",
-  "nodeinfo.analyze": "The analyst model answers each question only from the evidence and must cite it. Uncited answers become insufficient.",
-  "nodeinfo.relationship": "Board seats, shared employers and related-party transactions are checked in the verified graph.",
-  "nodeinfo.consistency": "Sections are compared with the previous year's filing; large changes are flagged for review.",
-  "nodeinfo.regulatory": "Reg S-K Items 401, 402, 404 and 407. Law, best practice and internal indicators are kept apart.",
-  "nodeinfo.missing_evidence": "What public filings cannot confirm is listed openly, never hidden inside the score.",
-  "nodeinfo.merge": "Findings are numbered and ranked by severity. Severity and confidence stay separate.",
-  "nodeinfo.sentinel": "A different model checks every AI finding: does the citation support it, is it the right period, does anything contradict it?",
-  "nodeinfo.score": "The explainable Health Score, evidence coverage and the four report sections are built.",  "ct.title": "Governance Crash-Test",
-  "ct.subtitle": "Pick a company, freeze the evidence at a date, and describe the decision you are about to make.",
+  "nodeinfo.redact":
+    "Emails, phone, ID and card numbers in your decision text are masked before any AI model sees them. Only counts are kept.",
+  "nodeinfo.guard":
+    "A rule check and a dedicated safety model screen the request for prompt injection and misuse.",
+  "nodeinfo.collect":
+    "Filings published on or before the freeze date, the verified relationship graph and the disclosure rules are loaded. Nothing later is visible.",
+  "nodeinfo.plan":
+    "Your decision becomes up to 8 specific questions across the four investigations.",
+  "nodeinfo.gather":
+    "Hybrid search (meaning + keywords) finds passages; a cross-encoder then re-ranks them so the best evidence comes first.",
+  "nodeinfo.analyze":
+    "The analyst model answers each question only from the evidence and must cite it. Uncited answers become insufficient.",
+  "nodeinfo.relationship":
+    "Board seats, shared employers and related-party transactions are checked in the verified graph.",
+  "nodeinfo.consistency":
+    "Sections are compared with the previous year's filing; large changes are flagged for review.",
+  "nodeinfo.regulatory":
+    "Reg S-K Items 401, 402, 404 and 407. Law, best practice and internal indicators are kept apart.",
+  "nodeinfo.missing_evidence":
+    "What public filings cannot confirm is listed openly, never hidden inside the score.",
+  "nodeinfo.merge":
+    "Findings are numbered and ranked by severity. Severity and confidence stay separate.",
+  "nodeinfo.sentinel":
+    "A different model checks every AI finding: does the citation support it, is it the right period, does anything contradict it?",
+  "nodeinfo.score":
+    "The explainable Health Score, evidence coverage and the four report sections are built.",
+  "ct.title": "Governance Crash-Test",
+  "ct.subtitle":
+    "Pick a company, freeze the evidence at a date, and describe the decision you are about to make.",
   "ct.demos": "Ready-made demos",
   "ct.demosNote": "Open instantly, no account needed.",
   "ct.open": "Open report",
   "ct.new": "Run a new Crash-Test",
   "ct.company": "Company",
   "ct.asOf": "Evidence freeze date",
-  "ct.asOfHint": "Only filings published on or before this date are used. Later facts are invisible to every step.",
+  "ct.asOfHint":
+    "Only filings published on or before this date are used. Later facts are invisible to every step.",
   "ct.decision": "The decision",
-  "ct.decisionHint": "Describe what you are about to do. Personal data is removed before any model sees it.",
+  "ct.decisionHint":
+    "Describe what you are about to do. Personal data is removed before any model sees it.",
   "ct.examples": "Examples",
   "ct.start": "Start Crash-Test",
   "ct.needLogin": "Log in, or continue as demo, to run a new Crash-Test.",
-  "ct.workerOff": "Live analysis is offline right now. A new request waits up to 5 minutes; the demos above open instantly.",
+  "ct.workerOff":
+    "Live analysis is offline right now. A new request waits up to 5 minutes; the demos above open instantly.",
   "ct.limit": "See plans",
   "ct.noCompanies": "No companies loaded yet.",
   "ct.filings": "filings",
@@ -160,7 +190,8 @@ const en = {
   "band.high_concern": "High concern",
   "run.title": "Crash-Test in progress",
   "run.queued": "Waiting for the analysis worker...",
-  "run.workerOff": "No analysis worker is online. The request fails after 5 minutes if none picks it up.",
+  "run.workerOff":
+    "No analysis worker is online. The request fails after 5 minutes if none picks it up.",
   "run.elapsed": "Elapsed",
   "run.done": "Crash-Test complete",
   "run.failed": "The Crash-Test could not finish",
@@ -172,7 +203,8 @@ const en = {
   "run.review": "Need human review",
   "run.insufficient": "Insufficient evidence",
   "run.cost": "Cost of this analysis",
-  "run.reportNext": "The full report view (findings, evidence, rules, graph, memo) opens here in the next update.",
+  "run.reportNext":
+    "The full report view (findings, evidence, rules, graph, memo) opens here in the next update.",
   "node.redact": "Remove personal data",
   "node.guard": "Safety check",
   "node.collect": "Load filings, graph and rules",
@@ -185,8 +217,10 @@ const en = {
   "node.missing_evidence": "Missing evidence detection",
   "node.merge": "Rank the findings",
   "node.sentinel": "Reliability Sentinel checks every finding",
-  "node.score": "Health Score and report",  "nav.logout": "Log out",
-  "auth.panel": "Evidence-first governance checks for investors, banks and compliance teams.",
+  "node.score": "Health Score and report",
+  "nav.logout": "Log out",
+  "auth.panel":
+    "Evidence-first governance checks for investors, banks and compliance teams.",
   "auth.login.title": "Welcome back",
   "auth.login.subtitle": "Log in to run Crash-Tests and see your reports.",
   "auth.demo": "Continue as demo",
@@ -222,7 +256,8 @@ const en = {
   "auth.err.age": "You must be at least 18 years old.",
   "auth.err.generic": "Something went wrong. Please try again.",
   "auth.forgot.title": "Reset your password",
-  "auth.forgot.subtitle": "Answer your security question to set a new password.",
+  "auth.forgot.subtitle":
+    "Answer your security question to set a new password.",
   "auth.forgot.next": "Continue",
   "auth.newPassword": "New password",
   "auth.forgot.submit": "Set new password",
@@ -236,7 +271,8 @@ const en = {
   "dash.new": "New Crash-Test",
   "dash.upgrade": "See plans",
   "dash.admin": "Admin panel",
-  "dash.loading": "Loading...",  "brand.tagline": "Trust less, Verify more.",
+  "dash.loading": "Loading...",
+  "brand.tagline": "Trust less, Verify more.",
   "nav.crashTest": "Crash-Test",
   "nav.replay": "Replay",
   "nav.graph": "Graph",
@@ -255,7 +291,8 @@ const en = {
   "status.demo": "Demo mode: precomputed results",
   "status.offline": "Server waking up or offline",
   "hero.title": "Trust less, Verify more.",
-  "hero.subtitle": "Before you sign, invest or partner, see what the evidence really says.",
+  "hero.subtitle":
+    "Before you sign, invest or partner, see what the evidence really says.",
   "hero.cta": "Run a Crash-Test",
   "hero.demo": "Try the demo, no sign-up",
   "hero.goDashboard": "Go to your dashboard",
@@ -264,12 +301,19 @@ const en = {
   "hero.point2": "Gaps shown, never hidden",
   "hero.point3": "Self-checking AI",
   "ct.privateMode": "Private Mode (local AI)",
-  "ct.privateHint": "Runs on this machine using local Ollama models (qwen2.5, gemma3). No document text or prompts leave your infrastructure.",
-  "ct.privateDisabledTooltip": "Ollama not detected locally. Run `ollama serve` to enable private mode.",
+  "ct.privateHint":
+    "Runs on this machine using local Ollama models (qwen2.5, gemma3). No document text or prompts leave your infrastructure.",
+  "ct.privateDisabledTooltip":
+    "Ollama not detected locally. Run `ollama serve` to enable private mode.",
   "ct.privateBadge": "Private Mode — Local LLM (qwen2.5 / gemma3)",
-  "ct.privateUnavailable": "Private mode needs the local model runtime (Ollama). It is not running on this server.",
-  "run.notice.normal": "This takes about 2 to 5 minutes. Nirikkha reads the filings, checks every rule and verifies each finding, so please keep this page open.",
-  "run.notice.private": "Private mode runs every AI step on this computer's small local models, so it takes about 5 to 10 minutes. Nothing leaves this machine.",
+  "ct.privateUnavailable":
+    "Private mode needs the local model runtime (Ollama). It is not running on this server.",
+  "run.notice.normal":
+    "A Crash-Test usually takes 2 to 5 minutes. Nirikkha reads the filings, checks every rule and verifies each finding before showing you anything.",
+  "run.notice.first":
+    "First run of the day? Allow 5 to 10 minutes. Our free cloud server wakes up and loads the AI models first. You can close this page: the report will appear in Reports when it is ready.",
+  "run.notice.private":
+    "Private mode runs every AI step on this computer's small local models, so it takes about 5 to 10 minutes. Nothing leaves this machine.",
   "run.elapsedTime": "Elapsed",
 };
 
@@ -277,8 +321,10 @@ export type Key = keyof typeof en;
 
 const bn: Partial<Record<Key, string>> = {
   "price.title": "প্রমাণ-নির্ভর সিদ্ধান্তের জন্য প্ল্যান",
-  "price.subtitle": "বিনামূল্যে শুরু করুন। গভর্ন্যান্স যাচাই যখন আপনার টিমের সিদ্ধান্তের অংশ হয়ে যাবে, তখন আপগ্রেড করুন।",
-  "price.note": "প্রস্তাবিত দাম (USD), পাইলট গ্রাহকদের সাথে আলোচনার পর চূড়ান্ত হবে।",
+  "price.subtitle":
+    "বিনামূল্যে শুরু করুন। গভর্ন্যান্স যাচাই যখন আপনার টিমের সিদ্ধান্তের অংশ হয়ে যাবে, তখন আপগ্রেড করুন।",
+  "price.note":
+    "প্রস্তাবিত দাম (USD), পাইলট গ্রাহকদের সাথে আলোচনার পর চূড়ান্ত হবে।",
   "price.perMonth": "মাসে ক্র্যাশ-টেস্ট",
   "price.unlimited": "সীমাহীন ক্র্যাশ-টেস্ট",
   "price.forAnalysts": "অ্যানালিস্টদের জন্য",
@@ -289,9 +335,11 @@ const bn: Partial<Record<Key, string>> = {
   "price.pilot": "পাইলটের অনুরোধ করুন",
   "price.pilotSent": "পাইলটের অনুরোধ নেওয়া হয়েছে। আমরা যোগাযোগ করব।",
   "price.addons": "প্রতি রিপোর্টের দাম",
-  "price.demoUser": "ডেমো অ্যাকাউন্ট: সব ফিচার আগেই খোলা। তবু চাইলে চেকআউট প্রক্রিয়া দেখে নিতে পারেন।",
+  "price.demoUser":
+    "ডেমো অ্যাকাউন্ট: সব ফিচার আগেই খোলা। তবু চাইলে চেকআউট প্রক্রিয়া দেখে নিতে পারেন।",
   "price.howTitle": "এই প্রোটোটাইপে পেমেন্ট যেভাবে কাজ করে",
-  "price.howBody": "চেকআউট একটি প্রদর্শনী: আপনি পদ্ধতি বাছেন এবং প্ল্যান চালু হয়, কিন্তু কোনো টাকা কাটা হয় না এবং কোনো কার্ড, অ্যাকাউন্ট বা পিনের তথ্য নেওয়া হয় না। পরের ধাপে আসল পেমেন্ট: আন্তর্জাতিক কার্ড গেটওয়ে, আর বাংলাদেশের জন্য বিকাশ / নগদ মার্চেন্ট অ্যাকাউন্ট বা SSLCommerz।",
+  "price.howBody":
+    "চেকআউট একটি প্রদর্শনী: আপনি পদ্ধতি বাছেন এবং প্ল্যান চালু হয়, কিন্তু কোনো টাকা কাটা হয় না এবং কোনো কার্ড, অ্যাকাউন্ট বা পিনের তথ্য নেওয়া হয় না। পরের ধাপে আসল পেমেন্ট: আন্তর্জাতিক কার্ড গেটওয়ে, আর বাংলাদেশের জন্য বিকাশ / নগদ মার্চেন্ট অ্যাকাউন্ট বা SSLCommerz।",
   "pay.mobile": "মোবাইল ব্যাংকিং",
   "pay.mobileSub": "বিকাশ, নগদ, রকেট (বাংলাদেশ)",
   "pay.card": "কার্ড",
@@ -299,7 +347,8 @@ const bn: Partial<Record<Key, string>> = {
   "pay.bank": "ব্যাংক ট্রান্সফার",
   "pay.bankSub": "দেশীয় বা আন্তর্জাতিক ট্রান্সফার",
   "co.title": "চেকআউট",
-  "co.banner": "ডেমো চেকআউট: কোনো টাকা কাটা হয় না এবং কোনো কার্ড, অ্যাকাউন্ট বা পিনের তথ্য নেওয়া হয় না।",
+  "co.banner":
+    "ডেমো চেকআউট: কোনো টাকা কাটা হয় না এবং কোনো কার্ড, অ্যাকাউন্ট বা পিনের তথ্য নেওয়া হয় না।",
   "co.step1": "১. পেমেন্ট পদ্ধতি বাছুন",
   "co.step2": "২. নিশ্চিত করুন",
   "co.confirm": "সাবস্ক্রিপশন নিশ্চিত করুন (ডেমো)",
@@ -316,18 +365,21 @@ const bn: Partial<Record<Key, string>> = {
   "co.plan": "প্ল্যান",
   "co.toDashboard": "ড্যাশবোর্ডে যান",
   "co.runTest": "ক্র্যাশ-টেস্ট চালান",
-  "adm.simSubs": "সিমুলেটেড সাবস্ক্রিপশন",  "nav.admin": "অ্যাডমিন",
+  "adm.simSubs": "সিমুলেটেড সাবস্ক্রিপশন",
+  "nav.admin": "অ্যাডমিন",
   "adm.title": "অ্যাডমিন প্যানেল",
   "adm.only": "শুধু অ্যাডমিনের জন্য।",
   "adm.signinTitle": "অ্যাডমিন সাইন ইন",
-  "adm.signinNote": "অ্যাডমিন অ্যাকাউন্ট ব্যবহার করুন। একই পাসওয়ার্ডে ৩০ মিনিটের অ্যাডমিন সেশনও খুলবে।",
+  "adm.signinNote":
+    "অ্যাডমিন অ্যাকাউন্ট ব্যবহার করুন। একই পাসওয়ার্ডে ৩০ মিনিটের অ্যাডমিন সেশনও খুলবে।",
   "adm.notAdmin": "এই অ্যাকাউন্টটি অ্যাডমিন নয়।",
   "adm.signedInAs": "এখন আপনি sign in করে আছেন:",
   "adm.signinButton": "অ্যাডমিনে প্রবেশ",
   "adm.email": "ইমেইল",
   "adm.switch": "অ্যাডমিন অ্যাকাউন্ট দিয়ে sign in করুন",
   "adm.confirm": "নিশ্চিত করুন এটি আপনি",
-  "adm.confirmNote": "অ্যাডমিন অংশ: আবার পাসওয়ার্ড দিন। অ্যাডমিন সেশন ৩০ মিনিট চলে, আর পেজ রিফ্রেশ বা বন্ধ করলেই শেষ হয়।",
+  "adm.confirmNote":
+    "অ্যাডমিন অংশ: আবার পাসওয়ার্ড দিন। অ্যাডমিন সেশন ৩০ মিনিট চলে, আর পেজ রিফ্রেশ বা বন্ধ করলেই শেষ হয়।",
   "adm.unlock": "অ্যাডমিন প্যানেল খুলুন",
   "adm.session": "অ্যাডমিন সেশন",
   "adm.minLeft": "মিনিট বাকি",
@@ -354,9 +406,11 @@ const bn: Partial<Record<Key, string>> = {
   "adm.worker": "বিশ্লেষণ ওয়ার্কার",
   "adm.workerOn": "চালু",
   "adm.workerOff": "বন্ধ",
-  "adm.demosNote": "শুধু ফিচার করা রানগুলোই পাবলিক ক্র্যাশ-টেস্ট পেজে তৈরি ডেমো হিসেবে দেখায়। নতুন রান গোপন থাকে।",
+  "adm.demosNote":
+    "শুধু ফিচার করা রানগুলোই পাবলিক ক্র্যাশ-টেস্ট পেজে তৈরি ডেমো হিসেবে দেখায়। নতুন রান গোপন থাকে।",
   "adm.featured": "সবার জন্য দৃশ্যমান",
-  "adm.hidden": "গোপন",  "rep.eyebrow": "গভর্ন্যান্স ক্র্যাশ-টেস্ট রিপোর্ট",
+  "adm.hidden": "গোপন",
+  "rep.eyebrow": "গভর্ন্যান্স ক্র্যাশ-টেস্ট রিপোর্ট",
   "rep.severity": "গুরুত্ব",
   "rep.confidence": "আস্থা",
   "rep.frozen": "প্রমাণ স্থির করা হয়েছে",
@@ -365,14 +419,16 @@ const bn: Partial<Record<Key, string>> = {
   "rep.openNow": "এখনই রিপোর্ট খুলুন",
   "rep.notFound": "এই রিপোর্টটি লোড করা যায়নি।",
   "rep.sentinel": "রিলায়েবিলিটি সেন্টিনেল",
-  "rep.sentinelNote": "এই রিপোর্টে পৌঁছানোর আগে একটি দ্বিতীয় মডেল প্রতিটি এআই ফলাফল যাচাই করেছে।",
+  "rep.sentinelNote":
+    "এই রিপোর্টে পৌঁছানোর আগে একটি দ্বিতীয় মডেল প্রতিটি এআই ফলাফল যাচাই করেছে।",
   "rep.verified": "যাচাই সম্পন্ন",
   "rep.needsReview": "পর্যালোচনা দরকার",
   "rep.downgraded": "আস্থা কমানো হয়েছে",
   "rep.unsupported": "অসমর্থিত",
   "rep.judge": "যাচাইকারী মডেল",
   "rep.costTitle": "খরচ ও পদ্ধতি",
-  "live.log": "কাজের বিবরণ",  "rep.tab.overview": "সারসংক্ষেপ",
+  "live.log": "কাজের বিবরণ",
+  "rep.tab.overview": "সারসংক্ষেপ",
   "health.title": "কেন এই স্কোর",
   "health.factors": "স্কোর কমেছে যে কারণে",
   "health.points": "পয়েন্ট",
@@ -397,33 +453,52 @@ const bn: Partial<Record<Key, string>> = {
   "live.now": "এখন কী হচ্ছে",
   "live.progress": "অগ্রগতি",
   "live.waiting": "বিশ্লেষণ ওয়ার্কার এই ক্র্যাশ-টেস্ট হাতে নেওয়ার অপেক্ষায়।",
-  "nodeinfo.redact": "সিদ্ধান্তের লেখায় থাকা ইমেইল, ফোন, আইডি ও কার্ড নম্বর কোনো এআই মডেলের কাছে যাওয়ার আগেই ঢেকে দেওয়া হয়। শুধু সংখ্যার হিসাব রাখা হয়।",
-  "nodeinfo.guard": "একটি নিয়মভিত্তিক যাচাই ও একটি আলাদা নিরাপত্তা মডেল অনুরোধটিতে প্রম্পট ইনজেকশন বা অপব্যবহার আছে কি না দেখে।",
-  "nodeinfo.collect": "নির্ধারিত তারিখ বা তার আগে প্রকাশিত ফাইলিং, যাচাই করা সম্পর্কের গ্রাফ ও প্রকাশের নিয়ম লোড হয়। পরের কোনো তথ্য দেখা যায় না।",
-  "nodeinfo.plan": "আপনার সিদ্ধান্তকে চারটি অনুসন্ধানে ভাগ করে সর্বোচ্চ ৮টি নির্দিষ্ট প্রশ্নে রূপান্তর করা হয়।",
-  "nodeinfo.gather": "হাইব্রিড সার্চ (অর্থ + শব্দ) প্রাসঙ্গিক অংশ খোঁজে; তারপর একটি ক্রস-এনকোডার সাজিয়ে সেরা প্রমাণ সবার আগে আনে।",
-  "nodeinfo.analyze": "অ্যানালিস্ট মডেল প্রতিটি প্রশ্নের উত্তর শুধু প্রমাণ থেকে দেয় এবং উৎস উল্লেখ করতে বাধ্য। উৎসহীন উত্তর অপর্যাপ্ত হিসেবে ধরা হয়।",
-  "nodeinfo.relationship": "যাচাই করা গ্রাফে বোর্ডের পদ, একই প্রতিষ্ঠানে কাজের ইতিহাস ও সংশ্লিষ্ট পক্ষের লেনদেন পরীক্ষা করা হয়।",
-  "nodeinfo.consistency": "আগের বছরের ফাইলিংয়ের সাথে অংশগুলো তুলনা করা হয়; বড় পরিবর্তন পর্যালোচনার জন্য চিহ্নিত হয়।",
-  "nodeinfo.regulatory": "Reg S-K Item 401, 402, 404 ও 407। আইন, ভালো চর্চা ও অভ্যন্তরীণ সূচক আলাদা রাখা হয়।",
-  "nodeinfo.missing_evidence": "পাবলিক ফাইলিং যা নিশ্চিত করতে পারে না, তা খোলাখুলি তালিকায় দেখানো হয়, স্কোরের ভেতরে লুকানো হয় না।",
-  "nodeinfo.merge": "ফলাফলগুলো নম্বর দিয়ে গুরুত্ব অনুযায়ী সাজানো হয়। গুরুত্ব ও আস্থা আলাদা থাকে।",
-  "nodeinfo.sentinel": "একটি ভিন্ন মডেল প্রতিটি এআই ফলাফল যাচাই করে: উৎস কি দাবিটিকে সমর্থন করে, সময়কাল কি ঠিক, কোনো কিছু কি বিরোধিতা করে?",
-  "nodeinfo.score": "ব্যাখ্যাযোগ্য হেলথ স্কোর, প্রমাণের ব্যাপ্তি ও রিপোর্টের চারটি অংশ তৈরি হয়।",  "ct.title": "গভর্ন্যান্স ক্র্যাশ-টেস্ট",
-  "ct.subtitle": "একটি কোম্পানি বাছুন, একটি তারিখে প্রমাণ স্থির করুন, আর যে সিদ্ধান্ত নিতে যাচ্ছেন তা লিখুন।",
+  "nodeinfo.redact":
+    "সিদ্ধান্তের লেখায় থাকা ইমেইল, ফোন, আইডি ও কার্ড নম্বর কোনো এআই মডেলের কাছে যাওয়ার আগেই ঢেকে দেওয়া হয়। শুধু সংখ্যার হিসাব রাখা হয়।",
+  "nodeinfo.guard":
+    "একটি নিয়মভিত্তিক যাচাই ও একটি আলাদা নিরাপত্তা মডেল অনুরোধটিতে প্রম্পট ইনজেকশন বা অপব্যবহার আছে কি না দেখে।",
+  "nodeinfo.collect":
+    "নির্ধারিত তারিখ বা তার আগে প্রকাশিত ফাইলিং, যাচাই করা সম্পর্কের গ্রাফ ও প্রকাশের নিয়ম লোড হয়। পরের কোনো তথ্য দেখা যায় না।",
+  "nodeinfo.plan":
+    "আপনার সিদ্ধান্তকে চারটি অনুসন্ধানে ভাগ করে সর্বোচ্চ ৮টি নির্দিষ্ট প্রশ্নে রূপান্তর করা হয়।",
+  "nodeinfo.gather":
+    "হাইব্রিড সার্চ (অর্থ + শব্দ) প্রাসঙ্গিক অংশ খোঁজে; তারপর একটি ক্রস-এনকোডার সাজিয়ে সেরা প্রমাণ সবার আগে আনে।",
+  "nodeinfo.analyze":
+    "অ্যানালিস্ট মডেল প্রতিটি প্রশ্নের উত্তর শুধু প্রমাণ থেকে দেয় এবং উৎস উল্লেখ করতে বাধ্য। উৎসহীন উত্তর অপর্যাপ্ত হিসেবে ধরা হয়।",
+  "nodeinfo.relationship":
+    "যাচাই করা গ্রাফে বোর্ডের পদ, একই প্রতিষ্ঠানে কাজের ইতিহাস ও সংশ্লিষ্ট পক্ষের লেনদেন পরীক্ষা করা হয়।",
+  "nodeinfo.consistency":
+    "আগের বছরের ফাইলিংয়ের সাথে অংশগুলো তুলনা করা হয়; বড় পরিবর্তন পর্যালোচনার জন্য চিহ্নিত হয়।",
+  "nodeinfo.regulatory":
+    "Reg S-K Item 401, 402, 404 ও 407। আইন, ভালো চর্চা ও অভ্যন্তরীণ সূচক আলাদা রাখা হয়।",
+  "nodeinfo.missing_evidence":
+    "পাবলিক ফাইলিং যা নিশ্চিত করতে পারে না, তা খোলাখুলি তালিকায় দেখানো হয়, স্কোরের ভেতরে লুকানো হয় না।",
+  "nodeinfo.merge":
+    "ফলাফলগুলো নম্বর দিয়ে গুরুত্ব অনুযায়ী সাজানো হয়। গুরুত্ব ও আস্থা আলাদা থাকে।",
+  "nodeinfo.sentinel":
+    "একটি ভিন্ন মডেল প্রতিটি এআই ফলাফল যাচাই করে: উৎস কি দাবিটিকে সমর্থন করে, সময়কাল কি ঠিক, কোনো কিছু কি বিরোধিতা করে?",
+  "nodeinfo.score":
+    "ব্যাখ্যাযোগ্য হেলথ স্কোর, প্রমাণের ব্যাপ্তি ও রিপোর্টের চারটি অংশ তৈরি হয়।",
+  "ct.title": "গভর্ন্যান্স ক্র্যাশ-টেস্ট",
+  "ct.subtitle":
+    "একটি কোম্পানি বাছুন, একটি তারিখে প্রমাণ স্থির করুন, আর যে সিদ্ধান্ত নিতে যাচ্ছেন তা লিখুন।",
   "ct.demos": "তৈরি ডেমো",
   "ct.demosNote": "সঙ্গে সঙ্গে খোলে, অ্যাকাউন্ট লাগে না।",
   "ct.open": "রিপোর্ট খুলুন",
   "ct.new": "নতুন ক্র্যাশ-টেস্ট চালান",
   "ct.company": "কোম্পানি",
   "ct.asOf": "প্রমাণ স্থির করার তারিখ",
-  "ct.asOfHint": "শুধু এই তারিখ বা তার আগে প্রকাশিত ফাইলিং ব্যবহার হয়। পরের তথ্য কোনো ধাপেই দেখা যায় না।",
+  "ct.asOfHint":
+    "শুধু এই তারিখ বা তার আগে প্রকাশিত ফাইলিং ব্যবহার হয়। পরের তথ্য কোনো ধাপেই দেখা যায় না।",
   "ct.decision": "সিদ্ধান্ত",
-  "ct.decisionHint": "আপনি কী করতে যাচ্ছেন লিখুন। কোনো মডেলের কাছে যাওয়ার আগেই ব্যক্তিগত তথ্য সরিয়ে ফেলা হয়।",
+  "ct.decisionHint":
+    "আপনি কী করতে যাচ্ছেন লিখুন। কোনো মডেলের কাছে যাওয়ার আগেই ব্যক্তিগত তথ্য সরিয়ে ফেলা হয়।",
   "ct.examples": "উদাহরণ",
   "ct.start": "ক্র্যাশ-টেস্ট শুরু করুন",
-  "ct.needLogin": "নতুন ক্র্যাশ-টেস্ট চালাতে লগ ইন করুন, অথবা ডেমো হিসেবে চালিয়ে যান।",
-  "ct.workerOff": "লাইভ বিশ্লেষণ এখন বন্ধ। নতুন অনুরোধ সর্বোচ্চ ৫ মিনিট অপেক্ষা করবে; উপরের ডেমোগুলো সঙ্গে সঙ্গে খোলে।",
+  "ct.needLogin":
+    "নতুন ক্র্যাশ-টেস্ট চালাতে লগ ইন করুন, অথবা ডেমো হিসেবে চালিয়ে যান।",
+  "ct.workerOff":
+    "লাইভ বিশ্লেষণ এখন বন্ধ। নতুন অনুরোধ সর্বোচ্চ ৫ মিনিট অপেক্ষা করবে; উপরের ডেমোগুলো সঙ্গে সঙ্গে খোলে।",
   "ct.limit": "প্ল্যান দেখুন",
   "ct.noCompanies": "এখনো কোনো কোম্পানি লোড হয়নি।",
   "ct.filings": "ফাইলিং",
@@ -433,7 +508,8 @@ const bn: Partial<Record<Key, string>> = {
   "band.high_concern": "গুরুতর উদ্বেগ",
   "run.title": "ক্র্যাশ-টেস্ট চলছে",
   "run.queued": "বিশ্লেষণ ওয়ার্কারের অপেক্ষায়...",
-  "run.workerOff": "কোনো বিশ্লেষণ ওয়ার্কার চালু নেই। ৫ মিনিটের মধ্যে কেউ না নিলে অনুরোধটি ব্যর্থ হবে।",
+  "run.workerOff":
+    "কোনো বিশ্লেষণ ওয়ার্কার চালু নেই। ৫ মিনিটের মধ্যে কেউ না নিলে অনুরোধটি ব্যর্থ হবে।",
   "run.elapsed": "সময় লেগেছে",
   "run.done": "ক্র্যাশ-টেস্ট সম্পন্ন",
   "run.failed": "ক্র্যাশ-টেস্ট শেষ করা যায়নি",
@@ -445,7 +521,8 @@ const bn: Partial<Record<Key, string>> = {
   "run.review": "মানুষের পর্যালোচনা দরকার",
   "run.insufficient": "অপর্যাপ্ত প্রমাণ",
   "run.cost": "এই বিশ্লেষণের খরচ",
-  "run.reportNext": "পুরো রিপোর্ট (ফলাফল, প্রমাণ, নিয়ম, গ্রাফ, মেমো) পরের আপডেটে এখানেই খুলবে।",
+  "run.reportNext":
+    "পুরো রিপোর্ট (ফলাফল, প্রমাণ, নিয়ম, গ্রাফ, মেমো) পরের আপডেটে এখানেই খুলবে।",
   "node.redact": "ব্যক্তিগত তথ্য সরানো",
   "node.guard": "নিরাপত্তা যাচাই",
   "node.collect": "ফাইলিং, গ্রাফ ও নিয়ম লোড",
@@ -458,8 +535,10 @@ const bn: Partial<Record<Key, string>> = {
   "node.missing_evidence": "অনুপস্থিত প্রমাণ শনাক্ত",
   "node.merge": "ফলাফল সাজানো",
   "node.sentinel": "রিলায়েবিলিটি সেন্টিনেল প্রতিটি ফলাফল যাচাই করে",
-  "node.score": "হেলথ স্কোর ও রিপোর্ট",  "nav.logout": "লগ আউট",
-  "auth.panel": "বিনিয়োগকারী, ব্যাংক ও কমপ্লায়েন্স টিমের জন্য প্রমাণ-নির্ভর গভর্ন্যান্স যাচাই।",
+  "node.score": "হেলথ স্কোর ও রিপোর্ট",
+  "nav.logout": "লগ আউট",
+  "auth.panel":
+    "বিনিয়োগকারী, ব্যাংক ও কমপ্লায়েন্স টিমের জন্য প্রমাণ-নির্ভর গভর্ন্যান্স যাচাই।",
   "auth.login.title": "আবার স্বাগতম",
   "auth.login.subtitle": "ক্র্যাশ-টেস্ট চালাতে ও রিপোর্ট দেখতে লগ ইন করুন।",
   "auth.demo": "ডেমো হিসেবে চালিয়ে যান",
@@ -476,7 +555,8 @@ const bn: Partial<Record<Key, string>> = {
   "auth.signup.subtitle": "ফ্রি প্ল্যান: মাসে ৩টি ক্র্যাশ-টেস্ট।",
   "auth.name": "পূর্ণ নাম",
   "auth.dob": "জন্মতারিখ",
-  "auth.dobHint": "শুধু ১৮+ বয়স যাচাইয়ের জন্য ব্যবহার হয়। সংরক্ষণ করা হয় না।",
+  "auth.dobHint":
+    "শুধু ১৮+ বয়স যাচাইয়ের জন্য ব্যবহার হয়। সংরক্ষণ করা হয় না।",
   "auth.confirm": "পাসওয়ার্ড আবার লিখুন",
   "auth.question": "নিরাপত্তা প্রশ্ন",
   "auth.questionHint": "পাসওয়ার্ড ভুলে গেলে রিসেট করতে কাজে লাগবে।",
@@ -495,7 +575,8 @@ const bn: Partial<Record<Key, string>> = {
   "auth.err.age": "আপনার বয়স কমপক্ষে ১৮ বছর হতে হবে।",
   "auth.err.generic": "কিছু একটা সমস্যা হয়েছে। আবার চেষ্টা করুন।",
   "auth.forgot.title": "পাসওয়ার্ড রিসেট করুন",
-  "auth.forgot.subtitle": "নতুন পাসওয়ার্ড দিতে আপনার নিরাপত্তা প্রশ্নের উত্তর দিন।",
+  "auth.forgot.subtitle":
+    "নতুন পাসওয়ার্ড দিতে আপনার নিরাপত্তা প্রশ্নের উত্তর দিন।",
   "auth.forgot.next": "এগিয়ে যান",
   "auth.newPassword": "নতুন পাসওয়ার্ড",
   "auth.forgot.submit": "নতুন পাসওয়ার্ড সেট করুন",
@@ -509,7 +590,8 @@ const bn: Partial<Record<Key, string>> = {
   "dash.new": "নতুন ক্র্যাশ-টেস্ট",
   "dash.upgrade": "প্ল্যান দেখুন",
   "dash.admin": "অ্যাডমিন প্যানেল",
-  "dash.loading": "লোড হচ্ছে...",  "brand.tagline": "কম বিশ্বাস, বেশি যাচাই।",
+  "dash.loading": "লোড হচ্ছে...",
+  "brand.tagline": "কম বিশ্বাস, বেশি যাচাই।",
   "nav.crashTest": "ক্র্যাশ-টেস্ট",
   "nav.replay": "রিপ্লে",
   "nav.graph": "গ্রাফ",
@@ -528,7 +610,8 @@ const bn: Partial<Record<Key, string>> = {
   "status.demo": "ডেমো মোড: আগে থেকে তৈরি ফলাফল",
   "status.offline": "সার্ভার চালু হচ্ছে বা বন্ধ",
   "hero.title": "কম বিশ্বাস, বেশি যাচাই।",
-  "hero.subtitle": "চুক্তি, বিনিয়োগ বা অংশীদারিত্বের আগে জেনে নিন, প্রমাণ আসলে কী বলে।",
+  "hero.subtitle":
+    "চুক্তি, বিনিয়োগ বা অংশীদারিত্বের আগে জেনে নিন, প্রমাণ আসলে কী বলে।",
   "hero.cta": "ক্র্যাশ-টেস্ট চালান",
   "hero.demo": "ডেমো দেখুন, সাইন আপ ছাড়াই",
   "hero.goDashboard": "আপনার ড্যাশবোর্ডে যান",
@@ -537,12 +620,19 @@ const bn: Partial<Record<Key, string>> = {
   "hero.point2": "ঘাটতি লুকানো হয় না",
   "hero.point3": "নিজেকে যাচাই করে এমন এআই",
   "ct.privateMode": "প্রাইভেট মোড (স্থানীয় এআই)",
-  "ct.privateHint": "এই ডিভাইসেই স্থানীয় ওলামা মডেল (qwen2.5, gemma3) ব্যবহার করে চলবে। কোনো নথি বা প্রম্পট আপনার অবকাঠামোর বাইরে যাবে না।",
-  "ct.privateDisabledTooltip": "স্থানীয়ভাবে ওলামা শনাক্ত করা যায়নি। প্রাইভেট মোড চালু করতে `ollama serve` চালান।",
+  "ct.privateHint":
+    "এই ডিভাইসেই স্থানীয় ওলামা মডেল (qwen2.5, gemma3) ব্যবহার করে চলবে। কোনো নথি বা প্রম্পট আপনার অবকাঠামোর বাইরে যাবে না।",
+  "ct.privateDisabledTooltip":
+    "স্থানীয়ভাবে ওলামা শনাক্ত করা যায়নি। প্রাইভেট মোড চালু করতে `ollama serve` চালান।",
   "ct.privateBadge": "প্রাইভেট মোড — স্থানীয় এলএলএম (qwen2.5 / gemma3)",
-  "ct.privateUnavailable": "প্রাইভেট মোডের জন্য স্থানীয় মডেল রানটাইম (ওলামা) প্রয়োজন। এই সার্ভারে এটি চালু নেই।",
-  "run.notice.normal": "এতে প্রায় ২ থেকে ৫ মিনিট লাগে। নিরীক্ষা ফাইলিং পড়ে, প্রতিটি নিয়ম যাচাই করে এবং প্রতিটি ফলাফল পরীক্ষা করে, তাই পাতাটি খোলা রাখুন।",
-  "run.notice.private": "প্রাইভেট মোডে সব AI ধাপ এই কম্পিউটারের ছোট লোকাল মডেলে চলে, তাই প্রায় ৫ থেকে ১০ মিনিট লাগে। কিছুই এই মেশিনের বাইরে যায় না।",
+  "ct.privateUnavailable":
+    "প্রাইভেট মোডের জন্য স্থানীয় মডেল রানটাইম (ওলামা) প্রয়োজন। এই সার্ভারে এটি চালু নেই।",
+  "run.notice.normal":
+    "একটি ক্র্যাশ-টেস্টে সাধারণত ২ থেকে ৫ মিনিট লাগে। ফল দেখানোর আগে নিরীক্ষা ফাইলিং পড়ে, প্রতিটি নিয়ম যাচাই করে এবং প্রতিটি ফলাফল পরীক্ষা করে।",
+  "run.notice.first":
+    "আজকের প্রথম টেস্ট? ৫ থেকে ১০ মিনিট সময় দিন। আমাদের ফ্রি ক্লাউড সার্ভার আগে জেগে ওঠে আর AI মডেলগুলো লোড করে। পাতাটি বন্ধ করলেও সমস্যা নেই, রিপোর্ট তৈরি হলে Reports-এ চলে আসবে।",
+  "run.notice.private":
+    "প্রাইভেট মোডে সব AI ধাপ এই কম্পিউটারের ছোট লোকাল মডেলে চলে, তাই প্রায় ৫ থেকে ১০ মিনিট লাগে। কিছুই এই মেশিনের বাইরে যায় না।",
   "run.elapsedTime": "সময় পেরিয়েছে",
 };
 

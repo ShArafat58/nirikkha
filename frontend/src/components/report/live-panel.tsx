@@ -19,7 +19,9 @@ export function NoticeCard({
 }) {
   const { t, lang } = useApp();
   return (
-    <div className={`rounded-2xl border border-border bg-surface p-5 sm:p-6 ${className}`}>
+    <div
+      className={`rounded-2xl border border-border bg-surface p-5 sm:p-6 ${className}`}
+    >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-accent">
           <svg
@@ -50,11 +52,23 @@ export function NoticeCard({
       <p className="mt-3 text-sm leading-relaxed text-muted sm:text-base">
         {job.private ? t("run.notice.private") : t("run.notice.normal")}
       </p>
+      {!job.private && (
+        <p className="mt-3 flex gap-2 rounded-lg border border-accent/40 bg-accent/10 px-3 py-2 text-sm font-medium leading-relaxed text-accent sm:text-base">
+          <span aria-hidden>⏳</span>
+          <span>{t("run.notice.first")}</span>
+        </p>
+      )}
     </div>
   );
 }
 
-export function LivePanel({ job, elapsed = 0 }: { job: CrashTestJob; elapsed?: number }) {
+export function LivePanel({
+  job,
+  elapsed = 0,
+}: {
+  job: CrashTestJob;
+  elapsed?: number;
+}) {
   const { t } = useApp();
   const total = job.pipeline.length;
   const done = job.done_nodes.length;
@@ -68,7 +82,9 @@ export function LivePanel({ job, elapsed = 0 }: { job: CrashTestJob; elapsed?: n
       <div className="rounded-2xl border border-border bg-surface p-6">
         <div className="flex items-center justify-between">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="text-xs font-medium uppercase tracking-wider text-muted">{t("live.progress")}</p>
+            <p className="text-xs font-medium uppercase tracking-wider text-muted">
+              {t("live.progress")}
+            </p>
             {job.private && (
               <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-400">
                 🔒 {t("ct.privateBadge")}
@@ -78,35 +94,57 @@ export function LivePanel({ job, elapsed = 0 }: { job: CrashTestJob; elapsed?: n
           <span className="font-mono text-sm tabular-nums">{pct}%</span>
         </div>
         <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-surface-2">
-          <div className="h-full rounded-full bg-gradient-to-r from-accent/70 to-accent transition-all duration-700" style={{ width: `${Math.max(4, pct)}%` }} />
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-accent/70 to-accent transition-all duration-700"
+            style={{ width: `${Math.max(4, pct)}%` }}
+          />
         </div>
-        <p className="mt-2 font-mono text-xs text-muted">{done}/{total}</p>
+        <p className="mt-2 font-mono text-xs text-muted">
+          {done}/{total}
+        </p>
 
-        <p className="mt-6 text-xs font-medium uppercase tracking-wider text-muted">{t("live.now")}</p>
+        <p className="mt-6 text-xs font-medium uppercase tracking-wider text-muted">
+          {t("live.now")}
+        </p>
         {job.status === "queued" || !current ? (
           <p className="mt-2 text-text/85">{t("live.waiting")}</p>
         ) : (
           <div className="mt-2 rounded-xl border border-accent/30 bg-accent/5 p-4">
             <p className="flex items-center gap-2 text-lg font-semibold text-accent">
-              <span className="relative flex h-2.5 w-2.5"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-75" /><span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-accent" /></span>
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-75" />
+                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-accent" />
+              </span>
               {t(`node.${current}` as Key)}
             </p>
-            <p className="mt-2 leading-relaxed text-text/85">{t(`nodeinfo.${current}` as Key)}</p>
+            <p className="mt-2 leading-relaxed text-text/85">
+              {t(`nodeinfo.${current}` as Key)}
+            </p>
           </div>
         )}
       </div>
 
       {log.length > 0 && (
         <div className="rounded-2xl border border-border bg-surface p-6">
-          <p className="text-xs font-medium uppercase tracking-wider text-muted">{t("live.log")}</p>
+          <p className="text-xs font-medium uppercase tracking-wider text-muted">
+            {t("live.log")}
+          </p>
           <ol className="mt-3 space-y-3">
             {log.map((e) => (
               <li key={e.node} className="flex gap-3 text-sm">
-                <span className="mt-0.5 w-16 shrink-0 text-right font-mono text-xs text-muted">{secs(e.ms)}</span>
-                <span className="text-conf-high" aria-hidden>✓</span>
+                <span className="mt-0.5 w-16 shrink-0 text-right font-mono text-xs text-muted">
+                  {secs(e.ms)}
+                </span>
+                <span className="text-conf-high" aria-hidden>
+                  ✓
+                </span>
                 <span className="min-w-0">
-                  <span className="font-medium">{t(`node.${e.node}` as Key)}</span>
-                  <span className="block break-words text-xs text-muted">{e.message}</span>
+                  <span className="font-medium">
+                    {t(`node.${e.node}` as Key)}
+                  </span>
+                  <span className="block break-words text-xs text-muted">
+                    {e.message}
+                  </span>
                 </span>
               </li>
             ))}
